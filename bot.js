@@ -44,7 +44,7 @@ app.post("/webhook", async (req, res) => {
       claudeResponse = await axios.post(
         "https://api.anthropic.com/v1/messages",
         {
-          model: "claude-3-5-sonnet-20241022",
+          model: "claude-haiku-4-5-20251001",
           max_tokens: 1024,
           system: "You are a helpful teaching assistant. Keep answers brief.",
           messages: [{ role: "user", content: studentQuestion }]
