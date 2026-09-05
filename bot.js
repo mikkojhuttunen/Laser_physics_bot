@@ -5,19 +5,18 @@ const app = express();
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-// ⚠️  PASTE YOUR MAIN FILE IDS HERE (skip the ._ files)
 const COURSE_FILE_IDS = [
-  "file_01Uo9GgkC17USnGcpmkjchgG",  // Chapter_1.pdf
-  "file_01NRxJzjFnsDjPA1XKCjTuXW",  // Chapter_2.pdf
-  "file_01TuDbxbCaDyRaHQsdXb6voL",  // Chapter_3.pdf
-  "file_015umkYefmRXrH57UUbtQ4WY",  // Chapter_4.pdf
-  "file_01KnZ21SxA1sfB81BZGWVbta",  // FYS_501_Laser_HW1.pdf
-  "file_015focJn87VMLB5cMJ2Zm4BR",  // FYS_501_Laser_HW2.pdf
-  "file_0179vTFcpg3emMfxWEJpA2n2",  // FYS_501_Laser_HW3.pdf
-  "file_01MGzrruE4EJP12DQi52vCpT",  // FYS_501_Laser_HW4.pdf
-  "file_01BFtfVpugNTNy9WtFj8vkNd",  // FYS_501_Laser_HW5.pdf
-  "file_01KSmX5oM9dM3uYBDVSGZvdq",  // FYS_501_Laser_HW6.pdf
-  "file_0185k1dUXySjwQDvLGqgscBf"   // Laser_Physics_Slides.pdf
+  "file_01Uo9GgkC17USnGcpmkjchgG",
+  "file_01NRxJzjFnsDjPA1XKCjTuXW",
+  "file_01TuDbxbCaDyRaHQsdXb6voL",
+  "file_015umkYefmRXrH57UUbtQ4WY",
+  "file_01KnZ21SxA1sfB81BZGWVbta",
+  "file_015focJn87VMLB5cMJ2Zm4BR",
+  "file_0179vTFcpg3emMfxWEJpA2n2",
+  "file_01MGzrruE4EJP12DQi52vCpT",
+  "file_01BFtfVpugNTNy9WtFj8vkNd",
+  "file_01KSmX5oM9dM3uYBDVSGZvdq",
+  "file_0185k1dUXySjwQDvLGqgscBf"
 ];
 
 app.use(express.json());
@@ -34,6 +33,84 @@ app.post("/webhook", async (req, res) => {
     if (!message || !message.text) {
       console.log("Not a text message, ignoring");
       return res.sendStatus(200);
+    }
+
+    const studentQuestion = message.text;
+    const chatId = message.chat.id;
+
+    console.log("From chat:", chatId);
+    console.log("Message:", studentQuestion);
+
+    if (!ANTHROPIC_API_KEY) {
+      console.error("ANTHROPIC_API_KEY is missing!");
+      return res.sendStatus(200);
+    }
+
+    if (!TELEGRAM_TOKEN) {
+      console.error("TELEGRAM_TOKEN is missing!");
+      return res.sendStatus(200);
+    }
+
+    console.log("Calling Claude with course files...");
+
+    const messageContent = [
+      ...COURSE_FILE_IDS.map(fileId => ({
+        type: "document",
+        source: {
+          type: "file",
+          file_id: fileId
+        }
+      })),
+      {
+        type: "text",
+        text: studentQuestion
+      }
+    ];
+
+    const claudeResponse = await axios.post(
+      "https://api.anthropic.com/v1/messages",
+      {
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 1024,
+        system: "You are a helpful teaching assistant for FYS.501 Laser Physics. You have access to course materials. For homework questions, provide guidance and hints, not complete solutions. Keep responses brief.",
+        messages: [
+          {
+            role: "user",
+            content: messageContent
+          }
+        ]
+      },
+      {
+        headers: {
+          "x-api-key": ANTHROPIC_API_KEY,
+          "anthropic-version": "2023-06-01"
+        }
+      }
+    );
+
+    const botReply = claudeResponse.data.content[0].text;
+    console.log("Claude replied");
+
+    await axios.post(
+      `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`,
+      {
+        chat_id: chatId,
+        text: botReply
+      }
+    );
+
+    console.log("=== SUCCESS ===");
+    res.sendStatus(200);
+  } catch (error) {
+    console.error("ERROR:", error.message);
+    res.sendStatus(200);
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Bot running on port ${PORT}`);
+});
     }
 
     const studentQuestion = message.text;
