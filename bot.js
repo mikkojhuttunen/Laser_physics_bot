@@ -8,6 +8,21 @@ const PROJECT_ID = process.env.PROJECT_ID;
 
 app.use(express.json());
 
+// Set webhook on startup
+const WEBHOOK_URL = `https://laserphysicsbot-production.up.railway.app/webhook`;
+
+async function setWebhook() {
+  try {
+    await axios.post(
+      `https://api.telegram.org/bot${TELEGRAM_TOKEN}/setWebhook`,
+      { url: WEBHOOK_URL }
+    );
+    console.log("Webhook set successfully");
+  } catch (error) {
+    console.error("Failed to set webhook:", error.message);
+  }
+}
+
 app.post("/webhook", async (req, res) => {
   try {
     const message = req.body.message;
@@ -42,4 +57,5 @@ app.post("/webhook", async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Bot running on port ${PORT}`);
+  setWebhook();
 });
