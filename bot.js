@@ -19,12 +19,12 @@ app.post("/webhook", async (req, res) => {
     const response = await axios.post(
       "https://api.anthropic.com/v1/messages",
       {
-        model: "claude-opus-4-1-20250805",
+        model: "claude-opus-4-1",
         max_tokens: 1024,
         system: `You are a helpful teaching assistant.\nFor homework: provide guidance and hints, NOT complete solutions.\nBe encouraging and supportive.\nKeep responses concise.`,
         messages: [{ role: "user", content: studentQuestion }]
       },
-      { headers: { "Authorization": `Bearer ${ANTHROPIC_API_KEY}` } }
+      { headers: { "x-api-key": ANTHROPIC_API_KEY } }
     );
 
     const botReply = response.data.content[0].text;
