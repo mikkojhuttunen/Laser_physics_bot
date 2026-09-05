@@ -51,7 +51,8 @@ app.post("/webhook", async (req, res) => {
         },
         { 
           headers: { 
-            "x-api-key": ANTHROPIC_API_KEY
+            "x-api-key": ANTHROPIC_API_KEY,
+            "anthropic-version": "2023-06-01"
           } 
         }
       );
