@@ -1,0 +1,143 @@
+{
+  "courses": {
+    "FYS240": {
+      "code": "FYS.240",
+      "name": "Optics",
+      "finnish_name": "Optiikka",
+      "type": "playlists",
+      "description": "Lecture playlists organized by chapter (2-10)",
+      "chapters": {
+        "2": "https://youtube.com/playlist?list=PLlVl326H5K-FOk0rRcNK5TtIzOXVe0Unn",
+        "3": "https://youtube.com/playlist?list=PLlVl326H5K-HkE9Se9PCQUUXMzvWT6Opa",
+        "4": "https://youtube.com/playlist?list=PLlVl326H5K-F35s5J0wEIxBDUAx9bsMpe",
+        "5": "https://youtube.com/playlist?list=PLlVl326H5K-FDQsRsBllFO_VnwOJZcrdP",
+        "6": "https://youtube.com/playlist?list=PLlVl326H5K-G24puA7w88Ja-Rwl0UoIWP",
+        "7": "https://youtube.com/playlist?list=PLlVl326H5K-FljjaAwa7lPEXNs0IgJmE4",
+        "8": "https://youtube.com/playlist?list=PLlVl326H5K-F7nRllzWRpo3Xwd1vquAD0",
+        "9": "https://youtube.com/playlist?list=PLlVl326H5K-HE632xxLl8GG7JOkIrlRt8",
+        "10": "https://youtube.com/playlist?list=PLlVl326H5K-Hmk4bMR8C4K0mb049iaWGO"
+      }
+    },
+    "FYS501": {
+      "code": "FYS.501",
+      "name": "Laser Physics",
+      "finnish_name": "Laser Physics",
+      "type": "individual_videos",
+      "description": "Individual lecture videos organized by chapter and topic",
+      "intro": {
+        "title": "Course Intro",
+        "url": "https://www.youtube.com/watch?v=RMF7EJdIBY8"
+      },
+      "chapters": {
+        "1": {
+          "title": "Fundamentals of Lasers",
+          "videos": {
+            "1.1": {
+              "title": "Spontaneous and Stimulated Emission, Absorption",
+              "url": "https://www.youtube.com/watch?v=R0GVWRS86yI",
+              "topics": ["emission", "absorption", "quantum optics"]
+            },
+            "1.2": {
+              "title": "The Laser Idea",
+              "url": "https://www.youtube.com/watch?v=TQnGkWNgtxI",
+              "topics": ["laser basics", "laser principle"]
+            },
+            "1.3": {
+              "title": "Pumping Schemes",
+              "url": "https://www.youtube.com/watch?v=uUQn3-QWQv0",
+              "topics": ["pumping", "energy levels"]
+            },
+            "1.4": {
+              "title": "Properties of Laser Beams",
+              "url": "https://www.youtube.com/watch?v=yP-lPp6LLsw",
+              "topics": ["laser beam", "coherence", "beam properties"]
+            }
+          }
+        },
+        "2": {
+          "title": "Laser-Matter Interaction",
+          "videos": {
+            "2.1": {
+              "title": "Time-dependent Perturbation Theory",
+              "url": "https://www.youtube.com/watch?v=hcZJWO9MNrI",
+              "topics": ["perturbation theory", "quantum mechanics"]
+            },
+            "2.2": {
+              "title": "The Einstein A and B Coefficients",
+              "url": "https://www.youtube.com/watch?v=_Br_r2mdQok",
+              "topics": ["Einstein coefficients", "emission rate", "absorption rate"]
+            },
+            "2.3": {
+              "title": "Fermi's Golden Rule",
+              "url": "https://www.youtube.com/watch?v=CEO175WgjYs",
+              "topics": ["Fermi's golden rule", "transition rate", "quantum mechanics"]
+            },
+            "2.4": {
+              "title": "Cross-Section and Line Broadering",
+              "url": "https://www.youtube.com/watch?v=ySrtqaRJIq4",
+              "topics": ["cross-section", "line broadening", "spectral lines"]
+            },
+            "2.5": {
+              "title": "Line-broadering Mechanisms",
+              "url": "https://www.youtube.com/watch?v=pgTFG4HgoNE",
+              "topics": ["line broadening", "Doppler", "homogeneous broadening"]
+            },
+            "2.6": {
+              "title": "Saturation and Gain",
+              "url": "https://www.youtube.com/watch?v=jp8EVtzAEHQ",
+              "topics": ["saturation", "gain", "amplification"]
+            }
+          }
+        },
+        "3": {
+          "title": "Optical Resonators and Cavities",
+          "videos": {
+            "3.1": {
+              "title": "Matrix Formulation of Paraxial Optics",
+              "url": "https://www.youtube.com/watch?v=KtrBYBKnj4E",
+              "topics": ["paraxial optics", "matrix optics", "ABCD matrix"]
+            },
+            "3.2": {
+              "title": "Fabry–Pérot Interferometer",
+              "url": "https://www.youtube.com/watch?v=P7jKq137PvM",
+              "topics": ["Fabry-Perot", "interferometer", "optical cavity"]
+            },
+            "3.3": {
+              "title": "Optical Resonators",
+              "url": "https://www.youtube.com/watch?v=Z9yCLBLNUX4",
+              "topics": ["resonators", "optical cavity", "modes"]
+            },
+            "3.4": {
+              "title": "Stability Condition",
+              "url": "https://www.youtube.com/watch?v=2X6S5H81bzw",
+              "topics": ["stability", "cavity stability", "resonator design"]
+            },
+            "3.5": {
+              "title": "Eigenmodes of an Optical Resonator",
+              "url": "https://www.youtube.com/watch?v=iJMsmzXycRo",
+              "topics": ["eigenmodes", "modes", "resonator modes"]
+            },
+            "3.6": {
+              "title": "Photon Lifetime and Cavity Q-factor",
+              "url": "https://www.youtube.com/watch?v=BpuWCzQuSVE",
+              "topics": ["photon lifetime", "Q-factor", "quality factor"]
+            }
+          }
+        }
+      },
+      "topics": {
+        "quantum": ["2.1", "2.3", "2.2"],
+        "resonator": ["3.2", "3.3", "3.4", "3.5", "3.6"],
+        "emission": ["1.1", "2.2", "2.6"],
+        "cavity": ["3.2", "3.3", "3.4"],
+        "broadening": ["2.4", "2.5"],
+        "beam": ["1.4", "3.1"]
+      }
+    }
+  },
+  "channel": {
+    "handle": "@fysiikkaakotisohvalle1510",
+    "name": "Physics Lectures",
+    "url": "https://www.youtube.com/@fysiikkaakotisohvalle1510"
+  }
+}
