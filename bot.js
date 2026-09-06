@@ -1,5 +1,6 @@
 /**
  * FYS.501 Laser Physics — Telegram teaching-assistant bot
+ * Modified to render LaTeX equations as images
  *
  * Key differences from the crashing version:
  *   1. Course material is sent as CACHED TEXT in the system prompt, not as 11 PDFs
@@ -7,12 +8,14 @@
  *   2. Telegram is acknowledged (HTTP 200) IMMEDIATELY, before Claude is called.
  *      This is what stopped the webhook-retry storm that was killing the container.
  *   3. Duplicate updates, long replies, rate limits and API errors are all handled.
+ *   4. NEW: LaTeX equations in $$ ... $$ blocks are automatically rendered as images
  */
 
 const fs = require("fs");
 const path = require("path");
 const express = require("express");
 const axios = require("axios");
+const { extractAndSendLatex } = require("./latex-renderer");
 
 const app = express();
 app.use(express.json());
@@ -25,6 +28,7 @@ const MODEL = process.env.CLAUDE_MODEL || "claude-haiku-4-5-20251001";
 const CACHE_TTL = process.env.CACHE_TTL || "1h";                // "1h" or "5m"
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || "900", 10);
 const BOT_USERNAME = (process.env.BOT_USERNAME || "").replace(/^@/, "").toLowerCase();
+const LATEX_ENABLED = process.env.LATEX_ENABLED !== "false";    // Enable/disable LaTeX rendering
 
 const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
 
@@ -56,11 +60,18 @@ HOW TO HELP
 **REDIRECT**: If it's outside course scope, say "That's beyond FYS.501, ask Mikko during discussions" (don't lecture).
 
 FORMAT
-- Plain text for Telegram. No markdown headers, no bold, no LaTeX delimiters. Write equations in readable inline form: "1/f = (n-1)(1/R1 - 1/R2)".
+- Plain text for Telegram.
+${LATEX_ENABLED 
+  ? `- Write EQUATIONS in LaTeX between double dollar signs: $$E = mc^2$$ or $$\\frac{1}{f} = (n-1)(\\frac{1}{R_1} - \\frac{1}{R_2})$$
+- Use \\\\ for backslash, {} for grouping, ^ for superscripts, _ for subscripts
+- These will be automatically rendered as readable images
+- For very simple inline math in text, still use UNICODE: α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω`
+  : `- No markdown headers, no bold, no LaTeX delimiters. Write equations in readable inline form: "1/f = (n-1)(1/R1 - 1/R2)".
 - Use UNICODE SYMBOLS ONLY: α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω
 - Use superscript ¹²³⁴ for exponents, subscript ₁₂₃₄ for indices
 - Write fractions as: a/b or use ÷
-- NO dollar signs $...$ anywhere, NO backslashes
+- NO dollar signs $...$ anywhere, NO backslashes`
+}
 - 2-3 short paragraphs maximum. Brevity matters more than completeness here; students can ask a follow-up.
 - Answer in the language the student writes in (English or Finnish).
 
@@ -111,29 +122,41 @@ async function tg(method, payload) {
   return axios.post(`${TELEGRAM_API}/${method}`, payload, { timeout: 15000 });
 }
 
+/**
+ * Send a message or LaTeX blocks to Telegram
+ * If LATEX_ENABLED: parses $$ blocks and sends as rendered images
+ * If LATEX_ENABLED: false, sends as plain text (falls back to original behavior)
+ */
 async function sendMessage(chatId, text, replyTo) {
-  // Telegram hard-caps messages at 4096 characters.
-  const chunks = [];
-  let rest = text.trim();
-  while (rest.length > 4000) {
-    let cut = rest.lastIndexOf("\n\n", 4000);
-    if (cut < 2000) cut = rest.lastIndexOf(" ", 4000);
-    if (cut < 2000) cut = 4000;
-    chunks.push(rest.slice(0, cut));
-    rest = rest.slice(cut).trim();
-  }
-  chunks.push(rest);
+  if (LATEX_ENABLED) {
+    // NEW: Use LaTeX renderer
+    await extractAndSendLatex(tg, chatId, text, replyTo).catch((e) => {
+      console.error("extractAndSendLatex failed:", e.message);
+    });
+  } else {
+    // Original: Send as plain text, handling long messages
+    const chunks = [];
+    let rest = text.trim();
+    while (rest.length > 4000) {
+      let cut = rest.lastIndexOf("\n\n", 4000);
+      if (cut < 2000) cut = rest.lastIndexOf(" ", 4000);
+      if (cut < 2000) cut = 4000;
+      chunks.push(rest.slice(0, cut));
+      rest = rest.slice(cut).trim();
+    }
+    chunks.push(rest);
 
-  for (const chunk of chunks) {
-    await tg("sendMessage", {
-      chat_id: chatId,
-      text: chunk,
-      reply_to_message_id: replyTo,
-      allow_sending_without_reply: true,
-      disable_web_page_preview: true,
-    }).catch((e) =>
-      console.error("Telegram sendMessage failed:", e.response?.status, JSON.stringify(e.response?.data))
-    );
+    for (const chunk of chunks) {
+      await tg("sendMessage", {
+        chat_id: chatId,
+        text: chunk,
+        reply_to_message_id: replyTo,
+        allow_sending_without_reply: true,
+        disable_web_page_preview: true,
+      }).catch((e) =>
+        console.error("Telegram sendMessage failed:", e.response?.status, JSON.stringify(e.response?.data))
+      );
+    }
   }
 }
 
@@ -208,7 +231,7 @@ const HELP_TEXT =
 
 // ------------------------------------------------------------- webhook ------
 app.get("/", (_req, res) => res.send("Laser Physics bot is running"));
-app.get("/healthz", (_req, res) => res.json({ ok: true, corpusChars: COURSE_CORPUS.length }));
+app.get("/healthz", (_req, res) => res.json({ ok: true, corpusChars: COURSE_CORPUS.length, latexEnabled: LATEX_ENABLED }));
 
 app.post("/webhook", (req, res) => {
   // 1) Acknowledge Telegram FIRST. Everything below runs after the response.
@@ -271,4 +294,7 @@ if (!TELEGRAM_TOKEN) console.error("WARNING: TELEGRAM_TOKEN is not set");
 if (!ANTHROPIC_API_KEY) console.error("WARNING: ANTHROPIC_API_KEY is not set");
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Bot listening on port ${PORT} | model=${MODEL} | cache=${CACHE_TTL}`));
+app.listen(PORT, () => {
+  const status = LATEX_ENABLED ? "ENABLED ✓" : "disabled";
+  console.log(`Bot listening on port ${PORT} | model=${MODEL} | cache=${CACHE_TTL} | LaTeX=${status}`);
+});
