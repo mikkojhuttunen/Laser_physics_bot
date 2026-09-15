@@ -36,6 +36,11 @@ const path = require('path');
 
 const CORPUS_PATH = path.join(__dirname, 'course_corpus.txt');
 
+// terminology.json is built offline by terminology.js (harvested from the
+// \CDAlert/\Alert-marked lecture .tex sources) and committed alongside the
+// corpus. It backs the /define command in bot.js.
+const TERMINOLOGY_PATH = path.join(__dirname, 'terminology.json');
+
 // Default cap on how much text getCorpusSection() returns, to keep LLM
 // prompts (and eyeballing during buildQuizBank.js runs) reasonably sized.
 const DEFAULT_MAX_CHARS = 9000;
@@ -223,6 +228,60 @@ function extractSection(scopeText, chapter, section) {
   return deduped.join('\n\n');
 }
 
+// ---------- glossary (terminology.json) ----------
+
+let _glossary = null;
+
+function loadGlossary({ forceReload = false } = {}) {
+  if (_glossary !== null && !forceReload) return _glossary;
+  try {
+    const raw = fs.readFileSync(TERMINOLOGY_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    _glossary = Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error(`corpusLoader: could not read/parse ${TERMINOLOGY_PATH}: ${e.message}`);
+    _glossary = [];
+  }
+  return _glossary;
+}
+
+function glossaryLooksHealthy() {
+  const g = loadGlossary();
+  return Array.isArray(g) && g.length > 50;
+}
+
+function normalizeTerm(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+}
+
+// Looks up a student-typed term against the glossary. Ranks exact
+// normalized matches first, then prefix/substring matches either
+// direction (so "population inversion" matches a query of just
+// "inversion", and "gain" matches an entry titled "gain saturation").
+function findGlossaryTerms(query, limit = 3) {
+  const glossary = loadGlossary();
+  const q = normalizeTerm(query);
+  if (!q || !glossary.length) return [];
+
+  const exact = [];
+  const starts = [];
+  const includes = [];
+
+  for (const entry of glossary) {
+    const termNorm = normalizeTerm(entry.term);
+    if (!termNorm) continue;
+    if (termNorm === q) {
+      exact.push(entry);
+    } else if (termNorm.startsWith(q) || q.startsWith(termNorm)) {
+      starts.push(entry);
+    } else if (termNorm.includes(q) || q.includes(termNorm)) {
+      includes.push(entry);
+    }
+  }
+
+  return [...exact, ...starts, ...includes].slice(0, limit);
+}
+
 // ---------- public API ----------
 
 /**
@@ -326,6 +385,10 @@ module.exports = {
   isValidSection,
   corpusLooksHealthy,
   SECTION_INDEX,
+  // glossary / /define command
+  glossaryLooksHealthy,
+  findGlossaryTerms,
   // exposed mainly for tests / buildQuizBank.js diagnostics
   _loadCorpus: loadCorpus,
+  _loadGlossary: loadGlossary,
 };

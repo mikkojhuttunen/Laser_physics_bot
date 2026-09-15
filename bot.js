@@ -32,13 +32,14 @@ const BOT_USERNAME = (process.env.BOT_USERNAME || "").replace(/^@/, "").toLowerC
 const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
 
 // ------------------------------------------------------- course material ----
-// Loaded ONCE at startup. Regenerate with `node build_corpus.js` if the PDFs change.
-const CORPUS_PATH = path.join(__dirname, "course_corpus.txt");
+// Loaded ONCE at startup. Regenerate with `node build_corpus_v2.js` if the
+// .tex lecture sources, textbook PDFs, or homework PDFs change.
+const CORPUS_PATH = path.join(__dirname, "course_corpus_v2.txt");
 let COURSE_CORPUS = "";
 try {
   COURSE_CORPUS = fs.readFileSync(CORPUS_PATH, "utf8");
   console.log(
-    `Loaded course corpus: ${COURSE_CORPUS.length.toLocaleString()} chars ` +
+    `Loaded course corpus (v2): ${COURSE_CORPUS.length.toLocaleString()} chars ` +
     `(~${Math.round(COURSE_CORPUS.length / 3.7).toLocaleString()} tokens)`
   );
 } catch (e) {
@@ -56,7 +57,7 @@ if (!lectureLinks.lectureDataLooksHealthy()) {
 const TA_INSTRUCTIONS = `You are the teaching assistant bot for FYS.501 Laser Physics, answering in Telegram.
 
 WHAT YOU KNOW
-Course material: lecture slides, textbook Chapters 1–4, homework assignment sheets. Ground answers in this material and cite which chapter/section. You do NOT have homework solutions.
+Course material: lecture notes (rebuilt cleanly from the slide sources), textbook Chapters 1–4, homework assignment sheets. Ground answers in this material and cite which chapter/section. You do NOT have homework solutions.
 
 HOW TO ANSWER — ABSOLUTE RULES
 1. **LENGTH**: ONE OR TWO SHORT SENTENCES/PARAGRAPH ONLY. Never use section headers, bullets, tables, or sub-points. No "Step 1, Step 2". No "Key insight:". Just talk to them like a person.
@@ -205,6 +206,37 @@ async function askWhichChapter(bot, chatId) {
   return null;
 }
 
+// --------------------------------------------------------------- glossary ---
+function escapeHtml(str) {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Formats a /define reply from corpusLoader.findGlossaryTerms(). Telegram
+// HTML parse_mode — same convention as lectureLinks.formatWeekMessage.
+function formatGlossaryReply(query) {
+  if (!corpusLoader.glossaryLooksHealthy()) {
+    return "The glossary isn't available right now — please check back later.";
+  }
+  const matches = corpusLoader.findGlossaryTerms(query, 3);
+  if (!matches.length) {
+    return (
+      `I couldn't find "${escapeHtml(query)}" in the glossary. It's auto-extracted from ` +
+      `highlighted terms in the lecture slides, so it doesn't cover everything — try asking ` +
+      `me directly instead.`
+    );
+  }
+  return matches
+    .map((g) => {
+      const revisit = g.revisitedIn.length ? ` (also covered in ${g.revisitedIn.join(", ")})` : "";
+      return (
+        `<b>${escapeHtml(g.term)}</b> — introduced in section ${g.introducedIn}` +
+        `${g.introducedInLecture ? ` (${escapeHtml(g.introducedInLecture)})` : ""}${revisit}\n` +
+        `${escapeHtml(g.context)}`
+      );
+    })
+    .join("\n\n");
+}
+
 // --------------------------------------------------------------- claude -----
 async function askClaude(chatId, question) {
   const messages = [...(history.get(chatId) || []), { role: "user", content: question }];
@@ -264,7 +296,7 @@ function stripMention(text) {
 }
 
 const HELP_TEXT =
-  "Hi! I'm the FYS.501 Laser Physics assistant. I know the lecture slides, " +
+  "Hi! I'm the FYS.501 Laser Physics assistant. I know the lecture notes, " +
   "textbook Chapters 1-4 and the six homework sheets.\n\n" +
   "Ask me things like:\n" +
   "- What is the difference between a stable and unstable resonator?\n" +
@@ -274,6 +306,8 @@ const HELP_TEXT =
   "finished homework solutions. Show me your attempt and I'll check your reasoning.\n\n" +
   "Ask me to \"quiz me on chapter 2\" (or a specific section, e.g. \"quiz me on " +
   "section 2.3\") for a multiple-choice quiz.\n\n" +
+  "/define <term> looks up a term in the course glossary — e.g. \"/define " +
+  "population inversion\".\n\n" +
   "Lecture videos: /lectures for the full listing, or add a week or topic — " +
   "e.g. \"/lectures week 2\" or \"/lectures on Fermi's golden rule\" — or just " +
   "ask in a normal message, like \"is there a video on gain saturation?\"\n\n" +
@@ -286,6 +320,7 @@ app.get("/healthz", (_req, res) =>
     ok: true,
     corpusChars: COURSE_CORPUS.length,
     corpusLooksHealthy: corpusLoader.corpusLooksHealthy(),
+    glossaryLooksHealthy: corpusLoader.glossaryLooksHealthy(),
     quizBankLooksHealthy: quizGenerator.quizBankLooksHealthy(),
     lectureDataLooksHealthy: lectureLinks.lectureDataLooksHealthy(),
   })
@@ -344,6 +379,13 @@ async function handleUpdate(update) {
       console.error("lectureLinks.handleLectureQuery crashed (/lectures arg):", e.message);
       return sendMessage(chatId, lectureLinks.formatFullListing(), message.message_id, "HTML");
     }
+  }
+  if (/^\/define/i.test(text)) {
+    const arg = text.replace(/^\/define(@\S+)?\s*/i, "").trim();
+    if (!arg) {
+      return sendMessage(chatId, 'Usage: /define <term> — e.g. "/define population inversion"', message.message_id);
+    }
+    return sendMessage(chatId, formatGlossaryReply(arg), message.message_id, "HTML");
   }
 
   const question = stripMention(text);
