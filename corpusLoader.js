@@ -228,6 +228,49 @@ function extractSection(scopeText, chapter, section) {
   return deduped.join('\n\n');
 }
 
+// ---------- balanced multi-part truncation ----------
+
+// Truncates a list of text parts to fit within `maxChars` total, splitting
+// the budget so no single part can starve the others out entirely (which is
+// what a naive join-then-slice(0, maxChars) does when the first part alone
+// exceeds maxChars). Parts that fit within an equal share keep their full
+// text; the leftover budget from those is redistributed to the parts that
+// still need it, so a short part never wastes budget and a long part never
+// hogs it beyond what the others actually need.
+function truncateBalanced(parts, maxChars) {
+  const nonEmpty = parts.filter(Boolean);
+  if (nonEmpty.length === 0) return '';
+  if (nonEmpty.length === 1) {
+    const p = nonEmpty[0];
+    return p.length > maxChars ? p.slice(0, maxChars) + '\n\n[...excerpt truncated...]' : p;
+  }
+
+  const SEP = '\n\n';
+  let budget = maxChars - SEP.length * (nonEmpty.length - 1);
+  const shares = new Array(nonEmpty.length).fill(0);
+  const active = nonEmpty.map((_, i) => i);
+
+  while (active.length > 0) {
+    const per = Math.floor(budget / active.length);
+    const satisfied = active.filter((i) => nonEmpty[i].length <= per);
+    if (satisfied.length === 0) {
+      // No remaining part fits within an equal share of what's left —
+      // split the rest evenly among them.
+      active.forEach((i) => { shares[i] = per; });
+      break;
+    }
+    satisfied.forEach((i) => {
+      shares[i] = nonEmpty[i].length;
+      budget -= nonEmpty[i].length;
+    });
+    satisfied.forEach((i) => active.splice(active.indexOf(i), 1));
+  }
+
+  return nonEmpty
+    .map((p, i) => (p.length <= shares[i] ? p : p.slice(0, shares[i]) + '\n\n[...truncated...]'))
+    .join(SEP);
+}
+
 // ---------- glossary (terminology.json) ----------
 
 let _glossary = null;
@@ -293,6 +336,12 @@ function findGlossaryTerms(query, limit = 3) {
  * than throwing, since the two source documents don't always number
  * sub-sections identically.
  *
+ * When the combined excerpt exceeds the char cap, each source (textbook /
+ * slides) is truncated independently via a balanced budget split
+ * (truncateBalanced) rather than concatenating first and slicing from the
+ * front — otherwise a long textbook section could consume the entire cap
+ * before the lecture-slide portion is ever appended.
+ *
  * @param {number|string} chapter - 1-4
  * @param {string} [section] - e.g. "2.3"; omit for the whole chapter
  * @param {object} [opts]
@@ -320,38 +369,35 @@ function getCorpusSection(chapter, section, opts = {}) {
     );
   }
 
-  let excerpt;
   if (!section) {
     // Whole chapter: textbook prose (bounded by BEGIN/END markers) plus every
-    // known section's slide content, concatenated in section order.
+    // known section's slide content, concatenated in section order. Each
+    // source gets a fair share of the char budget (see truncateBalanced)
+    // rather than the textbook block silently eating the whole cap.
     const slideParts = listSections(chapterNum)
       .map((sec) => extractSection(slidesFull, chapterNum, sec))
       .filter(Boolean);
-    excerpt = [textbookBlock, ...slideParts].filter(Boolean).join('\n\n');
-  } else {
-    const fromTextbook = textbookBlock ? extractSection(textbookBlock, chapterNum, section) : null;
-    const fromSlides = slidesFull ? extractSection(slidesFull, chapterNum, section) : null;
-    const parts = [fromTextbook, fromSlides].filter(Boolean);
-
-    if (parts.length) {
-      excerpt = parts.join('\n\n');
-    } else {
-      console.warn(
-        `corpusLoader: no heading match for section ${chapterNum}.${section.split('.')[1]} ` +
-        `— falling back to the whole chapter ${chapterNum} excerpt`
-      );
-      const slideParts = listSections(chapterNum)
-        .map((sec) => extractSection(slidesFull, chapterNum, sec))
-        .filter(Boolean);
-      excerpt = [textbookBlock, ...slideParts].filter(Boolean).join('\n\n');
-    }
+    const maxChars = opts.maxChars || DEFAULT_MAX_CHARS_CHAPTER;
+    return truncateBalanced([textbookBlock, ...slideParts], maxChars);
   }
 
-  const maxChars = opts.maxChars || (section ? DEFAULT_MAX_CHARS : DEFAULT_MAX_CHARS_CHAPTER);
-  if (excerpt.length > maxChars) {
-    excerpt = excerpt.slice(0, maxChars) + '\n\n[...excerpt truncated...]';
+  const fromTextbook = textbookBlock ? extractSection(textbookBlock, chapterNum, section) : null;
+  const fromSlides = slidesFull ? extractSection(slidesFull, chapterNum, section) : null;
+  const parts = [fromTextbook, fromSlides].filter(Boolean);
+  const maxChars = opts.maxChars || DEFAULT_MAX_CHARS;
+
+  if (parts.length) {
+    return truncateBalanced(parts, maxChars);
   }
-  return excerpt;
+
+  console.warn(
+    `corpusLoader: no heading match for section ${chapterNum}.${section.split('.')[1]} ` +
+    `— falling back to the whole chapter ${chapterNum} excerpt`
+  );
+  const slideParts = listSections(chapterNum)
+    .map((sec) => extractSection(slidesFull, chapterNum, sec))
+    .filter(Boolean);
+  return truncateBalanced([textbookBlock, ...slideParts], maxChars);
 }
 
 function listChapters() {
