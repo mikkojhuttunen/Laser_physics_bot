@@ -124,7 +124,7 @@ async function tg(method, payload) {
   return axios.post(`${TELEGRAM_API}/${method}`, payload, { timeout: 15000 });
 }
 
-async function sendMessage(chatId, text, replyTo) {
+async function sendMessage(chatId, text, replyTo, parseMode) {
   // Telegram hard-caps messages at 4096 characters.
   const chunks = [];
   let rest = text.trim();
@@ -141,6 +141,7 @@ async function sendMessage(chatId, text, replyTo) {
     await tg("sendMessage", {
       chat_id: chatId,
       text: chunk,
+      parse_mode: parseMode,
       reply_to_message_id: replyTo,
       allow_sending_without_reply: true,
       disable_web_page_preview: true,
@@ -328,7 +329,7 @@ async function handleUpdate(update) {
     return sendMessage(chatId, "Conversation history cleared. Ask me anything.");
   }
   if (/^\/lectures/i.test(text)) {
-    return sendMessage(chatId, lectureLinks.formatFullListing(), message.message_id);
+    return sendMessage(chatId, lectureLinks.formatFullListing(), message.message_id, "HTML");
   }
 
   const question = stripMention(text);
@@ -355,7 +356,7 @@ async function handleUpdate(update) {
       const reply = await lectureLinks.handleLectureQuery(question);
       remember(chatId, "user", question);
       remember(chatId, "assistant", reply);
-      return sendMessage(chatId, reply, message.message_id);
+      return sendMessage(chatId, reply, message.message_id, "HTML");
     } catch (e) {
       console.error("lectureLinks.handleLectureQuery crashed:", e.message);
       // Fall through to askClaude below rather than leaving the student with nothing.
