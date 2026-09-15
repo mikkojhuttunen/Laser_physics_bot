@@ -1,0 +1,221 @@
+{
+  "weeks": [
+    {
+      "week": 1,
+      "chapter": 1,
+      "topic": "Introductory Laser Concepts",
+      "keywords": [
+        "intro",
+        "introduction",
+        "basics",
+        "laser fundamentals",
+        "spontaneous emission",
+        "stimulated emission",
+        "population inversion",
+        "pumping",
+        "laser beam properties",
+        "spatial coherence"
+      ],
+      "lectures": [
+        {
+          "title": "Laser Physics — Course Intro",
+          "url": "https://www.youtube.com/watch?v=RMF7EJdIBY8",
+          "duration": "15:05"
+        },
+        {
+          "title": "Laser Physics 1.1 — Spontaneous and Stimulated Emission, Absorption",
+          "url": "https://www.youtube.com/watch?v=R0GVWRS86yI",
+          "duration": "25:37"
+        },
+        {
+          "title": "Laser Physics 1.2 — The Laser Idea",
+          "url": "https://www.youtube.com/watch?v=TQnGkWNgtxI",
+          "duration": "22:45"
+        },
+        {
+          "title": "Laser Physics 1.3 — Pumping Schemes",
+          "url": "https://www.youtube.com/watch?v=uUQn3-QWQv0",
+          "duration": "17:12"
+        },
+        {
+          "title": "Laser Physics 1.4 — Properties of Laser Beams",
+          "url": "https://www.youtube.com/watch?v=yP-lPp6LLsw",
+          "duration": "33:10"
+        }
+      ]
+    },
+    {
+      "week": 2,
+      "chapter": 2,
+      "topic": "Semiclassical Theory of Light-Matter Interaction",
+      "keywords": [
+        "semiclassical",
+        "light-matter interaction",
+        "perturbation theory",
+        "einstein coefficients",
+        "fermi's golden rule",
+        "cross-section",
+        "line broadening",
+        "saturation",
+        "gain"
+      ],
+      "lectures": [
+        {
+          "title": "Laser Physics 2.1 — Time-dependent Perturbation Theory",
+          "url": "https://www.youtube.com/watch?v=hcZJWO9MNrI",
+          "duration": "36:23"
+        },
+        {
+          "title": "Laser Physics 2.2 — The Einstein A and B Coefficients, Emission and Absorption Rate of a Single Atom",
+          "url": "https://www.youtube.com/watch?v=_Br_r2mdQok",
+          "duration": "12:29"
+        },
+        {
+          "title": "Laser Physics 2.3 — Fermi's Golden Rule",
+          "url": "https://www.youtube.com/watch?v=CEO175WgjYs",
+          "duration": "13:08"
+        },
+        {
+          "title": "Laser Physics 2.4 — Cross-Section and Line Broadening",
+          "url": "https://www.youtube.com/watch?v=ySrtqaRJIq4",
+          "duration": "17:11"
+        },
+        {
+          "title": "Laser Physics 2.5 — Line-Broadening Mechanisms",
+          "url": "https://www.youtube.com/watch?v=pgTFG4HgoNE",
+          "duration": "26:34"
+        },
+        {
+          "title": "Laser Physics 2.6 — Saturation and Gain",
+          "url": "https://www.youtube.com/watch?v=jp8EVtzAEHQ",
+          "duration": "27:52"
+        }
+      ]
+    },
+    {
+      "week": 3,
+      "chapter": 3,
+      "topic": "Passive Optical Resonators",
+      "keywords": [
+        "resonator",
+        "abcd matrix",
+        "abcd matrices",
+        "paraxial optics",
+        "fabry-perot",
+        "fabry perot",
+        "interferometer",
+        "optical resonators",
+        "resonator stability",
+        "stability condition",
+        "eigenmodes",
+        "gaussian beam",
+        "photon lifetime",
+        "cavity q-factor",
+        "q-factor"
+      ],
+      "lectures": [
+        {
+          "title": "Laser Physics 3.1 — Matrix Formulation of Paraxial Optics",
+          "url": "https://www.youtube.com/watch?v=KtrBYBKnj4E",
+          "duration": "28:44"
+        },
+        {
+          "title": "Laser Physics 3.2 — Fabry–Pérot Interferometer",
+          "url": "https://www.youtube.com/watch?v=P7jKq137PvM",
+          "duration": "24:39"
+        },
+        {
+          "title": "Laser Physics 3.3 — Optical Resonators",
+          "url": "https://www.youtube.com/watch?v=Z9yCLBLNUX4",
+          "duration": "14:58"
+        },
+        {
+          "title": "Laser Physics 3.4 — Stability Condition",
+          "url": "https://www.youtube.com/watch?v=2X6S5H81bzw",
+          "duration": "15:48"
+        },
+        {
+          "title": "Laser Physics 3.5 — Eigenmodes of an Optical Resonator",
+          "url": "https://www.youtube.com/watch?v=iJMsmzXycRo",
+          "duration": "34:28"
+        },
+        {
+          "title": "Laser Physics 3.6 — Photon Lifetime and Cavity Q-factor",
+          "url": "https://www.youtube.com/watch?v=BpuWCzQuSVE",
+          "duration": "18:05"
+        }
+      ]
+    },
+    {
+      "week": 4,
+      "chapter": 4,
+      "topic": "Continuous Wave (CW) Behaviour of a Laser",
+      "keywords": [
+        "rate equations",
+        "gain media",
+        "saturation intensity",
+        "cw behaviour",
+        "cw behavior",
+        "continuous wave",
+        "multimode oscillation",
+        "single-mode selection",
+        "mode selection"
+      ],
+      "lectures": [
+        {
+          "title": "FYS.510 Laser Physics 4.1 — Rate Equations Model and Laser Parameters",
+          "url": "https://www.youtube.com/watch?v=otEsXngJr_8",
+          "duration": "29:01"
+        },
+        {
+          "title": "FYS.510 Laser Physics 4.2 — CW Behaviour, Part I",
+          "url": "https://www.youtube.com/watch?v=miVepFRpvQw",
+          "duration": "41:55"
+        },
+        {
+          "title": "FYS.510 Laser Physics 4.2 — CW Behaviour, Part II",
+          "url": "https://www.youtube.com/watch?v=3KxjKQ4Vpjk",
+          "duration": "15:12"
+        },
+        {
+          "title": "FYS.510 Laser Physics 4.3 — Reasons for Multimode Oscillation",
+          "url": "https://www.youtube.com/watch?v=FIC8IjwcvYg",
+          "duration": "34:24"
+        },
+        {
+          "title": "FYS.510 Laser Physics 4.4 — Single-Mode Selection",
+          "url": "https://www.youtube.com/watch?v=riYiP9-06fY",
+          "duration": "20:29"
+        }
+      ]
+    },
+    {
+      "week": 5,
+      "chapter": null,
+      "topic": "Course Recap — Curriculum Review",
+      "keywords": [
+        "recap",
+        "review",
+        "discussion",
+        "exercises"
+      ],
+      "lectures": [],
+      "note": "No lectures. Week 5 recaps the whole course curriculum, with discussion and HW exercises extended to broader topics across the material."
+    },
+    {
+      "week": 6,
+      "chapter": null,
+      "topic": "Course Recap — Exam Preparation",
+      "keywords": [
+        "recap",
+        "review",
+        "discussion",
+        "exercises",
+        "final exam prep",
+        "hw6"
+      ],
+      "lectures": [],
+      "note": "No lectures. Week 6 is dedicated to recapping for the course exam, with discussion exercises focused on exam preparation. Students submit the final homework set, HW6."
+    }
+  ]
+}

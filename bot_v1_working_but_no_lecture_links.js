@@ -21,9 +21,6 @@ const fs = require("fs");
 const path = require("path");
 const express = require("express");
 const axios = require("axios");
-const quizGenerator = require("./quizGenerator");
-const corpusLoader = require("./corpusLoader");
-const lectureLinks = require("./lectureLinks");
 
 const app = express();
 app.use(express.json());
@@ -66,10 +63,6 @@ try {
 } catch (e) {
   console.log(`No homework_problems.json found (${e.code || e.message}) — /HW commands will fall back to full-corpus search.`);
 }
-
-// Lecture video links, keyed by week (lecture_data-2.json). Loaded once at
-// startup, same pattern as the corpus and homework problems above.
-lectureLinks.loadLectureData();
 
 
 const TA_INSTRUCTIONS = `You are the teaching assistant bot for FYS.501 Laser Physics, answering in Telegram.
@@ -143,7 +136,7 @@ async function tg(method, payload) {
   return axios.post(`${TELEGRAM_API}/${method}`, payload, { timeout: 15000 });
 }
 
-async function sendMessage(chatId, text, replyTo, parseMode) {
+async function sendMessage(chatId, text, replyTo) {
   // Telegram hard-caps messages at 4096 characters.
   const chunks = [];
   let rest = text.trim();
@@ -160,7 +153,6 @@ async function sendMessage(chatId, text, replyTo, parseMode) {
     await tg("sendMessage", {
       chat_id: chatId,
       text: chunk,
-      parse_mode: parseMode,
       reply_to_message_id: replyTo,
       allow_sending_without_reply: true,
       disable_web_page_preview: true,
@@ -168,60 +160,6 @@ async function sendMessage(chatId, text, replyTo, parseMode) {
       console.error("Telegram sendMessage failed:", e.response?.status, JSON.stringify(e.response?.data))
     );
   }
-}
-
-// ---------------------------------------------------- quiz bot adapter -----
-// quizGenerator.js expects a small node-telegram-bot-api-shaped `bot`
-// object (sendMessage/editMessageText/answerCallbackQuery). This bot.js
-// talks to Telegram directly via axios (tg()) rather than that library, so
-// this adapter bridges the two without adding a new dependency.
-const quizBot = {
-  async sendMessage(chatId, text, opts = {}) {
-    return tg("sendMessage", {
-      chat_id: chatId,
-      text,
-      parse_mode: opts.parse_mode,
-      reply_markup: opts.reply_markup,
-    }).catch((e) =>
-      console.error("Telegram sendMessage (quiz) failed:", e.response?.status, JSON.stringify(e.response?.data))
-    );
-  },
-  async editMessageText(text, opts = {}) {
-    return tg("editMessageText", {
-      chat_id: opts.chat_id,
-      message_id: opts.message_id,
-      text,
-      parse_mode: opts.parse_mode,
-      reply_markup: opts.reply_markup,
-    }).catch((e) =>
-      console.error("Telegram editMessageText (quiz) failed:", e.response?.status, JSON.stringify(e.response?.data))
-    );
-  },
-  async answerCallbackQuery(callbackQueryId, opts = {}) {
-    return tg("answerCallbackQuery", {
-      callback_query_id: callbackQueryId,
-      text: opts.text,
-    }).catch((e) =>
-      console.error("Telegram answerCallbackQuery failed:", e.response?.status, JSON.stringify(e.response?.data))
-    );
-  },
-};
-
-// Called by quizGenerator.startQuiz() when the student didn't name a
-// chapter/section (e.g. just typed "quiz me"). Presents an inline-keyboard
-// chapter picker; the actual quiz is kicked off from the "quizchapter:N"
-// callback handled in handleCallbackQuery() below. Returning null here tells
-// startQuiz() to stop — there's nothing more for it to do until the student
-// taps a button.
-async function askWhichChapter(bot, chatId) {
-  await bot.sendMessage(chatId, "Which chapter would you like to be quizzed on?", {
-    reply_markup: {
-      inline_keyboard: corpusLoader.listChapters().map((ch) => ([
-        { text: `Chapter ${ch} — ${corpusLoader.getChapterTitle(ch)}`, callback_data: `quizchapter:${ch}` },
-      ])),
-    },
-  });
-  return null;
 }
 
 // --------------------------------------------------------------- claude -----
@@ -429,13 +367,6 @@ const HELP_TEXT =
   "- /HW_hint3.2 — just a one-line nudge, no explanation\n" +
   "- Send a photo of your work-in-progress (caption it with the problem, e.g. \"/HW3.2\") " +
   "and I'll give a quick read on whether you're headed the right way.\n\n" +
-  "Quizzes:\n" +
-  "- \"quiz me\" — I'll ask which chapter\n" +
-  "- \"quiz me on chapter 2\" or \"quiz me on section 2.3\" — multiple choice, tap an answer to grade it\n" +
-  "- add a number for how many questions, e.g. \"quiz me on chapter 2, 10 questions\"\n\n" +
-  "Lecture videos:\n" +
-  "- /lectures — full listing, week by week\n" +
-  "- \"is there a video on gain saturation?\" or \"recording for week 3?\" — I'll find the right one(s)\n\n" +
   "I'll give you hints and point you to the right section, but I won't hand you " +
   "finished homework solutions.\n\n" +
   "/reset clears our conversation history.";
@@ -446,10 +377,7 @@ app.get("/healthz", (_req, res) =>
   res.json({
     ok: true,
     corpusChars: COURSE_CORPUS.length,
-    corpusLooksHealthy: corpusLoader.corpusLooksHealthy(),
     homeworkProblemsLoaded: Object.values(HOMEWORK_PROBLEMS).reduce((n, hw) => n + Object.keys(hw).length, 0),
-    quizBankLooksHealthy: quizGenerator.quizBankLooksHealthy(),
-    lectureDataLooksHealthy: lectureLinks.lectureDataLooksHealthy(),
   })
 );
 
@@ -465,21 +393,12 @@ app.post("/webhook", (req, res) => {
 });
 
 async function handleUpdate(update) {
-  if (!update || update.update_id === undefined) return;
+  const message = update?.message;
+  if (!message || (!message.text && !message.photo)) return;
 
   if (seenUpdates.has(update.update_id)) return;
   seenUpdates.add(update.update_id);
   if (seenUpdates.size > 1000) seenUpdates.clear();
-
-  // Quiz answer taps and chapter-picker taps arrive as callback_query
-  // updates, not message updates — handle those separately, before we ever
-  // look for update.message (which callback_query updates don't have).
-  if (update.callback_query) {
-    return handleCallbackQuery(update.callback_query);
-  }
-
-  const message = update.message;
-  if (!message || (!message.text && !message.photo)) return;
 
   const chatId = message.chat.id;
   const userId = message.from?.id;
@@ -523,9 +442,6 @@ async function handleUpdate(update) {
   if (/^\/reset/i.test(text)) {
     history.delete(chatId);
     return sendMessage(chatId, "Conversation history cleared. Ask me anything.");
-  }
-  if (/^\/lectures/i.test(text)) {
-    return sendMessage(chatId, lectureLinks.formatFullListing(), message.message_id, "HTML");
   }
 
   // ---- /HW3, /HW3.2, /HW_hint3.2
@@ -580,25 +496,6 @@ async function handleUpdate(update) {
 
   console.log(`[${message.chat.type}:${chatId}] ${question.slice(0, 120)}`);
 
-  // ---- "quiz me" / "quiz me on chapter 2" / "quiz me on section 2.3" ----
-  if (quizGenerator.isQuizRequest(question)) {
-    return quizGenerator
-      .startQuiz(quizBot, chatId, question, askWhichChapter)
-      .catch((e) => console.error("quizGenerator.startQuiz crashed:", e.message));
-  }
-
-  // ---- "any lecture video about X?" / "where's the recording for week 3?"
-  if (lectureLinks.STAGE1_TRIGGER.test(question)) {
-    try {
-      const reply = await lectureLinks.handleLectureQuery(question);
-      await sendMessage(chatId, reply, message.message_id, "HTML");
-    } catch (e) {
-      console.error("lectureLinks.handleLectureQuery crashed:", e.message);
-      await sendMessage(chatId, "Sorry, I couldn't look up lecture videos just now.", message.message_id);
-    }
-    return;
-  }
-
   await tg("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
 
   try {
@@ -613,33 +510,6 @@ async function handleUpdate(update) {
       message.message_id
     );
   }
-}
-
-// callback_query updates: answer-option taps ("quiz:...") from
-// quizGenerator's inline keyboards, and chapter-picker taps
-// ("quizchapter:N") from askWhichChapter() above.
-async function handleCallbackQuery(cq) {
-  const data = cq.data || "";
-
-  if (data.startsWith("quiz:")) {
-    return quizGenerator
-      .handleQuizAnswer(quizBot, cq)
-      .catch((e) => console.error("quizGenerator.handleQuizAnswer crashed:", e.message));
-  }
-
-  if (data.startsWith("quizchapter:")) {
-    const chapter = data.split(":")[1];
-    const chatId = cq.message?.chat?.id;
-    await quizBot.answerCallbackQuery(cq.id);
-    if (!chatId) return;
-    return quizGenerator
-      .startQuiz(quizBot, chatId, `quiz me on chapter ${chapter}`, askWhichChapter)
-      .catch((e) => console.error("quizGenerator.startQuiz (chapter pick) crashed:", e.message));
-  }
-
-  // Unknown callback data — acknowledge anyway so Telegram stops showing a
-  // loading spinner on the button.
-  await quizBot.answerCallbackQuery(cq.id).catch(() => {});
 }
 
 // ---------------------------------------------------------------- start -----
