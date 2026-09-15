@@ -1,6 +1,6 @@
 // lectureLinks.js
 // Handles lookup and formatting of lecture video links for the TA bot.
-// Data source: lecture_data-2.json (weeks -> topics -> keywords -> lectures)
+// Data source: lecture_data.json (weeks -> topics -> keywords -> lectures)
 
 const fs = require('fs');
 const path = require('path');
@@ -16,11 +16,11 @@ let lectureData = null;
 const STAGE1_TRIGGER = /\b(video|lecture|recording|watch|rewatch|stream)\b/i;
 
 /**
- * Loads lecture_data-2.json once at startup. Mirrors the corpus-loading
+ * Loads lecture_data.json once at startup. Mirrors the corpus-loading
  * pattern used elsewhere in the bot: load once, keep in memory, and expose
  * a health flag rather than failing silently.
  */
-function loadLectureData(dataPath = path.join(__dirname, 'lecture_data-2.json')) {
+function loadLectureData(dataPath = path.join(__dirname, 'lecture_data.json')) {
   try {
     const raw = fs.readFileSync(dataPath, 'utf8');
     lectureData = JSON.parse(raw);
@@ -94,6 +94,17 @@ function getTopicsSummary() {
   }));
 }
 
+/** Matches "week 2", "week #2", "wk2", etc. Deliberately doesn't require
+ * the word "lecture(s)" alongside it — "/lectures week 2" already carries
+ * that intent from the command itself. */
+const WEEK_NUMBER_RE = /\bwe?e?k\s*#?\s*(\d{1,2})\b/i;
+
+/** Pulls an explicit week number out of a query, or null if none is present. */
+function extractWeekNumber(query) {
+  const m = query.match(WEEK_NUMBER_RE);
+  return m ? parseInt(m[1], 10) : null;
+}
+
 /**
  * Two-stage entry point for bot.js.
  * Stage 1 (regex, STAGE1_TRIGGER) should already have fired before this is
@@ -106,6 +117,16 @@ function getTopicsSummary() {
 async function handleLectureQuery(query) {
   if (!lectureDataLooksHealthy()) {
     return "Lecture listing isn't available right now — please check back later.";
+  }
+
+  // Fast path: an explicit "week N" mention is unambiguous, so resolve it
+  // locally and skip the LLM call entirely — cheaper and instant, and it
+  // still works if the classifier API is ever unreachable/misconfigured.
+  const explicitWeek = extractWeekNumber(query);
+  if (explicitWeek !== null) {
+    const week = getWeekLectures(explicitWeek);
+    if (week) return formatWeekMessage(week);
+    return `I don't have a Week ${explicitWeek} — this course has ${lectureData.weeks.length} weeks of lecture videos. Try /lectures for the full listing.`;
   }
 
   const topicsSummary = getTopicsSummary();

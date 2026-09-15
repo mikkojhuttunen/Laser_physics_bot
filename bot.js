@@ -274,8 +274,9 @@ const HELP_TEXT =
   "finished homework solutions. Show me your attempt and I'll check your reasoning.\n\n" +
   "Ask me to \"quiz me on chapter 2\" (or a specific section, e.g. \"quiz me on " +
   "section 2.3\") for a multiple-choice quiz.\n\n" +
-  "Lecture videos: /lectures for the full listing, or just ask — e.g. \"is there a " +
-  "video on gain saturation?\" or \"recording for week 3?\"\n\n" +
+  "Lecture videos: /lectures for the full listing, or add a week or topic — " +
+  "e.g. \"/lectures week 2\" or \"/lectures on Fermi's golden rule\" — or just " +
+  "ask in a normal message, like \"is there a video on gain saturation?\"\n\n" +
   "/reset clears our conversation history.";
 
 // ------------------------------------------------------------- webhook ------
@@ -329,7 +330,20 @@ async function handleUpdate(update) {
     return sendMessage(chatId, "Conversation history cleared. Ask me anything.");
   }
   if (/^\/lectures/i.test(text)) {
-    return sendMessage(chatId, lectureLinks.formatFullListing(), message.message_id, "HTML");
+    const arg = text.replace(/^\/lectures(@\S+)?\s*/i, "").trim();
+    if (!arg) {
+      return sendMessage(chatId, lectureLinks.formatFullListing(), message.message_id, "HTML");
+    }
+    await tg("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
+    try {
+      const reply = await lectureLinks.handleLectureQuery(arg);
+      remember(chatId, "user", text);
+      remember(chatId, "assistant", reply);
+      return sendMessage(chatId, reply, message.message_id, "HTML");
+    } catch (e) {
+      console.error("lectureLinks.handleLectureQuery crashed (/lectures arg):", e.message);
+      return sendMessage(chatId, lectureLinks.formatFullListing(), message.message_id, "HTML");
+    }
   }
 
   const question = stripMention(text);
