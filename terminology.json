@@ -2402,7 +2402,7 @@
     "introducedInTitle": "Laser Physics 3.1 — Matrix Formulation of Paraxial Optics",
     "introducedInLecture": "Laser Physics 3.1 — Matrix Formulation of Paraxial Optics",
     "url": "https://www.youtube.com/watch?v=KtrBYBKnj4E",
-    "context": "C D\n) ] is ABCD matrix of the overall optical system and ( (\ny",
+    "context": "• where ( (y'; α') ) is output ray, [ (A B; C D) ] is ABCD matrix of the overall optical system and ( (y; α) ) is an input ray",
     "revisitedIn": [],
     "occurrenceCount": 1
   },
@@ -2412,7 +2412,7 @@
     "introducedInTitle": "Laser Physics 3.1 — Matrix Formulation of Paraxial Optics",
     "introducedInLecture": "Laser Physics 3.1 — Matrix Formulation of Paraxial Optics",
     "url": "https://www.youtube.com/watch?v=KtrBYBKnj4E",
-    "context": "α\n) )\nby suitably modeling optical systems ⇒  ABCD matrix formalism",
+    "context": "as a function of\n( (y; α) )\nby suitably modeling optical systems ⇒  ABCD matrix formalism",
     "revisitedIn": [],
     "occurrenceCount": 1
   },
@@ -2494,7 +2494,7 @@
     "introducedInTitle": "Laser Physics 3.1 — Matrix Formulation of Paraxial Optics",
     "introducedInLecture": "Laser Physics 3.1 — Matrix Formulation of Paraxial Optics",
     "url": "https://www.youtube.com/watch?v=KtrBYBKnj4E",
-    "context": "α\n) ) is an input ray",
+    "context": "• where ( (y'; α') ) is output ray, [ (A B; C D) ] is ABCD matrix of the overall optical system and ( (y; α) ) is an input ray",
     "revisitedIn": [],
     "occurrenceCount": 1
   },
@@ -2546,7 +2546,7 @@
     "introducedInTitle": "Laser Physics 3.1 — Matrix Formulation of Paraxial Optics",
     "introducedInLecture": "Laser Physics 3.1 — Matrix Formulation of Paraxial Optics",
     "url": "https://www.youtube.com/watch?v=KtrBYBKnj4E",
-    "context": "α'\n) ) is output ray, [ (\nA B",
+    "context": "• where ( (y'; α') ) is output ray, [ (A B; C D) ] is ABCD matrix of the overall optical system and ( (y; α) ) is an input ray",
     "revisitedIn": [],
     "occurrenceCount": 1
   },

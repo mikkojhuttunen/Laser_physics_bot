@@ -1262,52 +1262,20 @@ I⁽ᵍᵃⁱⁿ⁾ = 2 I⁽ᵃᵇˢ⁾
 • If we want to describe the propagation of a light ray through an optical system, we can simplify it as follows
 
 • Calculate
-( (
-y'
-
-α'
-) )
+( (y'; α') )
 
 as a function of
-( (
-y
-
-α
-) )
+( (y; α) )
 by suitably modeling optical systems ⇒ ABCD matrix formalism
 
 • The propagation of rays through a system follows simple linear algebra
 
-( (
-y'
-
-α'
-) )
+( (y'; α') )
 =
-[ (
-A B
+[ (A B; C D) ]
+( (y; α) )
 
-C D
-) ]
-( (
-y
-
-α
-) )
-
-• where ( (
-y'
-
-α'
-) ) is output ray, [ (
-A B
-
-C D
-) ] is ABCD matrix of the overall optical system and ( (
-y
-
-α
-) ) is an input ray
+• where ( (y'; α') ) is output ray, [ (A B; C D) ] is ABCD matrix of the overall optical system and ( (y; α) ) is an input ray
 
 • Note that an ABCD matrix only describes ray propagation from input plane Πᵢn to output plane Πₒut
 
@@ -1333,29 +1301,13 @@ y
 
 • We start by unperturbed propagation of length L in free space, having an ABCD matrix:
 
-[ (
-A B
-
-C D
-) ] free space =
-[ (
-1 L
-
-0 1
-) ]
+[ (A B; C D) ] free space =
+[ (1 L; 0 1) ]
 
 • Similarly, propagation of length L in a medium, with refractive index n, is given by
 
-[ (
-A B
-
-C D
-) ] medium =
-[ (
-1 L/n
-
-0 1
-)
+[ (A B; C D) ] medium =
+[ (1 L/n; 0 1)
 ]
 
 ## Thin Lens
@@ -1372,33 +1324,13 @@ s = (y)/(tan α) ≈ (y)/(α) ⇒ (α)/(y) + (α')/(y')= (1)/(f)
 
 • So we get
 
-( (
-y'
-
-α'
-) )
+( (y'; α') )
 =
-[ (
-A B
-
-C D
-) ]
-( (
-y
-
-α
-) )
+[ (A B; C D) ]
+( (y; α) )
 ⇒
-[ (
-A B
-
-C D
-) ] thin lens =
-[ (
-1 0
-
--1/f 1
-) ]
+[ (A B; C D) ] thin lens =
+[ (1 0; -1/f 1) ]
 
 ## Mirrors
 
@@ -1414,39 +1346,20 @@ f < 0 ⇒ convex mirror
 
 • The ABCD matrix for spherical mirror is represented by
 
-[ (
-A B
-
-C D
-) ] spherical mirror
+[ (A B; C D) ] spherical mirror
 =
-[ (
-1 0
-
--2/R 1
-) ]
+[ (1 0; -2/R 1) ]
 
 • If the radius of curvature of a spherical mirror goes to infinity, the mirror becomes a planar mirror
 
 • In this case
 
-[ (
-1 0
-
--2/R 1
-) ] spherical mirror
+[ (1 0; -2/R 1) ] spherical mirror
 
 R∞
 
-[ (
-A B
-
-C D
-) ] planar mirror
-= [ (
-1 0
-0 1
-) ] = I
+[ (A B; C D) ] planar mirror
+= [ (1 0; 0 1) ] = I
 
 • Naturally one must still keep
 track of the propagation direction, planar mirror turns propagation towards (-z)-direction
@@ -1467,94 +1380,38 @@ the input ray
 
 • To calculate the relation between input and output rays
 
-( (
-y'
-
-α'
-) )
+( (y'; α') )
 =
-[ (
-A B
-
-C D
-) ]
-( (
-y
-
-α
-) )
+[ (A B; C D) ]
+( (y; α) )
 
 • We need to reconstruct the full path of the ray from end to start:
 
-( (
-y'
-
-α'
-) )
+( (y'; α') )
 =
-[ (
-A_N B_N
-
-C_N D_N
-) ]
+[ (A_N B_N; C_N D_N) ]
 …
-[ (
-Aₙ₋₁ Bₙ₋₁
-
-Cₙ₋₁ Dₙ₋₁
-) ]
-[ (
-A₂ B₂
-
-C₂ D₂
-) ]
-[ (
-A₁ B₁
-
-C₁ D₁
-) ]
-( (
-y
-
-α
-) )
+[ (Aₙ₋₁ Bₙ₋₁; Cₙ₋₁ Dₙ₋₁) ]
+[ (A₂ B₂; C₂ D₂) ]
+[ (A₁ B₁; C₁ D₁) ]
+( (y; α) )
 
 =
-[ (
-A B
-
-C D
-) ]
-( (
-y
-
-α
-) )
+[ (A B; C D) ]
+( (y; α) )
 
 • Thus, the total transfer matrix is
 
-[ (
-A B
-
-C D
-) ]
+[ (A B; C D) ]
 = ᵢ₌₁^(N)
-[ (
-A_(N-i) B_(N-i)
-
-C_(N-i) D_(N-i)
-) ]
+[ (A_(N-i) B_(N-i); C_(N-i) D_(N-i)) ]
 
 • Note that the ABCD matrices of simple components must be multiplied in 'reverse order' with respect to the physical sequence in which they interact with the ray
 
 • Determinant of the system matrix is given by
 
 det
-[ (
-A B
-
-C D
-) ]
+[ (A B; C D) ]
 =
 (n₂)/(n₁)
 
@@ -1914,11 +1771,7 @@ u₀₀(R,z) = 1√(z² + z_R²) exp (- (R²)/(w²(z)) - i [ (R²)/(2R(z)) + φ(
 • The key to the treatment is the q-parameter:
 
 • Optical system is treated via matrix:
-[ (
-A B
-
-C D
-) ]
+[ (A B; C D) ]
 
 • Gaussian beam is treated using complex parameter qᵢₙ
 
@@ -1940,40 +1793,24 @@ qₒᵤₜ = A qᵢₙ + BC qᵢₙ + D
 
 • The output ray after n round trips is then given by
 
-( ( y'
-α' ) ) =
-[ ( A B
-C D )
-( ( y
-α ) )
+( (y'; α') ) =
+[ (A B; C D)
+( (y; α) )
 
 • To calculate this nᵗʰ-power a matrix, we use Sylvester's theorem:
 
-[ (
-A B
-C D
-) ] n =
+[ (A B; C D) ] n =
 1sin( θ)
-[ (
-A sin( n θ) - sin((n-1)θ) B sin(n θ)
-
-C sin( n θ) D sin( n θ) - sin((n-1)θ)
-) ]
+[ (A sin( n θ) - sin((n-1)θ) B sin(n θ); C sin( n θ) D sin( n θ) - sin((n-1)θ)) ]
 
 • by defining the angle θ via
 
 cos(θ) = 12 Tr
-[ (
-A B
-C D
-) ] = A + D2
+[ (A B; C D) ] = A + D2
 
 • Even in the limit n → ∞ , system should not diverge:
 
-lim_(n → ∞) [ (
-A B
-C D
-) ] n < ∞ ⇒ θ ∈ R
+lim_(n → ∞) [ (A B; C D) ] n < ∞ ⇒ θ ∈ R
 
 • The reality of angle θ implies:
 
@@ -1981,10 +1818,7 @@ C D
 ⇒ -1 ≤ cosθ ≤ 1
 
 ⇒ (1)/(2)
-| Tr ❴ (
-A B
-C D
-) ❵ | ≤ 1
+| Tr ❴ (A B; C D) ❵ | ≤ 1
 
 ⇒
 | A + D2 | ≤ 1
@@ -2013,37 +1847,13 @@ Definition: g_(1,2) ≡ 1 - LR_(1,2) , g-parameter
 
 • For the resonators described above, ABCD matrix for a single round-trip is
 
-[ (
-A B
+[ (A B; C D) ] =
+[ (1 0; -2/R₁ 1) ]
+[ (1 L; 0 1) ]
+[ (1 0; -1/R₂ 1) ]
+[ (1 L; 0 1) ]
 
-C D
-) ] =
-[ (
-1 0
-
--2/R₁ 1
-) ]
-[ (
-1 L
-
-0 1
-) ]
-[ (
-1 0
-
--1/R₂ 1
-) ]
-[ (
-1 L
-
-0 1
-) ]
-
-= … = [ (
-1-2L/R₂ …
-
-… ( R₁R₂ - 2L( 2 R₂ + R₁) + 4L² )/(R₁ R₂)
-) ]
+= … = [ (1-2L/R₂ …; … ( R₁R₂ - 2L( 2 R₂ + R₁) + 4L² )/(R₁ R₂)) ]
 
 • Above results into a stability condition
 
@@ -6951,13 +6761,11 @@ vanishing of — introduced in 2.6
     • z > 0 , i.e. +z-direction is taken as the propagation direction of the ray
 
 ABCD matrix — introduced in 3.1
-    C D
-) ] is ABCD matrix of the overall optical system and ( (
-y
+    • where ( (y'; α') ) is output ray, [ (A B; C D) ] is ABCD matrix of the overall optical system and ( (y; α) ) is an input ray
 
 ABCD matrix formalism — introduced in 3.1
-    α
-) )
+    as a function of
+( (y; α) )
 by suitably modeling optical systems ⇒  ABCD matrix formalism
 
 analysis — introduced in 3.1
@@ -6984,8 +6792,7 @@ how a laser — introduced in 3.1
     • Let's next turn our attention to systems consisting of several components, so that we can understand how a laser resonator is formed and behaves (facilitates stability analysis)
 
 input ray — introduced in 3.1
-    α
-) ) is an input ray
+    • where ( (y'; α') ) is output ray, [ (A B; C D) ] is ABCD matrix of the overall optical system and ( (y; α) ) is an input ray
 
 longitudinal/propagation — introduced in 3.1
     • We are mostly interested in the longitudinal/propagation features of the field
@@ -7000,9 +6807,7 @@ ordered multiplication — introduced in 3.1
     • Their ordered multiplication
 
 output ray — introduced in 3.1
-    α'
-) ) is output ray, [ (
-A B
+    • where ( (y'; α') ) is output ray, [ (A B; C D) ] is ABCD matrix of the overall optical system and ( (y; α) ) is an input ray
 
 paraxial approximation holds — introduced in 3.1
     • To do this, assume that paraxial approximation holds, treating the field inside the cavity as a bundle of rays
