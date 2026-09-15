@@ -355,9 +355,18 @@ async function handleUpdate(update) {
 
   const chatId = message.chat.id;
   const userId = message.from?.id;
-  const text = message.text.trim();
+  const rawText = message.text.trim();
 
   if (!shouldAnswer(message)) return;
+
+  // In a group, people naturally type "@BotName /command" (mention first),
+  // not just Telegram's own "/command@BotName" convention (mention stuck
+  // to the end of the command). The /^\/.../ checks below only match a
+  // leading slash, so a leading mention has to be stripped first or those
+  // commands silently fall through to the general Claude Q&A path instead.
+  const text = BOT_USERNAME
+    ? rawText.replace(new RegExp(`^@${BOT_USERNAME}\\s*`, "i"), "")
+    : rawText;
 
   if (/^\/(start|help)/i.test(text)) return sendMessage(chatId, HELP_TEXT);
   if (/^\/reset/i.test(text)) {
