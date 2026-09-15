@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Environment variables (NEVER commit these — real tokens/keys go in Railway's Variables tab)
+.env
+.env.local
+.env.*.local
+
+# Homework source PDFs and solutions — never commit these to the repo.
+# The repo only needs the derived course_corpus.txt / homework_problems.json.
+pdfs/
+*.pdf
+*solution*
+
+# Temporary / backup files
+*.tmp
+*.bak
+course_corpus.txt.bak
+homework_problems.json.bak
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# Build artifacts
+dist/
+build/

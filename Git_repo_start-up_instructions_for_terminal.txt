@@ -1,0 +1,9 @@
+git init
+mkdir Laser-physics-TG-bot
+cd Laser-physics-TG-bot
+git init
+git add .                          # stage all files
+git commit -m "Initial commit"     # first commit
+git remote add origin <repo-url>
+git branch -M main
+git push -u origin main

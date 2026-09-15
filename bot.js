@@ -1,19 +1,26 @@
 /**
  * FYS.501 Laser Physics — Telegram teaching-assistant bot
- * With video references integration for FYS.240 Optics and FYS.501 Laser Physics
  *
- * Key features:
- *   1. Course material from course_corpus.txt (cached)
- *   2. Video references for direct playlist/video links
- *   3. LaTeX equation rendering (optional)
- *   4. Conversation history & rate limiting
+ * Key differences from the crashing version:
+ *   1. Course material is sent as CACHED TEXT in the system prompt, not as 11 PDFs
+ *      re-uploaded on every single message.
+ *   2. Telegram is acknowledged (HTTP 200) IMMEDIATELY, before Claude is called.
+ *      This is what stopped the webhook-retry storm that was killing the container.
+ *   3. Duplicate updates, long replies, rate limits and API errors are all handled.
+ *
+ * HOMEWORK-HELPER COMMANDS (added):
+ *   /HW3          — overview: lists the problems in Homework 3
+ *   /HW3.2        — hint on Homework 3, problem 2 (equation/section pointer + guiding question)
+ *   /HW_hint3.2   — minimal nudge: one guiding question, nothing else
+ *   photo message — quick "right track / wrong track" read on a work-in-progress photo;
+ *                   caption it with a problem reference (e.g. "/HW3.2") for best results.
+ *   None of these reveal solutions — same no-solutions rule as the rest of the bot.
  */
 
 const fs = require("fs");
 const path = require("path");
 const express = require("express");
 const axios = require("axios");
-const { extractAndSendLatex } = require("./latex-renderer");
 
 const app = express();
 app.use(express.json());
@@ -21,16 +28,16 @@ app.use(express.json());
 // ---------------------------------------------------------------- config ----
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "";
+const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET || "";        // optional, see README
 const MODEL = process.env.CLAUDE_MODEL || "claude-haiku-4-5-20251001";
-const CACHE_TTL = process.env.CACHE_TTL || "1h";
+const CACHE_TTL = process.env.CACHE_TTL || "1h";                // "1h" or "5m"
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS || "900", 10);
 const BOT_USERNAME = (process.env.BOT_USERNAME || "").replace(/^@/, "").toLowerCase();
-const LATEX_ENABLED = process.env.LATEX_ENABLED !== "false";
 
 const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
 
 // ------------------------------------------------------- course material ----
+// Loaded ONCE at startup. Regenerate with `node build_corpus.js` if the PDFs change.
 const CORPUS_PATH = path.join(__dirname, "course_corpus.txt");
 let COURSE_CORPUS = "";
 try {
@@ -40,73 +47,58 @@ try {
     `(~${Math.round(COURSE_CORPUS.length / 3.7).toLocaleString()} tokens)`
   );
 } catch (e) {
-  console.error(`WARNING: could not read ${CORPUS_PATH} — ${e.message}`);
+  console.error(`FATAL: could not read ${CORPUS_PATH} — ${e.message}`);
+  console.error("The bot will still start but will have no course knowledge.");
 }
 
-// ------------------------------------------------- video references ----
-const VIDEO_REFS_PATH = path.join(__dirname, "video_references.json");
-let VIDEO_REFERENCES = {};
+// Exact per-problem text, keyed "<hw>" -> "<problem>" -> text, e.g. HOMEWORK_PROBLEMS["1"]["2"].
+// Built by build_corpus.js from problems numbered "<hw>.<n>" in the HW PDFs.
+// Optional: if missing/empty, /HW commands fall back to letting Claude search the full corpus.
+const HW_PROBLEMS_PATH = path.join(__dirname, "homework_problems.json");
+let HOMEWORK_PROBLEMS = {};
 try {
-  VIDEO_REFERENCES = JSON.parse(fs.readFileSync(VIDEO_REFS_PATH, "utf8"));
-  console.log(
-    `Loaded video references: ${Object.keys(VIDEO_REFERENCES.courses).length} courses`
-  );
+  HOMEWORK_PROBLEMS = JSON.parse(fs.readFileSync(HW_PROBLEMS_PATH, "utf8"));
+  const total = Object.values(HOMEWORK_PROBLEMS).reduce((n, hw) => n + Object.keys(hw).length, 0);
+  console.log(`Loaded homework_problems.json: ${total} problems across ${Object.keys(HOMEWORK_PROBLEMS).length} homeworks`);
 } catch (e) {
-  console.error(`WARNING: could not read ${VIDEO_REFS_PATH} — ${e.message}`);
-  console.error("Bot will work without video reference suggestions.");
+  console.log(`No homework_problems.json found (${e.code || e.message}) — /HW commands will fall back to full-corpus search.`);
 }
 
-// ------------------------------------------------------ build system ----
-const TA_INSTRUCTIONS = `You are the teaching assistant bot for FYS.501 Laser Physics, answering students in a Telegram group.
+
+const TA_INSTRUCTIONS = `You are the teaching assistant bot for FYS.501 Laser Physics, answering in Telegram.
 
 WHAT YOU KNOW
-- Course material: lecture slides, textbook Chapters 1–4, homework assignment sheets
-- Video resources: 
-  * FYS.240 Optics: playlists organized by chapter (2-10)
-  * FYS.501 Laser Physics: individual video lectures organized by chapter and topic
-- Ground answers in course material and cite which chapter/section
-- You do NOT have homework solutions
+Course material: lecture slides, textbook Chapters 1–4, homework assignment sheets. Ground answers in this material and cite which chapter/section. You do NOT have homework solutions.
 
-WHEN TO SUGGEST VIDEOS
-If a student asks about a topic that's covered in videos, suggest the relevant video/playlist:
-- For FYS.240: "That's covered in Chapter X of the Optics course. Watch the playlist: [link]"
-- For FYS.501: "Check out this video on [topic]: [link]"
-- For related topics: "You might also find this helpful: [link]"
+HOW TO ANSWER — ABSOLUTE RULES
+1. **LENGTH**: ONE OR TWO SHORT SENTENCES/PARAGRAPH ONLY. Never use section headers, bullets, tables, or sub-points. No "Step 1, Step 2". No "Key insight:". Just talk to them like a person.
 
-HOW TO HELP
-**LENGTH**: ONE OR TWO SHORT SENTENCES/PARAGRAPH ONLY. Never use section headers, bullets, tables, or sub-points. No "Step 1, Step 2". No "Key insight:". Just talk to them like a person.
-**HOMEWORK**: Give hints, not answers. Name the relevant equation or concept, point to the section, suggest a video if available, ask ONE guiding question.
-**CONCEPTUAL**: Answer directly and briefly. If they ask about something that has a video, mention it: "That's explained in Video X.X: [link]. In short, ..."
-**VIDEO REFERENCES**: When appropriate, include direct YouTube links. Say which chapter/video number so they can find it easily.
-**STUDENT ATTEMPTS**: If they show work, check it quickly, point at one specific error. Don't rewrite the whole thing.
-**REDIRECT**: If it's outside course scope, say "That's beyond FYS.501, ask Mikko during discussions".
+2. **HOMEWORK**: Give hints, not answers. Name the relevant equation or concept, point to the section, ask ONE guiding question. Example: "That uses the lensmaker's equation from Chapter 3.2. What happens when you set d→0?" Don't explain the whole path.
 
-FORMAT
-- Plain text for Telegram.
-${LATEX_ENABLED 
-  ? `- Write EQUATIONS in LaTeX between double dollar signs: $$E = mc^2$$
-- These will be automatically rendered as readable images`
-  : `- Use UNICODE SYMBOLS ONLY: α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω`
-}
-- Include YouTube links when suggesting videos
-- 2-3 short paragraphs maximum
-- Answer in the language the student writes in (English or Finnish)
+3. **CONCEPTUAL**: Answer directly and briefly. Full but concise. If someone asks "what is stimulated emission?", answer it in 2 sentences.
 
-LIMITS
-- Some maths symbols in extracted chapter text are garbled; read them from context
-- Some video topics may be outside the exact course — use judgment`;
+4. **MATH NOTATION** — CRITICAL:
+   - Use UNICODE SYMBOLS ONLY: α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ σ τ υ φ χ ψ ω
+   - Use superscript ¹²³⁴ for exponents, subscript ₁₂₃₄ for indices
+   - Write fractions as: a/b or use ÷
+   - Write as inline text: "q = hc(1/λₚ - 1/λ₀)" NOT "q = hc\\left(\\frac{1}{\\lambda_p}..."
+   - NO dollar signs $...$ anywhere, NO backslashes, NO braces {}
+   - Acceptable for complex expressions: "N₂ > (g₂/g₁)N₁" or "(ω - ω₀)/Δω"
+
+5. **STUDENT ATTEMPTS**: If they show work, check it quickly, point at one specific error if there is one. Don't rewrite the whole thing.
+
+6. **REDIRECT**: If it's outside course scope, say "That's beyond FYS.501, ask Mikko" (don't lecture).
+
+7. **LANGUAGE**: Respond in the language they use (English or Finnish).
+
+TONE: Encouraging, conversational, brief. These are hard topics; students asking are doing the right thing.`;
 
 function buildSystemBlocks() {
   const blocks = [{ type: "text", text: TA_INSTRUCTIONS }];
-  
-  // Add video references context
-  if (Object.keys(VIDEO_REFERENCES).length > 0) {
-    const videoContext = formatVideoReferences(VIDEO_REFERENCES);
-    blocks.push({ type: "text", text: videoContext });
-  }
-  
   if (COURSE_CORPUS) {
     blocks.push({
+      // The big, unchanging block goes LAST and carries the cache breakpoint,
+      // so it is billed at the cheap cache-read rate on every subsequent call.
       type: "text",
       text: `<course_material>\n${COURSE_CORPUS}\n</course_material>`,
       cache_control:
@@ -117,50 +109,6 @@ function buildSystemBlocks() {
   }
   return blocks;
 }
-
-/**
- * Format video references for inclusion in system prompt
- */
-function formatVideoReferences(refs) {
-  let context = "\n<video_resources>\n";
-  
-  context += `## Available Video Resources\n`;
-  context += `Channel: ${refs.channel.handle} (${refs.channel.url})\n\n`;
-  
-  // FYS.240
-  if (refs.courses.FYS240) {
-    context += `### FYS.240 Optics (Optiikka) - Playlists by Chapter\n`;
-    const chapters = refs.courses.FYS240.chapters;
-    for (const [ch, url] of Object.entries(chapters)) {
-      context += `Chapter ${ch}: ${url}\n`;
-    }
-    context += "\n";
-  }
-  
-  // FYS.501
-  if (refs.courses.FYS501) {
-    context += `### FYS.501 Laser Physics - Individual Videos\n`;
-    context += `Intro: ${refs.courses.FYS501.intro.url}\n\n`;
-    
-    for (const [chNum, chapter] of Object.entries(refs.courses.FYS501.chapters)) {
-      context += `**Chapter ${chNum}: ${chapter.title}**\n`;
-      for (const [vidNum, video] of Object.entries(chapter.videos)) {
-        context += `  ${vidNum}: ${video.title} - ${video.url}\n`;
-      }
-      context += "\n";
-    }
-    
-    // Topic index
-    context += `**Quick Topic Index:**\n`;
-    for (const [topic, videoNums] of Object.entries(refs.courses.FYS501.topics)) {
-      context += `  ${topic}: videos ${videoNums.join(", ")}\n`;
-    }
-  }
-  
-  context += "\n</video_resources>\n";
-  return context;
-}
-
 const SYSTEM_BLOCKS = buildSystemBlocks();
 
 const ANTHROPIC_HEADERS = {
@@ -171,10 +119,10 @@ const ANTHROPIC_HEADERS = {
 };
 
 // ------------------------------------------------------- tiny state store ----
-const seenUpdates = new Set();
-const history = new Map();
-const lastCall = new Map();
-const HISTORY_TURNS = 6;
+const seenUpdates = new Set();           // de-duplicate Telegram retries
+const history = new Map();               // chatId -> [{role, content}, ...]
+const lastCall = new Map();              // userId -> timestamp (rate limit)
+const HISTORY_TURNS = 6;                 // 3 exchanges
 const MIN_INTERVAL_MS = 4000;
 
 function remember(chatId, role, content) {
@@ -189,33 +137,28 @@ async function tg(method, payload) {
 }
 
 async function sendMessage(chatId, text, replyTo) {
-  if (LATEX_ENABLED) {
-    await extractAndSendLatex(tg, chatId, text, replyTo).catch((e) => {
-      console.error("extractAndSendLatex failed:", e.message);
-    });
-  } else {
-    const chunks = [];
-    let rest = text.trim();
-    while (rest.length > 4000) {
-      let cut = rest.lastIndexOf("\n\n", 4000);
-      if (cut < 2000) cut = rest.lastIndexOf(" ", 4000);
-      if (cut < 2000) cut = 4000;
-      chunks.push(rest.slice(0, cut));
-      rest = rest.slice(cut).trim();
-    }
-    chunks.push(rest);
+  // Telegram hard-caps messages at 4096 characters.
+  const chunks = [];
+  let rest = text.trim();
+  while (rest.length > 4000) {
+    let cut = rest.lastIndexOf("\n\n", 4000);
+    if (cut < 2000) cut = rest.lastIndexOf(" ", 4000);
+    if (cut < 2000) cut = 4000;
+    chunks.push(rest.slice(0, cut));
+    rest = rest.slice(cut).trim();
+  }
+  chunks.push(rest);
 
-    for (const chunk of chunks) {
-      await tg("sendMessage", {
-        chat_id: chatId,
-        text: chunk,
-        reply_to_message_id: replyTo,
-        allow_sending_without_reply: true,
-        disable_web_page_preview: true,
-      }).catch((e) =>
-        console.error("Telegram sendMessage failed:", e.response?.status, JSON.stringify(e.response?.data))
-      );
-    }
+  for (const chunk of chunks) {
+    await tg("sendMessage", {
+      chat_id: chatId,
+      text: chunk,
+      reply_to_message_id: replyTo,
+      allow_sending_without_reply: true,
+      disable_web_page_preview: true,
+    }).catch((e) =>
+      console.error("Telegram sendMessage failed:", e.response?.status, JSON.stringify(e.response?.data))
+    );
   }
 }
 
@@ -248,6 +191,7 @@ async function askClaude(chatId, question) {
         `Claude attempt ${attempt + 1} failed | status=${status} |`,
         JSON.stringify(err.response?.data || err.message)
       );
+      // Retry only on transient failures.
       if (status === 429 || status === 500 || status === 529 || err.code === "ECONNABORTED") {
         await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
         continue;
@@ -258,15 +202,150 @@ async function askClaude(chatId, question) {
   throw new Error("Claude unavailable after 3 attempts");
 }
 
+// ----------------------------------------------------------- claude vision --
+// Separate from askClaude(): image checks are one-off (not multi-turn history),
+// use a fixed low token budget, and never get logged/stored as chat history.
+const VISION_MODEL = process.env.VISION_MODEL || MODEL;
+const VISION_MAX_TOKENS = 300;
+
+async function askClaudeVision(imageBase64, mediaType, directive) {
+  const messages = [
+    {
+      role: "user",
+      content: [
+        { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
+        { type: "text", text: directive },
+      ],
+    },
+  ];
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await axios.post(
+        "https://api.anthropic.com/v1/messages",
+        { model: VISION_MODEL, max_tokens: VISION_MAX_TOKENS, system: SYSTEM_BLOCKS, messages },
+        { headers: ANTHROPIC_HEADERS, timeout: 120000 }
+      );
+      return res.data.content
+        .filter((b) => b.type === "text")
+        .map((b) => b.text)
+        .join("\n")
+        .trim();
+    } catch (err) {
+      const status = err.response?.status;
+      console.error(
+        `Claude vision attempt ${attempt + 1} failed | status=${status} |`,
+        JSON.stringify(err.response?.data || err.message)
+      );
+      if (status === 429 || status === 500 || status === 529 || err.code === "ECONNABORTED") {
+        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("Claude vision unavailable after 3 attempts");
+}
+
+// ------------------------------------------------------ telegram file fetch -
+async function fetchTelegramPhotoAsBase64(fileId) {
+  const fileRes = await tg("getFile", { file_id: fileId });
+  const filePath = fileRes.data.result.file_path; // e.g. "photos/file_123.jpg"
+  const fileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${filePath}`;
+  const binRes = await axios.get(fileUrl, { responseType: "arraybuffer", timeout: 20000 });
+  const ext = (filePath.split(".").pop() || "jpg").toLowerCase();
+  const mediaType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+  return { base64: Buffer.from(binRes.data).toString("base64"), mediaType };
+}
+
 // -------------------------------------------------------------- routing -----
 function shouldAnswer(message) {
   const type = message.chat.type;
-  const text = message.text || "";
-  if (type === "private") return true;
-  if (/^\//.test(text)) return true;
+  const text = message.text || message.caption || "";
+  if (type === "private") return true;                                  // DMs: always
+  if (message.photo) return true;                                       // photos: always answer, same as DMs/commands
+  if (/^\//.test(text)) return true;                                    // commands
   if (BOT_USERNAME && text.toLowerCase().includes("@" + BOT_USERNAME)) return true;
-  if (message.reply_to_message?.from?.is_bot) return true;
-  return false;
+  if (message.reply_to_message?.from?.is_bot) return true;              // replying to us
+  return false;                                                          // otherwise stay quiet
+}
+
+// --------------------------------------------------------- HW commands ------
+// Matches:  /HW3          (overview of Homework 3)
+//           /HW3.2        (hint on Homework 3, problem 2)
+//           /HW_hint3.2   (minimal one-line nudge on Homework 3, problem 2)
+const HW_COMMAND_RE = /^\/HW(_hint)?(\d+)(?:\.(\d+))?(@\S+)?\b/i;
+
+function buildHwOverviewDirective(hwNum) {
+  return (
+    `[HOMEWORK OVERVIEW REQUEST]\n` +
+    `The student wants an overview of Homework ${hwNum}. Find "HOMEWORK ${hwNum}" in the course ` +
+    `material and list each top-level numbered problem with a one-line topic description only ` +
+    `(no sub-parts, no hints, no solutions, no point values needed). Keep the whole reply short — ` +
+    `one line per problem. End with: "Ask /HW${hwNum}.<problem number> for a hint on a specific one."`
+  );
+}
+
+// Free, deterministic version — used when homework_problems.json has this homework,
+// so it costs no API call and can't hallucinate a problem list.
+function buildHwOverviewFromStructuredData(hwNum) {
+  const problems = HOMEWORK_PROBLEMS[hwNum];
+  const nums = Object.keys(problems).sort((a, b) => Number(a) - Number(b));
+  const lines = nums.map((n) => {
+    const firstLine = problems[n]
+      .split("\n")[0]
+      .trim()
+      .replace(new RegExp(`^${hwNum}\\.${n}\\b\\.?\\s*`), "") // strip the leading "hw.n" header itself
+      .replace(/\s*\(\d+\s*points?\)\s*$/i, "");
+    return `${hwNum}.${n} — ${firstLine}`;
+  });
+  return (
+    `Homework ${hwNum}:\n` +
+    lines.join("\n") +
+    `\n\nAsk /HW${hwNum}.<problem number> for a hint on a specific one.`
+  );
+}
+
+function buildHwHintDirective(hwNum, problemNum) {
+  const exactText = HOMEWORK_PROBLEMS[hwNum]?.[problemNum];
+  const problemBlock = exactText
+    ? `Here is the exact text of problem ${hwNum}.${problemNum}, verbatim from the assignment sheet:\n"""\n${exactText}\n"""\n`
+    : `Find problem ${hwNum}.${problemNum} in Homework ${hwNum} in the course material below. ` +
+      `If you can't find it, say so plainly instead of guessing.\n`;
+  return (
+    `[HOMEWORK HINT REQUEST]\n` +
+    `The student is asking for help with Homework ${hwNum}, problem ${problemNum}. ${problemBlock}` +
+    `Give ONE hint per your standing homework rules: name the relevant equation or concept, point ` +
+    `to where it's covered, and ask one guiding question. Do not solve the problem or give the final answer.`
+  );
+}
+
+function buildHwMinimalHintDirective(hwNum, problemNum) {
+  const exactText = HOMEWORK_PROBLEMS[hwNum]?.[problemNum];
+  const problemBlock = exactText
+    ? `Here is the exact text of problem ${hwNum}.${problemNum}, verbatim from the assignment sheet:\n"""\n${exactText}\n"""\n`
+    : `Find problem ${hwNum}.${problemNum} in Homework ${hwNum} in the course material below. ` +
+      `If you can't find it, say so plainly instead of guessing.\n`;
+  return (
+    `[HOMEWORK MINIMAL HINT REQUEST]\n` +
+    `The student wants just a nudge for Homework ${hwNum}, problem ${problemNum} — no explanation. ${problemBlock}` +
+    `Reply with ONE short guiding question only (a single sentence), optionally naming one equation ` +
+    `or concept. No further explanation, no solution.`
+  );
+}
+
+function buildPhotoCheckDirective(caption) {
+  return (
+    `[HOMEWORK PHOTO CHECK — QUICK DIRECTION READ ONLY]\n` +
+    `The student sent a photo of their in-progress work` +
+    (caption ? ` with this caption: "${caption}"` : " with no caption — infer the problem from what's visible") +
+    `. Give ONLY a quick preliminary read, 2-3 sentences total: ` +
+    `(1) one line saying whether the overall approach looks like it's heading in the right direction ` +
+    `or has a likely wrong turn, and (2) if something looks off, name the ONE most likely issue and ` +
+    `point to the relevant concept/section — do NOT solve it, do NOT write out corrected math, do NOT ` +
+    `give the final answer. If the photo is unreadable or you can't tell what problem it's for, say so ` +
+    `and ask them to retake it or add a caption with the problem number (e.g. "/HW3.2").`
+  );
 }
 
 function stripMention(text) {
@@ -278,37 +357,44 @@ function stripMention(text) {
 
 const HELP_TEXT =
   "Hi! I'm the FYS.501 Laser Physics assistant. I know the lecture slides, " +
-  "textbook Chapters 1-4, homework sheets, AND video lectures.\n\n" +
+  "textbook Chapters 1-4 and the six homework sheets.\n\n" +
   "Ask me things like:\n" +
   "- What is the difference between a stable and unstable resonator?\n" +
-  "- I'm stuck on HW3 question 2, where do I start?\n" +
   "- Explain the ABCD matrix for a thick lens\n\n" +
-  "I'll give you hints, point you to relevant videos or textbook sections, " +
-  "and ask guiding questions. I won't give you finished homework solutions, " +
-  "but I'll check your reasoning if you show your work.\n\n" +
+  "Homework commands:\n" +
+  "- /HW3 — list the problems in Homework 3\n" +
+  "- /HW3.2 — get a hint on Homework 3, problem 2\n" +
+  "- /HW_hint3.2 — just a one-line nudge, no explanation\n" +
+  "- Send a photo of your work-in-progress (caption it with the problem, e.g. \"/HW3.2\") " +
+  "and I'll give a quick read on whether you're headed the right way.\n\n" +
+  "I'll give you hints and point you to the right section, but I won't hand you " +
+  "finished homework solutions.\n\n" +
   "/reset clears our conversation history.";
 
 // ------------------------------------------------------------- webhook ------
 app.get("/", (_req, res) => res.send("Laser Physics bot is running"));
-app.get("/healthz", (_req, res) => res.json({ 
-  ok: true, 
-  corpusChars: COURSE_CORPUS.length,
-  videoCoursesLoaded: Object.keys(VIDEO_REFERENCES.courses || {}).length,
-  latexEnabled: LATEX_ENABLED 
-}));
+app.get("/healthz", (_req, res) =>
+  res.json({
+    ok: true,
+    corpusChars: COURSE_CORPUS.length,
+    homeworkProblemsLoaded: Object.values(HOMEWORK_PROBLEMS).reduce((n, hw) => n + Object.keys(hw).length, 0),
+  })
+);
 
 app.post("/webhook", (req, res) => {
+  // 1) Acknowledge Telegram FIRST. Everything below runs after the response.
   if (WEBHOOK_SECRET && req.get("x-telegram-bot-api-secret-token") !== WEBHOOK_SECRET) {
     return res.sendStatus(403);
   }
   res.sendStatus(200);
 
+  // 2) Handle the update asynchronously.
   handleUpdate(req.body).catch((e) => console.error("handleUpdate crashed:", e.message));
 });
 
 async function handleUpdate(update) {
   const message = update?.message;
-  if (!message || !message.text) return;
+  if (!message || (!message.text && !message.photo)) return;
 
   if (seenUpdates.has(update.update_id)) return;
   seenUpdates.add(update.update_id);
@@ -316,14 +402,89 @@ async function handleUpdate(update) {
 
   const chatId = message.chat.id;
   const userId = message.from?.id;
-  const text = message.text.trim();
+  const text = (message.text || "").trim();
 
   if (!shouldAnswer(message)) return;
+
+  // ---- photo submission: quick direction check, handled before anything else
+  if (message.photo && message.photo.length) {
+    if (!shouldAnswer(message)) return;
+
+    const now0 = Date.now();
+    if (now0 - (lastCall.get(userId) || 0) < MIN_INTERVAL_MS) return;
+    lastCall.set(userId, now0);
+
+    const caption = (message.caption || "").trim();
+    console.log(`[${message.chat.type}:${chatId}] photo submitted, caption="${caption.slice(0, 80)}"`);
+
+    await tg("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
+
+    try {
+      // Largest resolution is the last entry in Telegram's photo size array.
+      const best = message.photo[message.photo.length - 1];
+      const { base64, mediaType } = await fetchTelegramPhotoAsBase64(best.file_id);
+      const directive = buildPhotoCheckDirective(caption);
+      const reply = await askClaudeVision(base64, mediaType, directive);
+      await sendMessage(chatId, reply, message.message_id);
+    } catch (e) {
+      console.error("Photo check failed:", e.message);
+      await sendMessage(
+        chatId,
+        "Sorry, I couldn't read that photo just now. Please try again, ideally with good lighting and " +
+          "a caption naming the problem (e.g. \"/HW3.2\").",
+        message.message_id
+      );
+    }
+    return;
+  }
 
   if (/^\/(start|help)/i.test(text)) return sendMessage(chatId, HELP_TEXT);
   if (/^\/reset/i.test(text)) {
     history.delete(chatId);
     return sendMessage(chatId, "Conversation history cleared. Ask me anything.");
+  }
+
+  // ---- /HW3, /HW3.2, /HW_hint3.2
+  const hwMatch = text.match(HW_COMMAND_RE);
+  if (hwMatch) {
+    const isMinimalHint = !!hwMatch[1];
+    const hwNum = hwMatch[2];
+    const problemNum = hwMatch[3];
+
+    const now1 = Date.now();
+    if (now1 - (lastCall.get(userId) || 0) < MIN_INTERVAL_MS) return;
+    lastCall.set(userId, now1);
+
+    console.log(`[${message.chat.type}:${chatId}] HW command: ${text.slice(0, 60)}`);
+
+    // Overview with no problem number: answer for free/instantly if we have
+    // structured data for this homework, no need to call Claude at all.
+    if (!problemNum && HOMEWORK_PROBLEMS[hwNum] && Object.keys(HOMEWORK_PROBLEMS[hwNum]).length) {
+      await sendMessage(chatId, buildHwOverviewFromStructuredData(hwNum), message.message_id);
+      return;
+    }
+
+    const directive = !problemNum
+      ? buildHwOverviewDirective(hwNum)
+      : isMinimalHint
+      ? buildHwMinimalHintDirective(hwNum, problemNum)
+      : buildHwHintDirective(hwNum, problemNum);
+
+    await tg("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
+
+    try {
+      const reply = await askClaude(chatId, directive);
+      remember(chatId, "user", text);
+      remember(chatId, "assistant", reply);
+      await sendMessage(chatId, reply, message.message_id);
+    } catch (e) {
+      await sendMessage(
+        chatId,
+        "Sorry, I couldn't reach my brain just now. Please try again in a moment.",
+        message.message_id
+      );
+    }
+    return;
   }
 
   const question = stripMention(text);
@@ -356,11 +517,4 @@ if (!TELEGRAM_TOKEN) console.error("WARNING: TELEGRAM_TOKEN is not set");
 if (!ANTHROPIC_API_KEY) console.error("WARNING: ANTHROPIC_API_KEY is not set");
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  const latexStatus = LATEX_ENABLED ? "ENABLED ✓" : "disabled";
-  const videoStatus = Object.keys(VIDEO_REFERENCES.courses || {}).length > 0 ? "✓" : "⚠";
-  console.log(
-    `Bot listening on port ${PORT} | model=${MODEL} | cache=${CACHE_TTL} | ` +
-    `LaTeX=${latexStatus} | Videos=${videoStatus}`
-  );
-});
+app.listen(PORT, () => console.log(`Bot listening on port ${PORT} | model=${MODEL} | cache=${CACHE_TTL}`));
