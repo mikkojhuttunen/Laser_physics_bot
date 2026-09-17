@@ -143,7 +143,27 @@ async function tg(method, payload) {
   return axios.post(`${TELEGRAM_API}/${method}`, payload, { timeout: 15000 });
 }
 
+// Converts "**bold**" markdown spans (Claude's natural way of marking vector
+// quantities, e.g. **E**, **B**) into real Unicode bold characters. Messages
+// are sent as plain text with no parse_mode, so Telegram never interprets
+// "**" as formatting — without this, students just see literal asterisks.
+// Leaves Greek letters, subscripts, and everything outside "**...**" as-is.
+function markdownBoldToUnicode(text) {
+  return text.replace(/\*\*(.+?)\*\*/g, (_, inner) => {
+    let out = "";
+    for (const ch of inner) {
+      const code = ch.codePointAt(0);
+      if (code >= 0x41 && code <= 0x5a) out += String.fromCodePoint(0x1d400 + (code - 0x41));       // A-Z
+      else if (code >= 0x61 && code <= 0x7a) out += String.fromCodePoint(0x1d41a + (code - 0x61));  // a-z
+      else if (code >= 0x30 && code <= 0x39) out += String.fromCodePoint(0x1d7ce + (code - 0x30));  // 0-9
+      else out += ch; // Greek letters, underscores, spaces, punctuation: leave alone
+    }
+    return out;
+  });
+}
+
 async function sendMessage(chatId, text, replyTo, parseMode) {
+  text = markdownBoldToUnicode(text);
   // Telegram hard-caps messages at 4096 characters.
   const chunks = [];
   let rest = text.trim();
