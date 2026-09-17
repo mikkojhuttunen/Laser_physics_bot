@@ -16,6 +16,7 @@ const axios = require("axios");
 const quizGenerator = require("./quizGenerator");
 const corpusLoader = require("./corpusLoader");
 const lectureLinks = require("./lectureLinks");
+const hwCommands = require("./hwCommands");
 
 const app = express();
 app.use(express.json());
@@ -53,6 +54,11 @@ lectureLinks.loadLectureData();
 if (!lectureLinks.lectureDataLooksHealthy()) {
   console.error("WARNING: lecture_data.json failed to load — /lectures and video lookups will be degraded.");
 }
+
+// Exact per-problem text for /HW commands, keyed "<hw>" -> "<problem>" -> text.
+// Optional: if missing/empty, /HW commands fall back to letting Claude search
+// the full corpus instead of quoting the verbatim problem text.
+hwCommands.load();
 
 const TA_INSTRUCTIONS = `You are the teaching assistant bot for FYS.501 Laser Physics, answering in Telegram.
 
@@ -277,11 +283,82 @@ async function askClaude(chatId, question) {
   throw new Error("Claude unavailable after 3 attempts");
 }
 
+// ----------------------------------------------------------- claude vision --
+// Separate from askClaude(): image checks are one-off (not multi-turn history),
+// use a fixed low token budget, and never get logged/stored as chat history.
+const VISION_MODEL = process.env.VISION_MODEL || MODEL;
+const VISION_MAX_TOKENS = 300;
+
+async function askClaudeVision(imageBase64, mediaType, directive) {
+  const messages = [
+    {
+      role: "user",
+      content: [
+        { type: "image", source: { type: "base64", media_type: mediaType, data: imageBase64 } },
+        { type: "text", text: directive },
+      ],
+    },
+  ];
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await axios.post(
+        "https://api.anthropic.com/v1/messages",
+        { model: VISION_MODEL, max_tokens: VISION_MAX_TOKENS, system: SYSTEM_BLOCKS, messages },
+        { headers: ANTHROPIC_HEADERS, timeout: 120000 }
+      );
+      return res.data.content
+        .filter((b) => b.type === "text")
+        .map((b) => b.text)
+        .join("\n")
+        .trim();
+    } catch (err) {
+      const status = err.response?.status;
+      console.error(
+        `Claude vision attempt ${attempt + 1} failed | status=${status} |`,
+        JSON.stringify(err.response?.data || err.message)
+      );
+      if (status === 429 || status === 500 || status === 529 || err.code === "ECONNABORTED") {
+        await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error("Claude vision unavailable after 3 attempts");
+}
+
+// ------------------------------------------------------ telegram file fetch -
+async function fetchTelegramPhotoAsBase64(fileId) {
+  const fileRes = await tg("getFile", { file_id: fileId });
+  const filePath = fileRes.data.result.file_path; // e.g. "photos/file_123.jpg"
+  const fileUrl = `https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${filePath}`;
+  const binRes = await axios.get(fileUrl, { responseType: "arraybuffer", timeout: 20000 });
+  const ext = (filePath.split(".").pop() || "jpg").toLowerCase();
+  const mediaType = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+  return { base64: Buffer.from(binRes.data).toString("base64"), mediaType };
+}
+
+function buildPhotoCheckDirective(caption) {
+  return (
+    `[HOMEWORK PHOTO CHECK — QUICK DIRECTION READ ONLY]\n` +
+    `The student sent a photo of their in-progress work` +
+    (caption ? ` with this caption: "${caption}"` : " with no caption — infer the problem from what's visible") +
+    `. Give ONLY a quick preliminary read, 2-3 sentences total: ` +
+    `(1) one line saying whether the overall approach looks like it's heading in the right direction ` +
+    `or has a likely wrong turn, and (2) if something looks off, name the ONE most likely issue and ` +
+    `point to the relevant concept/section — do NOT solve it, do NOT write out corrected math, do NOT ` +
+    `give the final answer. If the photo is unreadable or you can't tell what problem it's for, say so ` +
+    `and ask them to retake it or add a caption with the problem number (e.g. "/HW3.2").`
+  );
+}
+
 // -------------------------------------------------------------- routing -----
 function shouldAnswer(message) {
   const type = message.chat.type;
-  const text = message.text || "";
+  const text = message.text || message.caption || "";
   if (type === "private") return true;                                  // DMs: always
+  if (message.photo) return true;                                       // photos: always answer, same as DMs/commands
   if (/^\//.test(text)) return true;                                    // commands
   if (BOT_USERNAME && text.toLowerCase().includes("@" + BOT_USERNAME)) return true;
   if (message.reply_to_message?.from?.is_bot) return true;              // replying to us
@@ -304,6 +381,9 @@ const HELP_TEXT =
   "- Explain the ABCD matrix for a thick lens\n\n" +
   "I'll give you hints and point you to the right section, but I won't hand you " +
   "finished homework solutions. Show me your attempt and I'll check your reasoning.\n\n" +
+  hwCommands.HELP_SNIPPET + "\n" +
+  "- Send a photo of your work-in-progress (caption it with the problem, e.g. \"/HW3.2\") " +
+  "and I'll give a quick read on whether you're headed the right way.\n\n" +
   "Ask me to \"quiz me on chapter 2\" (or a specific section, e.g. \"quiz me on " +
   "section 2.3\") for a multiple-choice quiz.\n\n" +
   "/define <term> looks up a term in the course glossary — e.g. \"/define " +
@@ -321,6 +401,7 @@ app.get("/healthz", (_req, res) =>
     corpusChars: COURSE_CORPUS.length,
     corpusLooksHealthy: corpusLoader.corpusLooksHealthy(),
     glossaryLooksHealthy: corpusLoader.glossaryLooksHealthy(),
+    homeworkProblemsLoaded: hwCommands.homeworkProblemsCount(),
     quizBankLooksHealthy: quizGenerator.quizBankLooksHealthy(),
     lectureDataLooksHealthy: lectureLinks.lectureDataLooksHealthy(),
   })
@@ -351,13 +432,43 @@ async function handleUpdate(update) {
   }
 
   const message = update.message;
-  if (!message || !message.text) return;
+  if (!message || (!message.text && !message.photo)) return;
 
   const chatId = message.chat.id;
   const userId = message.from?.id;
-  const rawText = message.text.trim();
+  const rawText = (message.text || "").trim();
 
   if (!shouldAnswer(message)) return;
+
+  // ---- photo submission: quick direction check, handled before any text routing
+  if (message.photo && message.photo.length) {
+    const now0 = Date.now();
+    if (now0 - (lastCall.get(userId) || 0) < MIN_INTERVAL_MS) return;
+    lastCall.set(userId, now0);
+
+    const caption = (message.caption || "").trim();
+    console.log(`[${message.chat.type}:${chatId}] photo submitted, caption="${caption.slice(0, 80)}"`);
+
+    await tg("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
+
+    try {
+      // Largest resolution is the last entry in Telegram's photo size array.
+      const best = message.photo[message.photo.length - 1];
+      const { base64, mediaType } = await fetchTelegramPhotoAsBase64(best.file_id);
+      const directive = buildPhotoCheckDirective(caption);
+      const reply = await askClaudeVision(base64, mediaType, directive);
+      await sendMessage(chatId, reply, message.message_id);
+    } catch (e) {
+      console.error("Photo check failed:", e.message);
+      await sendMessage(
+        chatId,
+        "Sorry, I couldn't read that photo just now. Please try again, ideally with good lighting and " +
+          "a caption naming the problem (e.g. \"/HW3.2\").",
+        message.message_id
+      );
+    }
+    return;
+  }
 
   // In a group, people naturally type "@BotName /command" (mention first),
   // not just Telegram's own "/command@BotName" convention (mention stuck
@@ -395,6 +506,44 @@ async function handleUpdate(update) {
       return sendMessage(chatId, 'Usage: /define <term> — e.g. "/define population inversion"', message.message_id);
     }
     return sendMessage(chatId, formatGlossaryReply(arg), message.message_id, "HTML");
+  }
+
+  // ---- /HW3, /HW3.2, /HW_hint3.2
+  const hwMatch = text.match(hwCommands.HW_COMMAND_RE);
+  if (hwMatch) {
+    const { hwNum, problemNum, isMinimalHint } = hwCommands.parseMatch(hwMatch);
+
+    const now1 = Date.now();
+    if (now1 - (lastCall.get(userId) || 0) < MIN_INTERVAL_MS) return;
+    lastCall.set(userId, now1);
+
+    console.log(`[${message.chat.type}:${chatId}] HW command: ${text.slice(0, 60)}`);
+
+    // Overview with no problem number: answer for free/instantly if we have
+    // structured data for this homework, no need to call Claude at all.
+    const overview = hwCommands.getStructuredOverview(hwNum, problemNum);
+    if (overview) {
+      await sendMessage(chatId, overview, message.message_id);
+      return;
+    }
+
+    const directive = hwCommands.buildDirective(hwNum, problemNum, isMinimalHint);
+
+    await tg("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
+
+    try {
+      const reply = await askClaude(chatId, directive);
+      remember(chatId, "user", text);
+      remember(chatId, "assistant", reply);
+      await sendMessage(chatId, reply, message.message_id);
+    } catch (e) {
+      await sendMessage(
+        chatId,
+        "Sorry, I couldn't reach my brain just now. Please try again in a moment.",
+        message.message_id
+      );
+    }
+    return;
   }
 
   const question = stripMention(text);
