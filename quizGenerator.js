@@ -327,16 +327,24 @@ async function getQuizQuestions(chatId, chapter, section, count) {
 
 // ---------- Telegram-facing helpers ----------
 
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
 function buildQuestionKeyboard(sessionIndex, question) {
   return {
-    inline_keyboard: question.options.map((opt, i) => ([
-      { text: opt, callback_data: `quiz:${sessionIndex}:${i}` }
-    ]))
+    inline_keyboard: [
+      question.options.map((opt, i) => ({
+        text: OPTION_LETTERS[i] || String(i + 1),
+        callback_data: `quiz:${sessionIndex}:${i}`
+      }))
+    ]
   };
 }
 
 function formatQuestionMessage(question, qNumber, total) {
-  return `<b>Question ${qNumber}/${total}</b>\n\n${question.stem}`;
+  const optionsText = question.options
+    .map((opt, i) => `<b>${OPTION_LETTERS[i] || i + 1})</b> ${opt}`)
+    .join('\n');
+  return `<b>Question ${qNumber}/${total}</b>\n\n${question.stem}\n\n${optionsText}`;
 }
 
 // Fallback used when the caller doesn't supply its own askWhichChapter
@@ -414,7 +422,7 @@ async function handleQuizAnswer(bot, callbackQuery) {
 
   const feedback = correct
     ? `✅ Correct!\n${question.explanation}`
-    : `❌ Not quite. Correct answer: ${question.options[question.correctIndex]}\n${question.explanation}`;
+    : `❌ Not quite. Correct answer: <b>${OPTION_LETTERS[question.correctIndex]})</b> ${question.options[question.correctIndex]}\n${question.explanation}`;
 
   await bot.editMessageText(
     `${formatQuestionMessage(question, qIndex + 1, session.questions.length)}\n\n${feedback}`,
