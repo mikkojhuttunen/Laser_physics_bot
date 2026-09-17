@@ -7,6 +7,14 @@
  *   2. Telegram is acknowledged (HTTP 200) IMMEDIATELY, before Claude is called.
  *      This is what stopped the webhook-retry storm that was killing the container.
  *   3. Duplicate updates, long replies, rate limits and API errors are all handled.
+ *
+ * HOMEWORK-HELPER COMMANDS (added):
+ *   /HW3          — overview: lists the problems in Homework 3
+ *   /HW3.2        — hint on Homework 3, problem 2 (equation/section pointer + guiding question)
+ *   /HW_hint3.2   — minimal nudge: one guiding question, nothing else
+ *   photo message — quick "right track / wrong track" read on a work-in-progress photo;
+ *                   caption it with a problem reference (e.g. "/HW3.2") for best results.
+ *   None of these reveal solutions — same no-solutions rule as the rest of the bot.
  */
 
 const fs = require("fs");
@@ -16,7 +24,6 @@ const axios = require("axios");
 const quizGenerator = require("./quizGenerator");
 const corpusLoader = require("./corpusLoader");
 const lectureLinks = require("./lectureLinks");
-const hwCommands = require("./hwCommands");
 
 const app = express();
 app.use(express.json());
@@ -33,14 +40,13 @@ const BOT_USERNAME = (process.env.BOT_USERNAME || "").replace(/^@/, "").toLowerC
 const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
 
 // ------------------------------------------------------- course material ----
-// Loaded ONCE at startup. Regenerate with `node build_corpus_v2.js` if the
-// .tex lecture sources, textbook PDFs, or homework PDFs change.
-const CORPUS_PATH = path.join(__dirname, "course_corpus_v2.txt");
+// Loaded ONCE at startup. Regenerate with `node build_corpus.js` if the PDFs change.
+const CORPUS_PATH = path.join(__dirname, "course_corpus.txt");
 let COURSE_CORPUS = "";
 try {
   COURSE_CORPUS = fs.readFileSync(CORPUS_PATH, "utf8");
   console.log(
-    `Loaded course corpus (v2): ${COURSE_CORPUS.length.toLocaleString()} chars ` +
+    `Loaded course corpus: ${COURSE_CORPUS.length.toLocaleString()} chars ` +
     `(~${Math.round(COURSE_CORPUS.length / 3.7).toLocaleString()} tokens)`
   );
 } catch (e) {
@@ -48,22 +54,28 @@ try {
   console.error("The bot will still start but will have no course knowledge.");
 }
 
-// ------------------------------------------------------- lecture videos -----
-// Loaded ONCE at startup, same pattern as the course corpus above.
-lectureLinks.loadLectureData();
-if (!lectureLinks.lectureDataLooksHealthy()) {
-  console.error("WARNING: lecture_data.json failed to load — /lectures and video lookups will be degraded.");
+// Exact per-problem text, keyed "<hw>" -> "<problem>" -> text, e.g. HOMEWORK_PROBLEMS["1"]["2"].
+// Built by build_corpus.js from problems numbered "<hw>.<n>" in the HW PDFs.
+// Optional: if missing/empty, /HW commands fall back to letting Claude search the full corpus.
+const HW_PROBLEMS_PATH = path.join(__dirname, "homework_problems.json");
+let HOMEWORK_PROBLEMS = {};
+try {
+  HOMEWORK_PROBLEMS = JSON.parse(fs.readFileSync(HW_PROBLEMS_PATH, "utf8"));
+  const total = Object.values(HOMEWORK_PROBLEMS).reduce((n, hw) => n + Object.keys(hw).length, 0);
+  console.log(`Loaded homework_problems.json: ${total} problems across ${Object.keys(HOMEWORK_PROBLEMS).length} homeworks`);
+} catch (e) {
+  console.log(`No homework_problems.json found (${e.code || e.message}) — /HW commands will fall back to full-corpus search.`);
 }
 
-// Exact per-problem text for /HW commands, keyed "<hw>" -> "<problem>" -> text.
-// Optional: if missing/empty, /HW commands fall back to letting Claude search
-// the full corpus instead of quoting the verbatim problem text.
-hwCommands.load();
+// Lecture video links, keyed by week (lecture_data-2.json). Loaded once at
+// startup, same pattern as the corpus and homework problems above.
+lectureLinks.loadLectureData();
+
 
 const TA_INSTRUCTIONS = `You are the teaching assistant bot for FYS.501 Laser Physics, answering in Telegram.
 
 WHAT YOU KNOW
-Course material: lecture notes (rebuilt cleanly from the slide sources), textbook Chapters 1–4, homework assignment sheets. Ground answers in this material and cite which chapter/section. You do NOT have homework solutions.
+Course material: lecture slides, textbook Chapters 1–4, homework assignment sheets. Ground answers in this material and cite which chapter/section. You do NOT have homework solutions.
 
 HOW TO ANSWER — ABSOLUTE RULES
 1. **LENGTH**: ONE OR TWO SHORT SENTENCES/PARAGRAPH ONLY. Never use section headers, bullets, tables, or sub-points. No "Step 1, Step 2". No "Key insight:". Just talk to them like a person.
@@ -212,37 +224,6 @@ async function askWhichChapter(bot, chatId) {
   return null;
 }
 
-// --------------------------------------------------------------- glossary ---
-function escapeHtml(str) {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
-// Formats a /define reply from corpusLoader.findGlossaryTerms(). Telegram
-// HTML parse_mode — same convention as lectureLinks.formatWeekMessage.
-function formatGlossaryReply(query) {
-  if (!corpusLoader.glossaryLooksHealthy()) {
-    return "The glossary isn't available right now — please check back later.";
-  }
-  const matches = corpusLoader.findGlossaryTerms(query, 3);
-  if (!matches.length) {
-    return (
-      `I couldn't find "${escapeHtml(query)}" in the glossary. It's auto-extracted from ` +
-      `highlighted terms in the lecture slides, so it doesn't cover everything — try asking ` +
-      `me directly instead.`
-    );
-  }
-  return matches
-    .map((g) => {
-      const revisit = g.revisitedIn.length ? ` (also covered in ${g.revisitedIn.join(", ")})` : "";
-      return (
-        `<b>${escapeHtml(g.term)}</b> — introduced in section ${g.introducedIn}` +
-        `${g.introducedInLecture ? ` (${escapeHtml(g.introducedInLecture)})` : ""}${revisit}\n` +
-        `${escapeHtml(g.context)}`
-      );
-    })
-    .join("\n\n");
-}
-
 // --------------------------------------------------------------- claude -----
 async function askClaude(chatId, question) {
   const messages = [...(history.get(chatId) || []), { role: "user", content: question }];
@@ -339,6 +320,114 @@ async function fetchTelegramPhotoAsBase64(fileId) {
   return { base64: Buffer.from(binRes.data).toString("base64"), mediaType };
 }
 
+// -------------------------------------------------------------- routing -----
+function shouldAnswer(message) {
+  const type = message.chat.type;
+  const text = message.text || message.caption || "";
+  if (type === "private") return true;                                  // DMs: always
+  if (message.photo) return true;                                       // photos: always answer, same as DMs/commands
+  if (/^\//.test(text)) return true;                                    // commands
+  if (BOT_USERNAME && text.toLowerCase().includes("@" + BOT_USERNAME)) return true;
+  if (message.reply_to_message?.from?.is_bot) return true;              // replying to us
+  return false;                                                          // otherwise stay quiet
+}
+
+// --------------------------------------------------------- HW commands ------
+// Matches:  /HW3          (overview of Homework 3)
+//           /HW3.2        (hint on Homework 3, problem 2)
+//           /HW_hint3.2   (minimal one-line nudge on Homework 3, problem 2)
+const HW_COMMAND_RE = /^\/HW(_hint)?(\d+)(?:\.(\d+))?(@\S+)?\b/i;
+
+function buildHwOverviewDirective(hwNum) {
+  return (
+    `[HOMEWORK OVERVIEW REQUEST]\n` +
+    `The student wants an overview of Homework ${hwNum}. Find "HOMEWORK ${hwNum}" in the course ` +
+    `material and list each top-level numbered problem with a one-line topic description only ` +
+    `(no sub-parts, no hints, no solutions, no point values needed). Keep the whole reply short — ` +
+    `one line per problem. End with: "Ask /HW${hwNum}.<problem number> for a hint on a specific one."`
+  );
+}
+
+// Free, deterministic version — used when homework_problems.json has this homework,
+// so it costs no API call and can't hallucinate a problem list.
+// Pulls a short one-line summary out of a problem's raw assignment text.
+// The source PDFs typically put the "<hw>.<n>." header on its own line, with
+// the actual description starting on the next line and wrapping (often with
+// PDF-hyphenated words) across several more — so a naive "first line" grab
+// returns nothing but the bare header. This walks past the header line(s),
+// joins wrapped text into one string (undoing hyphenation), and stops at the
+// first sub-part marker ("a)"), a "(N points)" marker, or a length cap.
+function summarizeHwProblem(hwNum, n, raw) {
+  const lines = raw.split("\n").map((l) => l.trim());
+  const headerOnlyRe = new RegExp(`^${hwNum}\\.${n}\\.?$`);
+  const headerPrefixRe = new RegExp(`^${hwNum}\\.${n}\\b\\.?\\s*`);
+
+  let idx = 0;
+  while (idx < lines.length && lines[idx] === "") idx++;
+  if (idx < lines.length && headerOnlyRe.test(lines[idx])) idx++;
+  while (idx < lines.length && lines[idx] === "") idx++;
+
+  let combined = "";
+  for (; idx < lines.length; idx++) {
+    let line = lines[idx];
+    if (line === "") continue;
+    if (/^[a-z]\)/.test(line)) break; // hit the start of sub-part a)/b)/c)...
+    line = line.replace(headerPrefixRe, ""); // in case the header shares a line with text
+    combined = combined.endsWith("-") ? combined.slice(0, -1) + line : combined ? combined + " " + line : line;
+    if (/\(\d+\s*points?\)/i.test(combined)) break;
+    if (combined.length >= 180) break;
+  }
+
+  combined = combined.replace(/\(\d+\s*points?\)/gi, "").replace(/\s+/g, " ").trim();
+
+  // Prefer stopping at the end of the first full sentence; otherwise truncate.
+  const sentMatch = combined.match(/^.{20,}?[.!?](?=\s|$)/);
+  let summary = sentMatch ? sentMatch[0] : combined;
+  if (summary.length > 150) {
+    summary = summary.slice(0, 147).replace(/\s+\S*$/, "") + "...";
+  }
+  return summary || "(no description found)";
+}
+
+function buildHwOverviewFromStructuredData(hwNum) {
+  const problems = HOMEWORK_PROBLEMS[hwNum];
+  const nums = Object.keys(problems).sort((a, b) => Number(a) - Number(b));
+  const lines = nums.map((n) => `${hwNum}.${n} — ${summarizeHwProblem(hwNum, n, problems[n])}`);
+  return (
+    `Homework ${hwNum}:\n` +
+    lines.join("\n") +
+    `\n\nAsk /HW${hwNum}.<problem number> for a hint on a specific one.`
+  );
+}
+
+function buildHwHintDirective(hwNum, problemNum) {
+  const exactText = HOMEWORK_PROBLEMS[hwNum]?.[problemNum];
+  const problemBlock = exactText
+    ? `Here is the exact text of problem ${hwNum}.${problemNum}, verbatim from the assignment sheet:\n"""\n${exactText}\n"""\n`
+    : `Find problem ${hwNum}.${problemNum} in Homework ${hwNum} in the course material below. ` +
+      `If you can't find it, say so plainly instead of guessing.\n`;
+  return (
+    `[HOMEWORK HINT REQUEST]\n` +
+    `The student is asking for help with Homework ${hwNum}, problem ${problemNum}. ${problemBlock}` +
+    `Give ONE hint per your standing homework rules: name the relevant equation or concept, point ` +
+    `to where it's covered, and ask one guiding question. Do not solve the problem or give the final answer.`
+  );
+}
+
+function buildHwMinimalHintDirective(hwNum, problemNum) {
+  const exactText = HOMEWORK_PROBLEMS[hwNum]?.[problemNum];
+  const problemBlock = exactText
+    ? `Here is the exact text of problem ${hwNum}.${problemNum}, verbatim from the assignment sheet:\n"""\n${exactText}\n"""\n`
+    : `Find problem ${hwNum}.${problemNum} in Homework ${hwNum} in the course material below. ` +
+      `If you can't find it, say so plainly instead of guessing.\n`;
+  return (
+    `[HOMEWORK MINIMAL HINT REQUEST]\n` +
+    `The student wants just a nudge for Homework ${hwNum}, problem ${problemNum} — no explanation. ${problemBlock}` +
+    `Reply with ONE short guiding question only (a single sentence), optionally naming one equation ` +
+    `or concept. No further explanation, no solution.`
+  );
+}
+
 function buildPhotoCheckDirective(caption) {
   return (
     `[HOMEWORK PHOTO CHECK — QUICK DIRECTION READ ONLY]\n` +
@@ -353,18 +442,6 @@ function buildPhotoCheckDirective(caption) {
   );
 }
 
-// -------------------------------------------------------------- routing -----
-function shouldAnswer(message) {
-  const type = message.chat.type;
-  const text = message.text || message.caption || "";
-  if (type === "private") return true;                                  // DMs: always
-  if (message.photo) return true;                                       // photos: always answer, same as DMs/commands
-  if (/^\//.test(text)) return true;                                    // commands
-  if (BOT_USERNAME && text.toLowerCase().includes("@" + BOT_USERNAME)) return true;
-  if (message.reply_to_message?.from?.is_bot) return true;              // replying to us
-  return false;                                                          // otherwise stay quiet
-}
-
 function stripMention(text) {
   return text
     .replace(new RegExp(`@${BOT_USERNAME}`, "ig"), "")
@@ -373,24 +450,26 @@ function stripMention(text) {
 }
 
 const HELP_TEXT =
-  "Hi! I'm the FYS.501 Laser Physics assistant. I know the lecture notes, " +
+  "Hi! I'm the FYS.501 Laser Physics assistant. I know the lecture slides, " +
   "textbook Chapters 1-4 and the six homework sheets.\n\n" +
   "Ask me things like:\n" +
   "- What is the difference between a stable and unstable resonator?\n" +
-  "- I'm stuck on HW3 question 2, where do I start?\n" +
   "- Explain the ABCD matrix for a thick lens\n\n" +
-  "I'll give you hints and point you to the right section, but I won't hand you " +
-  "finished homework solutions. Show me your attempt and I'll check your reasoning.\n\n" +
-  hwCommands.HELP_SNIPPET + "\n" +
+  "Homework commands:\n" +
+  "- /HW3 — list the problems in Homework 3\n" +
+  "- /HW3.2 — get a hint on Homework 3, problem 2\n" +
+  "- /HW_hint3.2 — just a one-line nudge, no explanation\n" +
   "- Send a photo of your work-in-progress (caption it with the problem, e.g. \"/HW3.2\") " +
   "and I'll give a quick read on whether you're headed the right way.\n\n" +
-  "Ask me to \"quiz me on chapter 2\" (or a specific section, e.g. \"quiz me on " +
-  "section 2.3\") for a multiple-choice quiz.\n\n" +
-  "/define <term> looks up a term in the course glossary — e.g. \"/define " +
-  "population inversion\".\n\n" +
-  "Lecture videos: /lectures for the full listing, or add a week or topic — " +
-  "e.g. \"/lectures week 2\" or \"/lectures on Fermi's golden rule\" — or just " +
-  "ask in a normal message, like \"is there a video on gain saturation?\"\n\n" +
+  "Quizzes:\n" +
+  "- \"quiz me\" — I'll ask which chapter\n" +
+  "- \"quiz me on chapter 2\" or \"quiz me on section 2.3\" — multiple choice, tap an answer to grade it\n" +
+  "- add a number for how many questions, e.g. \"quiz me on chapter 2, 10 questions\"\n\n" +
+  "Lecture videos:\n" +
+  "- /lectures — full listing, week by week\n" +
+  "- \"is there a video on gain saturation?\" or \"recording for week 3?\" — I'll find the right one(s)\n\n" +
+  "I'll give you hints and point you to the right section, but I won't hand you " +
+  "finished homework solutions.\n\n" +
   "/reset clears our conversation history.";
 
 // ------------------------------------------------------------- webhook ------
@@ -400,8 +479,7 @@ app.get("/healthz", (_req, res) =>
     ok: true,
     corpusChars: COURSE_CORPUS.length,
     corpusLooksHealthy: corpusLoader.corpusLooksHealthy(),
-    glossaryLooksHealthy: corpusLoader.glossaryLooksHealthy(),
-    homeworkProblemsLoaded: hwCommands.homeworkProblemsCount(),
+    homeworkProblemsLoaded: Object.values(HOMEWORK_PROBLEMS).reduce((n, hw) => n + Object.keys(hw).length, 0),
     quizBankLooksHealthy: quizGenerator.quizBankLooksHealthy(),
     lectureDataLooksHealthy: lectureLinks.lectureDataLooksHealthy(),
   })
@@ -426,7 +504,8 @@ async function handleUpdate(update) {
   if (seenUpdates.size > 1000) seenUpdates.clear();
 
   // Quiz answer taps and chapter-picker taps arrive as callback_query
-  // updates, not message updates — handle those separately.
+  // updates, not message updates — handle those separately, before we ever
+  // look for update.message (which callback_query updates don't have).
   if (update.callback_query) {
     return handleCallbackQuery(update.callback_query);
   }
@@ -436,12 +515,14 @@ async function handleUpdate(update) {
 
   const chatId = message.chat.id;
   const userId = message.from?.id;
-  const rawText = (message.text || "").trim();
+  const text = (message.text || "").trim();
 
   if (!shouldAnswer(message)) return;
 
-  // ---- photo submission: quick direction check, handled before any text routing
+  // ---- photo submission: quick direction check, handled before anything else
   if (message.photo && message.photo.length) {
+    if (!shouldAnswer(message)) return;
+
     const now0 = Date.now();
     if (now0 - (lastCall.get(userId) || 0) < MIN_INTERVAL_MS) return;
     lastCall.set(userId, now0);
@@ -470,48 +551,21 @@ async function handleUpdate(update) {
     return;
   }
 
-  // In a group, people naturally type "@BotName /command" (mention first),
-  // not just Telegram's own "/command@BotName" convention (mention stuck
-  // to the end of the command). The /^\/.../ checks below only match a
-  // leading slash, so a leading mention has to be stripped first or those
-  // commands silently fall through to the general Claude Q&A path instead.
-  const text = BOT_USERNAME
-    ? rawText.replace(new RegExp(`^@${BOT_USERNAME}\\s*`, "i"), "")
-    : rawText;
-
   if (/^\/(start|help)/i.test(text)) return sendMessage(chatId, HELP_TEXT);
   if (/^\/reset/i.test(text)) {
     history.delete(chatId);
     return sendMessage(chatId, "Conversation history cleared. Ask me anything.");
   }
   if (/^\/lectures/i.test(text)) {
-    const arg = text.replace(/^\/lectures(@\S+)?\s*/i, "").trim();
-    if (!arg) {
-      return sendMessage(chatId, lectureLinks.formatFullListing(), message.message_id, "HTML");
-    }
-    await tg("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
-    try {
-      const reply = await lectureLinks.handleLectureQuery(arg);
-      remember(chatId, "user", text);
-      remember(chatId, "assistant", reply);
-      return sendMessage(chatId, reply, message.message_id, "HTML");
-    } catch (e) {
-      console.error("lectureLinks.handleLectureQuery crashed (/lectures arg):", e.message);
-      return sendMessage(chatId, lectureLinks.formatFullListing(), message.message_id, "HTML");
-    }
-  }
-  if (/^\/define/i.test(text)) {
-    const arg = text.replace(/^\/define(@\S+)?\s*/i, "").trim();
-    if (!arg) {
-      return sendMessage(chatId, 'Usage: /define <term> — e.g. "/define population inversion"', message.message_id);
-    }
-    return sendMessage(chatId, formatGlossaryReply(arg), message.message_id, "HTML");
+    return sendMessage(chatId, lectureLinks.formatFullListing(), message.message_id, "HTML");
   }
 
   // ---- /HW3, /HW3.2, /HW_hint3.2
-  const hwMatch = text.match(hwCommands.HW_COMMAND_RE);
+  const hwMatch = text.match(HW_COMMAND_RE);
   if (hwMatch) {
-    const { hwNum, problemNum, isMinimalHint } = hwCommands.parseMatch(hwMatch);
+    const isMinimalHint = !!hwMatch[1];
+    const hwNum = hwMatch[2];
+    const problemNum = hwMatch[3];
 
     const now1 = Date.now();
     if (now1 - (lastCall.get(userId) || 0) < MIN_INTERVAL_MS) return;
@@ -521,13 +575,16 @@ async function handleUpdate(update) {
 
     // Overview with no problem number: answer for free/instantly if we have
     // structured data for this homework, no need to call Claude at all.
-    const overview = hwCommands.getStructuredOverview(hwNum, problemNum);
-    if (overview) {
-      await sendMessage(chatId, overview, message.message_id);
+    if (!problemNum && HOMEWORK_PROBLEMS[hwNum] && Object.keys(HOMEWORK_PROBLEMS[hwNum]).length) {
+      await sendMessage(chatId, buildHwOverviewFromStructuredData(hwNum), message.message_id);
       return;
     }
 
-    const directive = hwCommands.buildDirective(hwNum, problemNum, isMinimalHint);
+    const directive = !problemNum
+      ? buildHwOverviewDirective(hwNum)
+      : isMinimalHint
+      ? buildHwMinimalHintDirective(hwNum, problemNum)
+      : buildHwHintDirective(hwNum, problemNum);
 
     await tg("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
 
@@ -555,26 +612,23 @@ async function handleUpdate(update) {
 
   console.log(`[${message.chat.type}:${chatId}] ${question.slice(0, 120)}`);
 
+  // ---- "quiz me" / "quiz me on chapter 2" / "quiz me on section 2.3" ----
   if (quizGenerator.isQuizRequest(question)) {
     return quizGenerator
       .startQuiz(quizBot, chatId, question, askWhichChapter)
       .catch((e) => console.error("quizGenerator.startQuiz crashed:", e.message));
   }
 
-  // Cheap local regex gate (lectureLinks.STAGE1_TRIGGER) before the Stage 2
-  // classifier call — keeps lecture lookups from hitting Claude on every
-  // single message, only on ones that mention videos/lectures/recordings.
+  // ---- "any lecture video about X?" / "where's the recording for week 3?"
   if (lectureLinks.STAGE1_TRIGGER.test(question)) {
-    await tg("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
     try {
       const reply = await lectureLinks.handleLectureQuery(question);
-      remember(chatId, "user", question);
-      remember(chatId, "assistant", reply);
-      return sendMessage(chatId, reply, message.message_id, "HTML");
+      await sendMessage(chatId, reply, message.message_id, "HTML");
     } catch (e) {
       console.error("lectureLinks.handleLectureQuery crashed:", e.message);
-      // Fall through to askClaude below rather than leaving the student with nothing.
+      await sendMessage(chatId, "Sorry, I couldn't look up lecture videos just now.", message.message_id);
     }
+    return;
   }
 
   await tg("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
