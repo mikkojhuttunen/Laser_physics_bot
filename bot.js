@@ -179,6 +179,51 @@ async function tg(method, payload) {
   return axios.post(`${TELEGRAM_API}/${method}`, payload, { timeout: 15000 });
 }
 
+// Converts one run of Unicode Mathematical Alphanumeric characters for a
+// given style. Digits have no dedicated "italic" codepoints in Unicode, so
+// italic digits are left as plain ASCII; lowercase italic "h" has no
+// codepoint of its own either (Unicode reserves that slot), so it maps to
+// the pre-existing PLANCK CONSTANT compatibility character (ℎ, U+210E)
+// instead, which is the standard workaround.
+function toMathUnicode(inner, style) {
+  let out = "";
+  for (const ch of inner) {
+    const code = ch.codePointAt(0);
+    if (style === "bold") {
+      if (code >= 0x41 && code <= 0x5a) out += String.fromCodePoint(0x1d400 + (code - 0x41));      // A-Z
+      else if (code >= 0x61 && code <= 0x7a) out += String.fromCodePoint(0x1d41a + (code - 0x61)); // a-z
+      else if (code >= 0x30 && code <= 0x39) out += String.fromCodePoint(0x1d7ce + (code - 0x30)); // 0-9
+      else out += ch;
+    } else if (style === "italic") {
+      if (ch === "h") out += "\u210e";                                                             // italic h exception
+      else if (code >= 0x41 && code <= 0x5a) out += String.fromCodePoint(0x1d434 + (code - 0x41));  // A-Z
+      else if (code >= 0x61 && code <= 0x7a) out += String.fromCodePoint(0x1d44e + (code - 0x61));  // a-z
+      else out += ch;                                                                               // no italic digits exist
+    } else { // "bolditalic"
+      if (code >= 0x41 && code <= 0x5a) out += String.fromCodePoint(0x1d468 + (code - 0x41));      // A-Z
+      else if (code >= 0x61 && code <= 0x7a) out += String.fromCodePoint(0x1d482 + (code - 0x61)); // a-z
+      else if (code >= 0x30 && code <= 0x39) out += String.fromCodePoint(0x1d7ce + (code - 0x30)); // 0-9 (reuses bold digits)
+      else out += ch;
+    }
+  }
+  return out;
+}
+
+// Converts Claude's Markdown emphasis into real Unicode styled characters,
+// since Telegram is sent parse_mode "HTML" here and asterisks otherwise show
+// up literally to students. Claude reaches for both "*single*" (italic) and
+// "**double**" (bold) inconsistently for emphasizing symbols/variable names
+// (e.g. *N_i*, **A**, **B**), so both are handled, plus "***triple***" for
+// completeness. Order matters: match longest marker first, since by the time
+// we get to the single-* pass, all ** and *** runs have already been
+// replaced with plain Unicode characters (no asterisks left to confuse it).
+function markdownEmphasisToUnicode(text) {
+  text = text.replace(/\*\*\*(.+?)\*\*\*/g, (_, inner) => toMathUnicode(inner, "bolditalic"));
+  text = text.replace(/\*\*(.+?)\*\*/g, (_, inner) => toMathUnicode(inner, "bold"));
+  text = text.replace(/\*(.+?)\*/g, (_, inner) => toMathUnicode(inner, "italic"));
+  return text;
+}
+
 // Escapes text for safe use inside a Telegram HTML parse_mode message.
 function escapeHtml(s) {
   return String(s)
@@ -223,6 +268,7 @@ async function sendMessage(chatId, text, replyTo, parseMode) {
   // force parse_mode "HTML" so a link renders as clickable text rather than
   // literal brackets. Harmless no-op for text with no links or HTML chars.
   if (!parseMode) {
+    text = markdownEmphasisToUnicode(text);
     text = convertLinksAndEscape(text);
     parseMode = "HTML";
   }
