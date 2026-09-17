@@ -98,10 +98,46 @@ HOW TO ANSWER — ABSOLUTE RULES
 
 7. **LANGUAGE**: Respond in the language they use (English or Finnish).
 
+WHEN TO SUGGEST VIDEOS
+If a student asks a conceptual or homework question that's covered in a lecture video, weave in the relevant one:
+- Check the <video_lectures> list below for a title matching the topic
+- Write it as a Markdown link with the video title as the clickable label, e.g.:
+  "That's covered in [Laser Physics 3.2 — Cavity Modes](https://youtube.com/watch?v=abc123)."
+- ALWAYS use this exact [Title](URL) format — never write the raw URL on its own, after a colon, or after a dash
+- Don't force a link where none genuinely fits; one relevant link is usually enough
+
 TONE: Encouraging, conversational, brief. These are hard topics; students asking are doing the right thing.`;
+
+/**
+ * Format the lecture video database for inclusion in the system prompt, so
+ * Claude can weave a relevant [Title](URL) link into an ordinary conceptual
+ * answer — same pattern as the FYS.240 bot's formatVideoDatabase(). This is
+ * separate from lectureLinks.js's own STAGE1_TRIGGER path, which still
+ * handles explicit "any video on X?" / "/lectures" requests deterministically
+ * without involving Claude.
+ */
+function formatVideoDatabase() {
+  const weeks = lectureLinks.getAllWeeks();
+  if (!weeks.length) return "";
+  let context = "\n<video_lectures>\n";
+  context += "## FYS.501 Laser Physics - Lecture Videos\n\n";
+  weeks.forEach((week) => {
+    week.lectures.forEach((lec) => {
+      context += `Week ${week.week} (${week.topic}): ${lec.title} - ${lec.url}\n`;
+    });
+  });
+  context += "\n</video_lectures>\n";
+  return context;
+}
 
 function buildSystemBlocks() {
   const blocks = [{ type: "text", text: TA_INSTRUCTIONS }];
+
+  const videoContext = formatVideoDatabase();
+  if (videoContext) {
+    blocks.push({ type: "text", text: videoContext });
+  }
+
   if (COURSE_CORPUS) {
     blocks.push({
       // The big, unchanging block goes LAST and carries the cache breakpoint,
