@@ -143,27 +143,54 @@ async function tg(method, payload) {
   return axios.post(`${TELEGRAM_API}/${method}`, payload, { timeout: 15000 });
 }
 
-// Converts "**bold**" markdown spans (Claude's natural way of marking vector
-// quantities, e.g. **E**, **B**) into real Unicode bold characters. Messages
-// are sent as plain text with no parse_mode, so Telegram never interprets
-// "**" as formatting — without this, students just see literal asterisks.
-// Leaves Greek letters, subscripts, and everything outside "**...**" as-is.
-function markdownBoldToUnicode(text) {
-  return text.replace(/\*\*(.+?)\*\*/g, (_, inner) => {
-    let out = "";
-    for (const ch of inner) {
-      const code = ch.codePointAt(0);
-      if (code >= 0x41 && code <= 0x5a) out += String.fromCodePoint(0x1d400 + (code - 0x41));       // A-Z
-      else if (code >= 0x61 && code <= 0x7a) out += String.fromCodePoint(0x1d41a + (code - 0x61));  // a-z
-      else if (code >= 0x30 && code <= 0x39) out += String.fromCodePoint(0x1d7ce + (code - 0x30));  // 0-9
-      else out += ch; // Greek letters, underscores, spaces, punctuation: leave alone
+// Escapes text for safe use inside a Telegram HTML parse_mode message.
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+// Converts any "[label](url)" Markdown links in Claude's text into real
+// Telegram HTML <a> tags, and HTML-escapes everything else in the chunk so
+// it's safe to send with parse_mode: "HTML". Links are pulled out into
+// placeholders BEFORE escaping so neither the label nor the URL get their
+// &/</> characters mangled, then the <a> tags are spliced back in after.
+// NOTE: Claude is never given lecture video URLs in this bot (that's kept
+// deterministic via lectureLinks.js/lectureClassifier.js on purpose), so
+// this is a safety net for any incidental link Claude's text ends up with
+// (e.g. quoting something from the corpus) rather than a video-suggestion
+// feature — it just means such a link renders as clickable text instead of
+// literal brackets, same fix as the FYS.240 bot.
+function convertLinksAndEscape(text) {
+  const links = [];
+  const withPlaceholders = text.replace(
+    /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+    (_, label, url) => {
+      links.push({ label, url });
+      return `\u0000${links.length - 1}\u0000`;
     }
-    return out;
+  );
+  let escaped = escapeHtml(withPlaceholders);
+  links.forEach((link, i) => {
+    const anchor = `<a href="${escapeHtml(link.url)}">${escapeHtml(link.label)}</a>`;
+    escaped = escaped.replace(`\u0000${i}\u0000`, anchor);
   });
+  return escaped;
 }
 
 async function sendMessage(chatId, text, replyTo, parseMode) {
-  text = markdownBoldToUnicode(text);
+  // Callers that already built final HTML themselves (lectureLinks output,
+  // etc.) pass parseMode: "HTML" explicitly and are sent as-is below. Any
+  // other call is raw text (Claude's replies, plain status strings) that
+  // may contain a Markdown "[label](url)" link — convert + escape it and
+  // force parse_mode "HTML" so a link renders as clickable text rather than
+  // literal brackets. Harmless no-op for text with no links or HTML chars.
+  if (!parseMode) {
+    text = convertLinksAndEscape(text);
+    parseMode = "HTML";
+  }
+
   // Telegram hard-caps messages at 4096 characters.
   const chunks = [];
   let rest = text.trim();
@@ -370,49 +397,17 @@ function buildHwOverviewDirective(hwNum) {
 
 // Free, deterministic version — used when homework_problems.json has this homework,
 // so it costs no API call and can't hallucinate a problem list.
-// Pulls a short one-line summary out of a problem's raw assignment text.
-// The source PDFs typically put the "<hw>.<n>." header on its own line, with
-// the actual description starting on the next line and wrapping (often with
-// PDF-hyphenated words) across several more — so a naive "first line" grab
-// returns nothing but the bare header. This walks past the header line(s),
-// joins wrapped text into one string (undoing hyphenation), and stops at the
-// first sub-part marker ("a)"), a "(N points)" marker, or a length cap.
-function summarizeHwProblem(hwNum, n, raw) {
-  const lines = raw.split("\n").map((l) => l.trim());
-  const headerOnlyRe = new RegExp(`^${hwNum}\\.${n}\\.?$`);
-  const headerPrefixRe = new RegExp(`^${hwNum}\\.${n}\\b\\.?\\s*`);
-
-  let idx = 0;
-  while (idx < lines.length && lines[idx] === "") idx++;
-  if (idx < lines.length && headerOnlyRe.test(lines[idx])) idx++;
-  while (idx < lines.length && lines[idx] === "") idx++;
-
-  let combined = "";
-  for (; idx < lines.length; idx++) {
-    let line = lines[idx];
-    if (line === "") continue;
-    if (/^[a-z]\)/.test(line)) break; // hit the start of sub-part a)/b)/c)...
-    line = line.replace(headerPrefixRe, ""); // in case the header shares a line with text
-    combined = combined.endsWith("-") ? combined.slice(0, -1) + line : combined ? combined + " " + line : line;
-    if (/\(\d+\s*points?\)/i.test(combined)) break;
-    if (combined.length >= 180) break;
-  }
-
-  combined = combined.replace(/\(\d+\s*points?\)/gi, "").replace(/\s+/g, " ").trim();
-
-  // Prefer stopping at the end of the first full sentence; otherwise truncate.
-  const sentMatch = combined.match(/^.{20,}?[.!?](?=\s|$)/);
-  let summary = sentMatch ? sentMatch[0] : combined;
-  if (summary.length > 150) {
-    summary = summary.slice(0, 147).replace(/\s+\S*$/, "") + "...";
-  }
-  return summary || "(no description found)";
-}
-
 function buildHwOverviewFromStructuredData(hwNum) {
   const problems = HOMEWORK_PROBLEMS[hwNum];
   const nums = Object.keys(problems).sort((a, b) => Number(a) - Number(b));
-  const lines = nums.map((n) => `${hwNum}.${n} — ${summarizeHwProblem(hwNum, n, problems[n])}`);
+  const lines = nums.map((n) => {
+    const firstLine = problems[n]
+      .split("\n")[0]
+      .trim()
+      .replace(new RegExp(`^${hwNum}\\.${n}\\b\\.?\\s*`), "") // strip the leading "hw.n" header itself
+      .replace(/\s*\(\d+\s*points?\)\s*$/i, "");
+    return `${hwNum}.${n} — ${firstLine}`;
+  });
   return (
     `Homework ${hwNum}:\n` +
     lines.join("\n") +
