@@ -39,7 +39,9 @@ HTML-escaping of all question text (laser questions contain `<`, `>`, `&`); per-
 
 ## Bank
 
-The optics bank was **not** copied (course-content discipline). Curate laser questions by reviewing `MVQUIZ_PENDING_QUESTION` log lines / `multivalueQuizBankPending_fys501.json` and merging keepers into `multivalueQuizBank_fys501.json` under `chapter → section`. Until then every `/mvquiz` is live-generated.
+The optics bank was **not** copied (course-content discipline). All four chapters are now drafted from the lecture notes and textbook: **88 questions** (Ch 1: 16, Ch 2: 27, Ch 3: 26, Ch 4: 19; 4–6 per section), each with `"reviewed": true` (reviewed by the course instructor on 2026-09-19 against `mv_review_ch1-2.md` and `mv_review_ch3-4.md`; ✅ marks the correct options, with explanation and source). New questions curated from the pending file should be added with `"reviewed": false` until checked. Every section holds at least 4 questions; sections 2.2, 2.3, 2.4, 3.2, 3.5 and 4.3 hold 5 and section 4.2 holds 6, so the default 5-question section quiz is fully served from the bank there (the other sections hold 4 and need one generated question to fill a default quiz). Curate further questions from `MVQUIZ_PENDING_QUESTION` log lines / `multivalueQuizBankPending_fys501.json` under `chapter → section`.
+
+Section keys follow `corpusLoader_fys501.js` (3.4 = Eigenmodes, 3.5 = Stability), the same convention as `quizBank_fys501.json`. Where a section holds fewer unseen questions than requested, the remainder is topped up by live generation (needs the corpus fix below); otherwise only the banked questions are served.
 
 ## Known prerequisite: corpus file
 
