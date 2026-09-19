@@ -15,6 +15,17 @@
  *   photo message — quick "right track / wrong track" read on a work-in-progress photo;
  *                   caption it with a problem reference (e.g. "/HW3.2") for best results.
  *   None of these reveal solutions — same no-solutions rule as the rest of the bot.
+ *
+ * QUIZ COMMANDS:
+ *   "quiz me on chapter 2" / "/quiz 2.3" — single-answer multiple choice (quizGenerator_fys501.js)
+ *   /mvquiz [chapter N | N.M] [count]    — "select all that apply" multi-answer quiz, a SEPARATE
+ *                                          add-on (multivalueQuizGenerator_fys501.js) with its own
+ *                                          bank, session state and callback_data namespace
+ *                                          ("mv:...", "mvquizchapter:..."). Also triggered by the
+ *                                          phrases "multiquiz" / "multi-select quiz" / "select all".
+ *
+ * LECTURE LISTING:
+ *   /lectures and /topics are identical aliases (full week-by-week video listing).
  */
 
 const fs = require("fs");
@@ -22,6 +33,7 @@ const path = require("path");
 const express = require("express");
 const axios = require("axios");
 const quizGenerator = require("./quizGenerator_fys501");
+const mvQuizGenerator = require("./multivalueQuizGenerator_fys501");
 const corpusLoader = require("./corpusLoader_fys501");
 const lectureLinks = require("./lectureLinks_fys501");
 
@@ -353,6 +365,23 @@ async function askWhichChapter(bot, chatId) {
   return null;
 }
 
+// Same idea as askWhichChapter() above, but for the multivalue ("select all
+// that apply") quiz add-on. A SEPARATE function with its own callback_data
+// prefix ("mvquizchapter:N") rather than reusing askWhichChapter()/"quizchapter:"
+// — a tap on this picker must route to mvQuizGenerator.startMultivalueQuiz(),
+// not quizGenerator.startQuiz(), and handleCallbackQuery() tells the two apart
+// by prefix alone.
+async function askWhichChapterMv(bot, chatId) {
+  await bot.sendMessage(chatId, "Which chapter would you like the multi-select quiz on?", {
+    reply_markup: {
+      inline_keyboard: corpusLoader.listChapters().map((ch) => ([
+        { text: `Chapter ${ch} — ${corpusLoader.getChapterTitle(ch)}`, callback_data: `mvquizchapter:${ch}` },
+      ])),
+    },
+  });
+  return null;
+}
+
 // --------------------------------------------------------------- claude -----
 async function askClaude(chatId, question) {
   const messages = [...(history.get(chatId) || []), { role: "user", content: question }];
@@ -561,9 +590,10 @@ const HELP_TEXT =
   "Quizzes:\n" +
   "- \"quiz me\" — I'll ask which chapter\n" +
   "- \"quiz me on chapter 2\" or \"quiz me on section 2.3\" — multiple choice, tap an answer to grade it\n" +
-  "- add a number for how many questions, e.g. \"quiz me on chapter 2, 10 questions\"\n\n" +
+  "- add a number for how many questions, e.g. \"quiz me on chapter 2, 10 questions\"\n" +
+  "- /mvquiz chapter 2 (or /mvquiz 2.3) — a \"select all that apply\" quiz: tap every letter that is correct, then Submit. Partial credit is given.\n\n" +
   "Lecture videos:\n" +
-  "- /lectures — full listing, week by week\n" +
+  "- /lectures (or /topics) — full listing, week by week\n" +
   "- \"is there a video on gain saturation?\" or \"recording for week 3?\" — I'll find the right one(s)\n\n" +
   "I'll give you hints and point you to the right section, but I won't hand you " +
   "finished homework solutions.\n\n" +
@@ -578,6 +608,7 @@ app.get("/healthz", (_req, res) =>
     corpusLooksHealthy: corpusLoader.corpusLooksHealthy(),
     homeworkProblemsLoaded: Object.values(HOMEWORK_PROBLEMS).reduce((n, hw) => n + Object.keys(hw).length, 0),
     quizBankLooksHealthy: quizGenerator.quizBankLooksHealthy(),
+    multivalueQuizBankLooksHealthy: mvQuizGenerator.quizBankLooksHealthy(),
     lectureDataLooksHealthy: lectureLinks.lectureDataLooksHealthy(),
   })
 );
@@ -653,8 +684,30 @@ async function handleUpdate(update) {
     history.delete(chatId);
     return sendMessage(chatId, "Conversation history cleared. Ask me anything.");
   }
-  if (/^\/lectures/i.test(text)) {
+  // /topics is an alias of /lectures (same handler, same output) for students
+  // who are more familiar with that wording.
+  if (/^\/(lectures|topics)/i.test(text)) {
     return sendMessage(chatId, lectureLinks.formatFullListing(), message.message_id, "HTML");
+  }
+
+  // ---- /mvquiz — explicit command for the multivalue ("select all that
+  // apply") quiz add-on. "/mvquiz", "/mvquiz chapter 2", "/mvquiz 2.3",
+  // "/mvquiz 2.3 8" (chapter/section + optional question count, same
+  // hint-parsing as the free-text trigger further down) are all accepted.
+  const mvQuizMatch = text.match(/^\/mvquiz(@\S+)?\b\s*(.*)$/i);
+  if (mvQuizMatch) {
+    const rest = (mvQuizMatch[2] || "").trim();
+    const mvQuizText = rest ? `multiquiz ${rest}` : "multiquiz";
+
+    const nowMv = Date.now();
+    if (nowMv - (lastCall.get(userId) || 0) < MIN_INTERVAL_MS) return;
+    lastCall.set(userId, nowMv);
+
+    console.log(`[${message.chat.type}:${chatId}] /mvquiz command: ${text.slice(0, 60)}`);
+
+    return mvQuizGenerator
+      .startMultivalueQuiz(quizBot, chatId, mvQuizText, askWhichChapterMv)
+      .catch((e) => console.error("mvQuizGenerator.startMultivalueQuiz (/mvquiz) crashed:", e.message));
   }
 
   // ---- /HW3, /HW3.2, /HW_hint3.2
@@ -709,6 +762,16 @@ async function handleUpdate(update) {
 
   console.log(`[${message.chat.type}:${chatId}] ${question.slice(0, 120)}`);
 
+  // ---- "multiquiz" / "multi-select quiz" / "select all" — the SEPARATE
+  // multi-answer quiz add-on. MUST be checked BEFORE the single-select
+  // trigger below: phrases like "multi-select quiz" also contain a standalone
+  // word "quiz", so the single-select regex would otherwise claim them.
+  if (mvQuizGenerator.isMultivalueQuizRequest(question)) {
+    return mvQuizGenerator
+      .startMultivalueQuiz(quizBot, chatId, question, askWhichChapterMv)
+      .catch((e) => console.error("mvQuizGenerator.startMultivalueQuiz crashed:", e.message));
+  }
+
   // ---- "quiz me" / "quiz me on chapter 2" / "quiz me on section 2.3" ----
   if (quizGenerator.isQuizRequest(question)) {
     return quizGenerator
@@ -745,10 +808,30 @@ async function handleUpdate(update) {
 }
 
 // callback_query updates: answer-option taps ("quiz:...") from
-// quizGenerator's inline keyboards, and chapter-picker taps
-// ("quizchapter:N") from askWhichChapter() above.
+// quizGenerator's inline keyboards, chapter-picker taps ("quizchapter:N")
+// from askWhichChapter() above, and the multivalue add-on's own namespace:
+// toggle/submit taps ("mv:...") and its chapter-picker taps
+// ("mvquizchapter:N") from askWhichChapterMv().
 async function handleCallbackQuery(cq) {
   const data = cq.data || "";
+
+  // ---- multivalue ("select all that apply") quiz add-on — its own
+  // callback_data namespace, kept separate from "quiz:"/"quizchapter:" ----
+  if (data.startsWith("mv:")) {
+    return mvQuizGenerator
+      .handleMultivalueQuizAnswer(quizBot, cq)
+      .catch((e) => console.error("mvQuizGenerator.handleMultivalueQuizAnswer crashed:", e.message));
+  }
+
+  if (data.startsWith("mvquizchapter:")) {
+    const chapter = data.split(":")[1];
+    const chatId = cq.message?.chat?.id;
+    await quizBot.answerCallbackQuery(cq.id);
+    if (!chatId) return;
+    return mvQuizGenerator
+      .startMultivalueQuiz(quizBot, chatId, `multiquiz chapter ${chapter}`, askWhichChapterMv)
+      .catch((e) => console.error("mvQuizGenerator.startMultivalueQuiz (chapter pick) crashed:", e.message));
+  }
 
   if (data.startsWith("quiz:")) {
     return quizGenerator
