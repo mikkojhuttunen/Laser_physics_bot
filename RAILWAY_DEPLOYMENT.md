@@ -4,21 +4,21 @@ This covers the bot **as it stands now**: Telegram Q&A, `/HW<n>.<m>` homework
 hints, `/HW<n>` overviews, and photo-based "am I on the right track" checks.
 If you followed the older `COMPLETE_SETUP_GUIDE.md` before, the flow below is
 the same shape — this just reflects the current files and adds the two new
-pieces (`homework_problems.json`, and the optional `VISION_MODEL` variable).
+pieces (`homework_problems_fys501.json`, and the optional `VISION_MODEL` variable).
 
 ---
 
 ## 0. Files you need in the repo root
 
 ```
-bot.js                   — the bot (Telegram webhook + Claude calls)
+bot_fys501.js                   — the bot (Telegram webhook + Claude calls)
 build_corpus.js          — regenerates the two files below from PDFs
-course_corpus.txt        — pre-built course text, loaded at startup
-homework_problems.json   — pre-built per-problem lookup, loaded at startup
+course_corpus_fys501.txt        — pre-built course text, loaded at startup
+homework_problems_fys501.json   — pre-built per-problem lookup, loaded at startup
 package.json             — dependencies + start script
 ```
 
-`course_corpus.txt` and `homework_problems.json` are already built from your
+`course_corpus_fys501.txt` and `homework_problems_fys501.json` are already built from your
 current PDFs (including the new combined `FYS_501_LaserPhysics_allHWs_2026.pdf`)
 from our last step — use those unless you change the course material again.
 
@@ -52,8 +52,8 @@ Both should return `"ok": true` / a list of models.
 mkdir fys501-laser-bot && cd fys501-laser-bot
 git init && git branch -M main
 
-# copy in: bot.js, build_corpus.js, course_corpus.txt,
-#          homework_problems.json, package.json
+# copy in: bot_fys501.js, build_corpus.js, course_corpus_fys501.txt,
+#          homework_problems_fys501.json, package.json
 
 cat > .gitignore << 'EOF'
 node_modules/
@@ -124,7 +124,7 @@ Open Telegram, find your bot, and try each of these:
 | Test | Send | Expect |
 |---|---|---|
 | Basic help | `/help` | Help text listing HW commands, back in 2–3s |
-| Overview | `/HW3` | Instant list of problems 3.1–3.4 (no API delay — served from `homework_problems.json`) |
+| Overview | `/HW3` | Instant list of problems 3.1–3.4 (no API delay — served from `homework_problems_fys501.json`) |
 | Hint | `/HW3.2` | A hint referencing the exact problem 3.2 text, not a solution |
 | Minimal hint | `/HW_hint3.2` | One short guiding question only |
 | Photo check | Send a photo of any worked math, caption `/HW3.2` | 2–3 sentence "right track / not quite" read, no full solution |
@@ -134,7 +134,7 @@ Also hit `GET <BOT_URL>/healthz` in a browser — it should report
 `corpusChars` and `homeworkProblemsLoaded: 24` (or however many problems
 you've currently got). If `homeworkProblemsLoaded` is `0`, the JSON either
 didn't get committed/pushed or wasn't picked up — check the Railway logs for
-the "Loaded homework_problems.json" line at startup.
+the "Loaded homework_problems_fys501.json" line at startup.
 
 ---
 
@@ -159,7 +159,7 @@ problems` means a problem in that PDF isn't starting its own line with
 exactly `<hw>.<n>` — check the PDF text before committing.
 
 ```bash
-git add course_corpus.txt homework_problems.json
+git add course_corpus_fys501.txt homework_problems_fys501.json
 git commit -m "update: refreshed course material"
 git push origin main
 ```
@@ -176,6 +176,6 @@ Railway auto-redeploys in ~30 seconds; no webhook changes needed.
   access (all current Claude models do) and the photo isn't unusually large;
   check Railway logs for `"Photo check failed:"`.
 - **`/HW3` overview looks stale or wrong** → it's served straight from
-  `homework_problems.json`, so rebuild and redeploy that file, not `bot.js`.
+  `homework_problems_fys501.json`, so rebuild and redeploy that file, not `bot_fys501.js`.
 - **Slow first message of the day** → normal, that's the prompt-cache write;
   subsequent messages within the cache TTL are fast and cheap.

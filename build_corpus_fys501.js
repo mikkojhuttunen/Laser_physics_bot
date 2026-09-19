@@ -1,11 +1,11 @@
 /**
- * Regenerate course_corpus.txt from the original PDFs.
+ * Regenerate course_corpus_fys501.txt from the original PDFs.
  * Run this LOCALLY (not on Railway) whenever the course material changes:
  *
  *   npm install pdf-parse
  *   node build_corpus.js ./pdfs
  *
- * Then commit the new course_corpus.txt AND homework_problems.json and redeploy.
+ * Then commit the new course_corpus_fys501.txt AND homework_problems_fys501.json and redeploy.
  *
  * IMPORTANT: do not put HW*_solutions.pdf in the folder. The bot should not
  * have the worked solutions.
@@ -19,8 +19,8 @@
  * HOMEWORK NUMBERING: each top-level problem must start its own line with
  * exactly "<N>.<n>" (e.g. "1.1", "1.2", "2.1" ...), where <N> matches the
  * "Homework <N>" section it's under. This script splits on that pattern and
- * writes homework_problems.json — { "1": { "1": "<full text of problem 1.1>",
- * "2": "..." }, "2": {...} } — which bot.js uses to look up an exact problem's
+ * writes homework_problems_fys501.json — { "1": { "1": "<full text of problem 1.1>",
+ * "2": "..." }, "2": {...} } — which bot_fys501.js uses to look up an exact problem's
  * text for /HW<N>.<n> instead of asking Claude to search the whole corpus.
  */
 
@@ -170,18 +170,18 @@ async function main() {
   }
 
   const corpus = parts.join("\n");
-  fs.writeFileSync("course_corpus.txt", corpus, "utf8");
+  fs.writeFileSync("course_corpus_fys501.txt", corpus, "utf8");
   console.log(
-    `\nWrote course_corpus.txt — ${corpus.length.toLocaleString()} chars ` +
+    `\nWrote course_corpus_fys501.txt — ${corpus.length.toLocaleString()} chars ` +
     `(~${Math.round(corpus.length / 3.7).toLocaleString()} tokens)`
   );
   if (corpus.length / 3.7 > 150000) {
     console.warn("WARNING: corpus is large. Consider splitting by topic.");
   }
 
-  fs.writeFileSync("homework_problems.json", JSON.stringify(homeworkProblems, null, 2), "utf8");
+  fs.writeFileSync("homework_problems_fys501.json", JSON.stringify(homeworkProblems, null, 2), "utf8");
   const totalProblems = Object.values(homeworkProblems).reduce((n, hw) => n + Object.keys(hw).length, 0);
-  console.log(`Wrote homework_problems.json — ${totalProblems} problems across ${Object.keys(homeworkProblems).length} homeworks`);
+  console.log(`Wrote homework_problems_fys501.json — ${totalProblems} problems across ${Object.keys(homeworkProblems).length} homeworks`);
   for (const [hwNum, problems] of Object.entries(homeworkProblems)) {
     if (Object.keys(problems).length === 0) {
       console.warn(

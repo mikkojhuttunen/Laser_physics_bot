@@ -8,36 +8,36 @@
  *  - LLM only used for content generation (structured JSON), never for grading
  *  - Grading is deterministic, done in code
  *  - Session state via in-memory Map with expiry (mirrors checkhw sessions)
- *  - Corpus-grounded generation (no invented content outside course_corpus.txt)
+ *  - Corpus-grounded generation (no invented content outside course_corpus_fys501.txt)
  *
  * Architecture (see QUIZ_FEATURE_SETUP_GUIDE.md section 2):
- *  - Bank-first: sampleFromBank() draws from the pre-built quizBank.json,
+ *  - Bank-first: sampleFromBank() draws from the pre-built quizBank_fys501.json,
  *    no API call.
  *  - Generate-as-fallback: if the bank doesn't have enough unused questions
  *    for the request, generateQuiz() is called live, scoped to just the
  *    requested section's corpus excerpt, to make up the shortfall.
  *  - Self-expanding: live-generated fallback questions are appended to
- *    quizBankPending.json (and also logged as a structured JSON line to
+ *    quizBankPending_fys501.json (and also logged as a structured JSON line to
  *    stdout, so a log-based capture pipeline works too if the deployment's
  *    filesystem doesn't persist across restarts — see section 5a of the
- *    guide). They are never written into quizBank.json directly; that only
+ *    guide). They are never written into quizBank_fys501.json directly; that only
  *    happens via a reviewed `buildQuizBank.js --merge-pending` run.
  *
- * Wiring into bot.js (see INTEGRATION notes at bottom) mirrors how
+ * Wiring into bot_fys501.js (see INTEGRATION notes at bottom) mirrors how
  * lectureLinks.js and checkhw-image-handler.js were integrated:
- * this file stays self-contained, bot.js just calls a few exported functions.
+ * this file stays self-contained, bot_fys501.js just calls a few exported functions.
  */
 
 const fs = require('fs');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
-const corpusLoader = require('./corpusLoader');
+const corpusLoader = require('./corpusLoader_fys501');
 const { getCorpusSection } = corpusLoader;
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const QUIZ_BANK_PATH = path.join(__dirname, 'quizBank.json');
-const QUIZ_BANK_PENDING_PATH = path.join(__dirname, 'quizBankPending.json');
+const QUIZ_BANK_PATH = path.join(__dirname, 'quizBank_fys501.json');
+const QUIZ_BANK_PENDING_PATH = path.join(__dirname, 'quizBankPending_fys501.json');
 
 // ---------- Stage 1: local trigger gate (no API call) ----------
 
@@ -137,7 +137,7 @@ function getRecentlyServed(chatId) {
   return recentlyServedIds.get(chatId) || new Set();
 }
 
-// ---------- quizBank.json access (cached, bank-first sourcing) ----------
+// ---------- quizBank_fys501.json access (cached, bank-first sourcing) ----------
 
 let _bankCache = null;
 
@@ -147,7 +147,7 @@ function loadQuizBank({ forceReload = false } = {}) {
     const raw = fs.readFileSync(QUIZ_BANK_PATH, 'utf8');
     _bankCache = JSON.parse(raw);
   } catch (e) {
-    console.warn(`quizGenerator: could not load quizBank.json (${e.message}) — bank is empty, all quizzes will be live-generated`);
+    console.warn(`quizGenerator: could not load quizBank_fys501.json (${e.message}) — bank is empty, all quizzes will be live-generated`);
     _bankCache = {};
   }
   return _bankCache;
@@ -169,7 +169,7 @@ function shuffle(arr) {
 }
 
 /**
- * Draws up to `count` unused questions from quizBank.json for a given
+ * Draws up to `count` unused questions from quizBank_fys501.json for a given
  * chapter (+ optional section). No API call.
  *
  * - If `section` is given, samples only from that section's pool.
@@ -202,7 +202,7 @@ function sampleFromBank(chapter, section, count, excludeIds = []) {
   };
 }
 
-// ---------- quizBankPending.json — self-expansion capture ----------
+// ---------- quizBankPending_fys501.json — self-expansion capture ----------
 
 function appendPendingQuestions(chapter, section, questions) {
   const generatedAt = new Date().toISOString();
@@ -222,7 +222,7 @@ function appendPendingQuestions(chapter, section, questions) {
     }
     fs.writeFileSync(QUIZ_BANK_PENDING_PATH, JSON.stringify(existing.concat(entries), null, 2), 'utf8');
   } catch (e) {
-    console.warn(`quizGenerator: could not persist quizBankPending.json (${e.message}) — relying on stdout log capture instead`);
+    console.warn(`quizGenerator: could not persist quizBankPending_fys501.json (${e.message}) — relying on stdout log capture instead`);
   }
 
   // Structured log line, independent of the file write above, so a
@@ -349,7 +349,7 @@ function formatQuestionMessage(question, qNumber, total) {
 
 // Fallback used when the caller doesn't supply its own askWhichChapter
 // (see the `askWhichChapter` param on startQuiz below). Just a plain text
-// prompt — bot.js can inject a richer version (e.g. an inline-keyboard
+// prompt — bot_fys501.js can inject a richer version (e.g. an inline-keyboard
 // chapter picker) instead.
 async function defaultAskWhichChapter(bot, chatId) {
   await bot.sendMessage(
@@ -359,7 +359,7 @@ async function defaultAskWhichChapter(bot, chatId) {
   return null;
 }
 
-// Called from bot.js message handler when isQuizRequest(text) is true.
+// Called from bot_fys501.js message handler when isQuizRequest(text) is true.
 // `askWhichChapter(bot, chatId)` is called when the request doesn't name a
 // chapter/section; it should prompt the student and return null (startQuiz
 // then stops, since there's nothing more to do until they respond) or,
@@ -403,7 +403,7 @@ async function startQuiz(bot, chatId, text, askWhichChapter = defaultAskWhichCha
   );
 }
 
-// Called from bot.js's callback_query handler when data starts with "quiz:"
+// Called from bot_fys501.js's callback_query handler when data starts with "quiz:"
 async function handleQuizAnswer(bot, callbackQuery) {
   const chatId = callbackQuery.message.chat.id;
   const [, qIndexStr, answerIndexStr] = callbackQuery.data.split(':');
@@ -460,9 +460,9 @@ module.exports = {
   extractRawCountHint,
 };
 
-/* INTEGRATION NOTES — this is now wired up in bot.js. Summary of how:
+/* INTEGRATION NOTES — this is now wired up in bot_fys501.js. Summary of how:
  *
- * bot.js talks to Telegram directly via axios, not node-telegram-bot-api,
+ * bot_fys501.js talks to Telegram directly via axios, not node-telegram-bot-api,
  * so it passes a small adapter object (`quizBot`) in place of `bot` that
  * implements sendMessage/editMessageText/answerCallbackQuery on top of its
  * existing tg() helper.
@@ -472,15 +472,15 @@ module.exports = {
  *     return quizGenerator.startQuiz(quizBot, chatId, question, askWhichChapter);
  *   }
  *
- * bot.js has no EventEmitter-style `.on('callback_query', ...)` (it's a
+ * bot_fys501.js has no EventEmitter-style `.on('callback_query', ...)` (it's a
  * plain webhook handler), so callback_query updates are dispatched directly
  * inside handleUpdate()/handleCallbackQuery() instead:
  *   if (data.startsWith('quiz:')) return quizGenerator.handleQuizAnswer(quizBot, cq);
  *
- * bot.js defines its own askWhichChapter(bot, chatId) — an inline-keyboard
+ * bot_fys501.js defines its own askWhichChapter(bot, chatId) — an inline-keyboard
  * chapter picker — and passes it into startQuiz() explicitly, overriding
  * the plain-text defaultAskWhichChapter() above. Tapping a chapter button
- * sends a "quizchapter:N" callback, which bot.js turns into a second
+ * sends a "quizchapter:N" callback, which bot_fys501.js turns into a second
  * startQuiz() call with synthetic text ("quiz me on chapter N").
  *
  * /healthz includes `quizBankLooksHealthy: quizGenerator.quizBankLooksHealthy()`

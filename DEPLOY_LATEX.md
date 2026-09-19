@@ -10,7 +10,7 @@ Step-by-step instructions for deploying LaTeX support to production.
 - [ ] `.env` updated with `LATEX_ENABLED=true`
 - [ ] Bot tested locally (equations render as images)
 - [ ] Git working directory clean
-- [ ] Backup of current `bot.js` exists
+- [ ] Backup of current `bot_fys501.js` exists
 
 ---
 
@@ -21,7 +21,7 @@ Step-by-step instructions for deploying LaTeX support to production.
 ```bash
 # Copy new files
 cp latex-renderer.js ./
-cp bot_modified.js bot.js
+cp bot_modified.js bot_fys501.js
 
 # Update .env
 echo "LATEX_ENABLED=true" >> .env
@@ -30,7 +30,7 @@ echo "LATEX_VERIFY_BEFORE_SEND=true" >> .env
 # Test locally
 TELEGRAM_TOKEN="your_token" \
 ANTHROPIC_API_KEY="your_key" \
-node bot.js
+node bot_fys501.js
 
 # In another terminal, test with your bot (ask math question)
 # Check that images render
@@ -45,11 +45,11 @@ Bot listening on port 3000 | model=claude-haiku-4-5-20251001 | cache=1h | LaTeX=
 
 ```bash
 # Review changes
-git diff bot.js | head -50
+git diff bot_fys501.js | head -50
 
 # Stage new files
 git add latex-renderer.js SETUP_LATEX.md LATEX_IMPLEMENTATION_CHECKLIST.md DEPLOY_LATEX.md
-git add bot.js
+git add bot_fys501.js
 
 # Update .gitignore if needed
 echo "bot_backup.js" >> .gitignore
@@ -67,7 +67,7 @@ New file:   latex-renderer.js
 New file:   SETUP_LATEX.md
 New file:   LATEX_IMPLEMENTATION_CHECKLIST.md
 New file:   DEPLOY_LATEX.md
-Modified:   bot.js
+Modified:   bot_fys501.js
 Modified:   .env.example
 ```
 
@@ -77,7 +77,7 @@ Modified:   .env.example
 git commit -m "feat: add LaTeX equation rendering via CodeCogs
 
 - New latex-renderer.js module for parsing and sending rendered equations
-- Updated bot.js to use LaTeX rendering (default enabled)
+- Updated bot_fys501.js to use LaTeX rendering (default enabled)
 - Updated TA_INSTRUCTIONS to guide Claude in using LaTeX syntax
 - Added SETUP_LATEX.md with detailed documentation
 - Support for fallback to plain text if rendering fails
@@ -149,7 +149,7 @@ git pull origin main
 # Restart bot
 systemctl restart fys501-bot
 # OR
-pm2 restart bot.js
+pm2 restart bot_fys501.js
 
 # Verify
 curl http://localhost:3000/healthz
@@ -159,7 +159,7 @@ curl http://localhost:3000/healthz
 
 ```bash
 # If manual:
-# 1. Upload new files (bot.js, latex-renderer.js) via SCP/SFTP
+# 1. Upload new files (bot_fys501.js, latex-renderer.js) via SCP/SFTP
 # 2. Update .env with LATEX_ENABLED=true
 # 3. Restart bot process manually
 # 4. Test in Telegram
@@ -197,7 +197,7 @@ git push origin main
 # Restart bot on server
 
 # Option 3: Restore from backup
-git checkout HEAD~1 bot.js
+git checkout HEAD~1 bot_fys501.js
 git commit -am "Revert LaTeX support"
 git push origin main
 # Restart bot
@@ -347,11 +347,11 @@ tail -f bot.log | grep "Claude ok"
 
 | Issue | Solution |
 |-------|----------|
-| `latex-renderer.js: MODULE NOT FOUND` | Ensure `latex-renderer.js` is in same directory as `bot.js` |
+| `latex-renderer.js: MODULE NOT FOUND` | Ensure `latex-renderer.js` is in same directory as `bot_fys501.js` |
 | `LATEX_ENABLED` undefined | Add to `.env` file: `LATEX_ENABLED=true` |
 | Images don't render | Verify CodeCogs is accessible from your server (check firewall) |
 | Slow responses | Set `LATEX_VERIFY_BEFORE_SEND=false` in `.env` |
-| Bot doesn't start | Check `node bot.js` runs locally first |
+| Bot doesn't start | Check `node bot_fys501.js` runs locally first |
 | Git commit fails | Ensure `.git/` repo exists, not just code copy |
 
 ---
@@ -398,7 +398,7 @@ curl http://localhost:3000/healthz
 - [ ] All new files copied
 - [ ] .env updated
 - [ ] git status clean
-- [ ] Backup of current bot.js exists
+- [ ] Backup of current bot_fys501.js exists
 
 # During deployment
 - [ ] Files committed and pushed
@@ -425,7 +425,7 @@ curl http://localhost:3000/healthz
 **Still having issues?**
 
 1. **Check logs**: `tail -f /path/to/bot.log`
-2. **Test locally**: `TELEGRAM_TOKEN=... node bot.js`
+2. **Test locally**: `TELEGRAM_TOKEN=... node bot_fys501.js`
 3. **Check CodeCogs**: Visit https://www.codecogs.com/latex/about.php
 4. **Verify Telegram**: Send `/start` to bot, expect HELP_TEXT
 

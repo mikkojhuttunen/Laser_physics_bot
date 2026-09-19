@@ -1,5 +1,5 @@
 /**
- * Regenerate homework_problems.json for the FYS.501 Laser Physics bot,
+ * Regenerate homework_problems_fys501.json for the FYS.501 Laser Physics bot,
  * directly from the HW#_FYS501_ModelSolutions.tex sources — the same
  * approach build_corpus.js uses for the lecture material, applied to the
  * homework problem statements instead.
@@ -24,7 +24,7 @@
  *
  *   node build_homework_fys501.js <tex_dir>
  *
- * Then commit the new homework_problems.json and redeploy the laser bot.
+ * Then commit the new homework_problems_fys501.json and redeploy the laser bot.
  */
 
 const fs = require('fs');
@@ -119,13 +119,13 @@ function main() {
     stats.push({ file, hwNum, count: blocks.length });
   }
 
-  const outPath = path.join(process.cwd(), 'homework_problems.json');
+  const outPath = path.join(process.cwd(), 'homework_problems_fys501.json');
   fs.writeFileSync(outPath, JSON.stringify(result, null, 2), 'utf8');
 
   console.log('File'.padEnd(45) + 'HW#'.padEnd(6) + 'Problems');
   for (const s of stats) console.log(s.file.padEnd(45) + s.hwNum.padEnd(6) + s.count);
   const total = stats.reduce((n, s) => n + s.count, 0);
-  console.log(`\nWrote homework_problems.json — ${total} problems across ${stats.length} homeworks`);
+  console.log(`\nWrote homework_problems_fys501.json — ${total} problems across ${stats.length} homeworks`);
 }
 
 main();

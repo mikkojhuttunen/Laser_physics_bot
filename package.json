@@ -2,9 +2,9 @@
   "name": "fys501-laser-bot",
   "version": "1.0.0",
   "private": true,
-  "main": "bot.js",
+  "main": "bot_fys501.js",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node bot_fys501.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.125.0",

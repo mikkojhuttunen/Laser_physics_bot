@@ -1,7 +1,7 @@
 /**
  * corpusLoader.js
  * -----------------
- * Chapter- and section-tagged access into course_corpus.txt.
+ * Chapter- and section-tagged access into course_corpus_fys501.txt.
  *
  * The corpus is a single flat text file (built by build_corpus.js) that
  * concatenates the lecture slides and the four textbook chapters, wrapped in
@@ -19,27 +19,27 @@
  * guide), this loader takes the "fallback" approach: it recognises headings
  * in *either* numbering convention directly via regex character classes, and
  * exposes a `getCorpusSection(chapter, section)` that works against the
- * existing course_corpus.txt unmodified. If build_corpus.js is ever updated
+ * existing course_corpus_fys501.txt unmodified. If build_corpus.js is ever updated
  * to emit explicit `### 2.3 ... ###` delimiters, this loader can be
  * simplified, but nothing else needs to change (same exported function
  * signatures).
  *
  * SECTION_INDEX below is the canonical list of chapters/sections used
- * throughout the quiz feature (quizBank.json, buildQuizBank.js). It resolves
+ * throughout the quiz feature (quizBank_fys501.json, buildQuizBank.js). It resolves
  * the slide-vs-textbook numbering disagreement in section 3.4/3.5 by
  * following the textbook's own internal order (3.4 Eigenmodes, 3.5
- * Stability), since that's what quizBank.json was already built against.
+ * Stability), since that's what quizBank_fys501.json was already built against.
  */
 
 const fs = require('fs');
 const path = require('path');
 
-const CORPUS_PATH = path.join(__dirname, 'course_corpus.txt');
+const CORPUS_PATH = path.join(__dirname, 'course_corpus_fys501.txt');
 
-// terminology.json is built offline by terminology.js (harvested from the
+// terminology_fys501.json is built offline by terminology.js (harvested from the
 // \CDAlert/\Alert-marked lecture .tex sources) and committed alongside the
-// corpus. It backs the /define command in bot.js.
-const TERMINOLOGY_PATH = path.join(__dirname, 'terminology.json');
+// corpus. It backs the /define command in bot_fys501.js.
+const TERMINOLOGY_PATH = path.join(__dirname, 'terminology_fys501.json');
 
 // Default cap on how much text getCorpusSection() returns, to keep LLM
 // prompts (and eyeballing during buildQuizBank.js runs) reasonably sized.
@@ -271,7 +271,7 @@ function truncateBalanced(parts, maxChars) {
     .join(SEP);
 }
 
-// ---------- glossary (terminology.json) ----------
+// ---------- glossary (terminology_fys501.json) ----------
 
 let _glossary = null;
 
@@ -364,7 +364,7 @@ function getCorpusSection(chapter, section, opts = {}) {
 
   if (!textbookBlock && !slidesFull) {
     throw new Error(
-      `corpusLoader: could not locate chapter ${chapterNum} content in course_corpus.txt ` +
+      `corpusLoader: could not locate chapter ${chapterNum} content in course_corpus_fys501.txt ` +
       `(corpus may be stale or malformed — try re-running build_corpus.js)`
     );
   }

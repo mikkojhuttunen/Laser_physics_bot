@@ -26,10 +26,10 @@ The energy is: $$E = h\\nu$$
 
 ### 1. Update Your Files
 
-Replace your current `bot.js` with `bot_modified.js`:
+Replace your current `bot_fys501.js` with `bot_modified.js`:
 ```bash
-cp bot.js bot_backup.js
-cp bot_modified.js bot.js
+cp bot_fys501.js bot_backup.js
+cp bot_modified.js bot_fys501.js
 ```
 
 ### 2. Add the LaTeX Renderer Module
@@ -43,9 +43,9 @@ ls latex-renderer.js
 Your project structure should look like:
 ```
 your-bot-repo/
-├── bot.js                    # MODIFIED
+├── bot_fys501.js                    # MODIFIED
 ├── latex-renderer.js         # NEW
-├── course_corpus.txt
+├── course_corpus_fys501.txt
 ├── build_corpus.js
 ├── package.json
 ├── .env
@@ -123,7 +123,7 @@ New utility module with 5 exported functions:
 
 **`extractAndSendLatex(tg, chatId, responseText, replyToMessageId)`**
 - Main function: parses response and sends text + images
-- Called from `bot.js` in place of plain `sendMessage()`
+- Called from `bot_fys501.js` in place of plain `sendMessage()`
 
 **`parseLatexBlocks(text)`**
 - Splits text by `$$` delimiters
@@ -142,11 +142,11 @@ New utility module with 5 exported functions:
 - Sends single LaTeX equation as image
 - Falls back to text `[Equation: ...]` if rendering fails
 
-### Modified `bot.js` Changes
+### Modified `bot_fys501.js` Changes
 
 **New import:**
 ```javascript
-const { extractAndSendLatex } = require("./latex-renderer");
+const { extractAndSendLatex } = require("./latex-renderer_fys501");
 ```
 
 **Updated `TA_INSTRUCTIONS`:**
@@ -302,7 +302,7 @@ If you see images but no text around them:
 
 Add these files to your repo:
 ```bash
-git add bot.js latex-renderer.js .env.example SETUP_LATEX.md
+git add bot_fys501.js latex-renderer.js .env.example SETUP_LATEX.md
 git commit -m "feat: add LaTeX equation rendering via CodeCogs"
 ```
 
@@ -332,7 +332,7 @@ No changes needed to:
 - Environment variables in cloud platform (AWS, Heroku, etc.)
 
 Just:
-1. Upload new files (`bot.js`, `latex-renderer.js`)
+1. Upload new files (`bot_fys501.js`, `latex-renderer.js`)
 2. Restart the bot
 3. It will auto-enable LaTeX rendering
 
@@ -344,7 +344,7 @@ Just:
 
 1. Start the bot:
    ```bash
-   TELEGRAM_TOKEN=... ANTHROPIC_API_KEY=... node bot.js
+   TELEGRAM_TOKEN=... ANTHROPIC_API_KEY=... node bot_fys501.js
    ```
 
 2. Send a test question to your bot:
@@ -363,7 +363,7 @@ To test LaTeX parsing without Telegram:
 
 Create a test file `test_latex.js`:
 ```javascript
-const { parseLatexBlocks, buildCodecogsUrl } = require("./latex-renderer");
+const { parseLatexBlocks, buildCodecogsUrl } = require("./latex-renderer_fys501");
 
 const response = `
 The quadratic formula is:
@@ -414,7 +414,7 @@ node test_latex.js
 
 ## Next Steps
 
-1. **Deploy**: Replace `bot.js` with `bot_modified.js`
+1. **Deploy**: Replace `bot_fys501.js` with `bot_modified.js`
 2. **Copy**: Add `latex-renderer.js` to your repo
 3. **Configure**: Update `.env` with `LATEX_ENABLED=true`
 4. **Restart**: Restart the bot

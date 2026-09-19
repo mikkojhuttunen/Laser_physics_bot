@@ -21,9 +21,9 @@ const fs = require("fs");
 const path = require("path");
 const express = require("express");
 const axios = require("axios");
-const quizGenerator = require("./quizGenerator");
-const corpusLoader = require("./corpusLoader");
-const lectureLinks = require("./lectureLinks");
+const quizGenerator = require("./quizGenerator_fys501");
+const corpusLoader = require("./corpusLoader_fys501");
+const lectureLinks = require("./lectureLinks_fys501");
 
 const app = express();
 app.use(express.json());
@@ -41,7 +41,7 @@ const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
 
 // ------------------------------------------------------- course material ----
 // Loaded ONCE at startup. Regenerate with `node build_corpus.js` if the PDFs change.
-const CORPUS_PATH = path.join(__dirname, "course_corpus.txt");
+const CORPUS_PATH = path.join(__dirname, "course_corpus_fys501.txt");
 let COURSE_CORPUS = "";
 try {
   COURSE_CORPUS = fs.readFileSync(CORPUS_PATH, "utf8");
@@ -57,14 +57,14 @@ try {
 // Exact per-problem text, keyed "<hw>" -> "<problem>" -> text, e.g. HOMEWORK_PROBLEMS["1"]["2"].
 // Built by build_corpus.js from problems numbered "<hw>.<n>" in the HW PDFs.
 // Optional: if missing/empty, /HW commands fall back to letting Claude search the full corpus.
-const HW_PROBLEMS_PATH = path.join(__dirname, "homework_problems.json");
+const HW_PROBLEMS_PATH = path.join(__dirname, "homework_problems_fys501.json");
 let HOMEWORK_PROBLEMS = {};
 try {
   HOMEWORK_PROBLEMS = JSON.parse(fs.readFileSync(HW_PROBLEMS_PATH, "utf8"));
   const total = Object.values(HOMEWORK_PROBLEMS).reduce((n, hw) => n + Object.keys(hw).length, 0);
-  console.log(`Loaded homework_problems.json: ${total} problems across ${Object.keys(HOMEWORK_PROBLEMS).length} homeworks`);
+  console.log(`Loaded homework_problems_fys501.json: ${total} problems across ${Object.keys(HOMEWORK_PROBLEMS).length} homeworks`);
 } catch (e) {
-  console.log(`No homework_problems.json found (${e.code || e.message}) — /HW commands will fall back to full-corpus search.`);
+  console.log(`No homework_problems_fys501.json found (${e.code || e.message}) — /HW commands will fall back to full-corpus search.`);
 }
 
 // Lecture video links, keyed by week (lecture_data-2.json). Loaded once at
@@ -301,7 +301,7 @@ async function sendMessage(chatId, text, replyTo, parseMode) {
 
 // ---------------------------------------------------- quiz bot adapter -----
 // quizGenerator.js expects a small node-telegram-bot-api-shaped `bot`
-// object (sendMessage/editMessageText/answerCallbackQuery). This bot.js
+// object (sendMessage/editMessageText/answerCallbackQuery). This bot_fys501.js
 // talks to Telegram directly via axios (tg()) rather than that library, so
 // this adapter bridges the two without adding a new dependency.
 const quizBot = {
@@ -477,7 +477,7 @@ function buildHwOverviewDirective(hwNum) {
   );
 }
 
-// Free, deterministic version — used when homework_problems.json has this homework,
+// Free, deterministic version — used when homework_problems_fys501.json has this homework,
 // so it costs no API call and can't hallucinate a problem list.
 function buildHwOverviewFromStructuredData(hwNum) {
   const problems = HOMEWORK_PROBLEMS[hwNum];

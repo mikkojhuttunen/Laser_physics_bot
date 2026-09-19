@@ -5,7 +5,7 @@ Quick reference for integrating LaTeX rendering into your Telegram bot.
 ## Files to Change/Add
 
 ### Files to Replace
-- [ ] `bot.js` → Replace with `bot_modified.js` (or manually apply changes below)
+- [ ] `bot_fys501.js` → Replace with `bot_modified.js` (or manually apply changes below)
 
 ### Files to Add
 - [ ] `latex-renderer.js` ← NEW utility module (copy directly)
@@ -24,9 +24,9 @@ Quick reference for integrating LaTeX rendering into your Telegram bot.
 # Copy the LaTeX renderer module
 cp latex-renderer.js ./
 
-# Or if you modified bot.js manually:
-cp bot.js bot.js.backup
-cp bot_modified.js bot.js
+# Or if you modified bot_fys501.js manually:
+cp bot_fys501.js bot_fys501.js.backup
+cp bot_modified.js bot_fys501.js
 ```
 
 ### Step 2: Update Environment
@@ -47,13 +47,13 @@ npm install
 
 ### Step 4: Test Locally
 ```bash
-TELEGRAM_TOKEN=xxx ANTHROPIC_API_KEY=yyy node bot.js
+TELEGRAM_TOKEN=xxx ANTHROPIC_API_KEY=yyy node bot_fys501.js
 # Should log: "LaTeX=ENABLED ✓"
 ```
 
 ### Step 5: Deploy
 ```bash
-git add bot.js latex-renderer.js .env.example SETUP_LATEX.md
+git add bot_fys501.js latex-renderer.js .env.example SETUP_LATEX.md
 git commit -m "feat: add LaTeX rendering support"
 git push origin main
 # Restart bot on your server
@@ -61,11 +61,11 @@ git push origin main
 
 ---
 
-## What Changed in bot.js?
+## What Changed in bot_fys501.js?
 
 | Section | Change | Details |
 |---------|--------|---------|
-| **Imports** | Added | `const { extractAndSendLatex } = require("./latex-renderer");` |
+| **Imports** | Added | `const { extractAndSendLatex } = require("./latex-renderer_fys501");` |
 | **TA_INSTRUCTIONS** | Updated | Now tells Claude to use `$$..$$` for equations + LaTeX syntax |
 | **Config** | Added | `LATEX_ENABLED` env variable (default: `true`) |
 | **sendMessage()** | Modified | Now calls `extractAndSendLatex()` if `LATEX_ENABLED` is true |
@@ -102,9 +102,9 @@ LATEX_ENABLED=false
 # Restart bot
 ```
 
-**Option 2: Revert bot.js**
+**Option 2: Revert bot_fys501.js**
 ```bash
-git checkout HEAD~1 bot.js
+git checkout HEAD~1 bot_fys501.js
 # Restart bot
 ```
 
@@ -143,7 +143,7 @@ git checkout HEAD~1 bot.js
 
 ### ✅ Commit These
 ```
-bot.js                              # MODIFIED
+bot_fys501.js                              # MODIFIED
 latex-renderer.js                   # NEW
 SETUP_LATEX.md                      # NEW (documentation)
 .env.example                        # UPDATED
@@ -154,7 +154,7 @@ LATEX_IMPLEMENTATION_CHECKLIST.md  # NEW (this file)
 ```
 .env                   # Contains secrets!
 node_modules/          # Generated, huge
-bot.js.backup          # Old version
+bot_fys501.js.backup          # Old version
 *.log                  # Logs
 ```
 
@@ -176,7 +176,7 @@ bot_backup.js
 ### Test Parsing (without Telegram)
 ```bash
 node -e "
-const { parseLatexBlocks } = require('./latex-renderer');
+const { parseLatexBlocks } = require('./latex-renderer_fys501');
 const text = 'Energy: \$\$E = mc^2\$\$. Famous!';
 console.log(parseLatexBlocks(text));
 "
@@ -262,9 +262,9 @@ git push
 # Restart bot
 ```
 
-### Restore Original bot.js
+### Restore Original bot_fys501.js
 ```bash
-git checkout HEAD~1 bot.js
+git checkout HEAD~1 bot_fys501.js
 git commit -m "Revert LaTeX support"
 git push
 # Restart bot

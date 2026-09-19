@@ -2,21 +2,21 @@
  * Homework-helper commands — /HW3, /HW3.2, /HW_hint3.2
  *
  * Extracted verbatim (logic-for-logic) from bot_v1_working_but_no_lecture_links.js
- * so it can be dropped into the current main-branch bot.js (the course_corpus_v2 /
+ * so it can be dropped into the current main-branch bot_fys501.js (the course_corpus_v2 /
  * /define glossary branch) without touching that file's corpus-v2 or glossary code.
  *
  * This module does NOT talk to Telegram or Claude directly — it hands back plain
  * strings/directives and lets your existing sendMessage()/askClaude() do the work,
- * so it doesn't care how the new bot.js wires those up.
+ * so it doesn't care how the new bot_fys501.js wires those up.
  *
  * ---------------------------------------------------------------------------
- * INTEGRATION (edit bot.js):
+ * INTEGRATION (edit bot_fys501.js):
  *
  * 1. Near your other requires:
- *      const hw = require("./hwCommands");
+ *      const hw = require("./hwCommands_fys501");
  *
  * 2. At startup, alongside your other file loads (corpus, glossary, etc.):
- *      hw.load();   // reads homework_problems.json once; logs how many problems loaded
+ *      hw.load();   // reads homework_problems_fys501.json once; logs how many problems loaded
  *
  * 3. Inside handleUpdate(), BEFORE the generic question/glossary/Claude fallback
  *    (put it next to your other slash-command checks like /reset, /lectures, /define):
@@ -52,7 +52,7 @@
  *
  * 4. Add the homework lines to your /help text (see hw.HELP_SNIPPET below).
  *
- * 5. Make sure homework_problems.json is present in the new repo layout (same file,
+ * 5. Make sure homework_problems_fys501.json is present in the new repo layout (same file,
  *    unchanged format: { "<hw>": { "<problem>": "<verbatim text>" } }). If the v2
  *    corpus pipeline renamed/relocated it, pass the new path to hw.load(path).
  * ---------------------------------------------------------------------------
@@ -69,13 +69,13 @@ const HW_COMMAND_RE = /^\/HW(_hint)?(\d+)(?:\.(\d+))?(@\S+)?\b/i;
 let HOMEWORK_PROBLEMS = {};
 
 function load(customPath) {
-  const hwPath = customPath || path.join(__dirname, "homework_problems.json");
+  const hwPath = customPath || path.join(__dirname, "homework_problems_fys501.json");
   try {
     HOMEWORK_PROBLEMS = JSON.parse(fs.readFileSync(hwPath, "utf8"));
     const total = Object.values(HOMEWORK_PROBLEMS).reduce((n, hw) => n + Object.keys(hw).length, 0);
     console.log(`[hwCommands] Loaded ${hwPath}: ${total} problems across ${Object.keys(HOMEWORK_PROBLEMS).length} homeworks`);
   } catch (e) {
-    console.log(`[hwCommands] No homework_problems.json found (${e.code || e.message}) — /HW commands will fall back to full-corpus search.`);
+    console.log(`[hwCommands] No homework_problems_fys501.json found (${e.code || e.message}) — /HW commands will fall back to full-corpus search.`);
   }
 }
 

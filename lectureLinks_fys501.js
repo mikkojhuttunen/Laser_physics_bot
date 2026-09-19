@@ -1,10 +1,10 @@
 // lectureLinks.js
 // Handles lookup and formatting of lecture video links for the TA bot.
-// Data source: lecture_data.json (weeks -> topics -> keywords -> lectures)
+// Data source: lecture_data_fys501.json (weeks -> topics -> keywords -> lectures)
 
 const fs = require('fs');
 const path = require('path');
-const { classifyLectureQuery } = require('./lectureClassifier');
+const { classifyLectureQuery } = require('./lectureClassifier_fys501');
 
 let lectureData = null;
 
@@ -16,24 +16,24 @@ let lectureData = null;
 const STAGE1_TRIGGER = /\b(video|lecture|recording|watch|rewatch|stream)\b/i;
 
 /**
- * Loads lecture_data.json once at startup. Mirrors the corpus-loading
+ * Loads lecture_data_fys501.json once at startup. Mirrors the corpus-loading
  * pattern used elsewhere in the bot: load once, keep in memory, and expose
  * a health flag rather than failing silently.
  */
-function loadLectureData(dataPath = path.join(__dirname, 'lecture_data.json')) {
+function loadLectureData(dataPath = path.join(__dirname, 'lecture_data_fys501.json')) {
   try {
     const raw = fs.readFileSync(dataPath, 'utf8');
     lectureData = JSON.parse(raw);
     console.log(`[lectureLinks] Loaded ${lectureData.weeks.length} weeks of lecture data.`);
     return true;
   } catch (err) {
-    console.error('[lectureLinks] Failed to load lecture_data.json:', err.message);
+    console.error('[lectureLinks] Failed to load lecture_data_fys501.json:', err.message);
     lectureData = { weeks: [] };
     return false;
   }
 }
 
-/** Simple health check, same spirit as corpusLooksHealthy in bot.js */
+/** Simple health check, same spirit as corpusLooksHealthy in bot_fys501.js */
 function lectureDataLooksHealthy() {
   return !!lectureData && Array.isArray(lectureData.weeks) && lectureData.weeks.length > 0;
 }
@@ -106,7 +106,7 @@ function extractWeekNumber(query) {
 }
 
 /**
- * Two-stage entry point for bot.js.
+ * Two-stage entry point for bot_fys501.js.
  * Stage 1 (regex, STAGE1_TRIGGER) should already have fired before this is
  * called. Stage 2 asks the classifier LLM which week(s) match; the LLM only
  * ever returns week numbers, never URLs. This function then looks those
