@@ -26,6 +26,15 @@
  *
  * LECTURE LISTING:
  *   /lectures and /topics are identical aliases (full week-by-week video listing).
+ *
+ * ACCESS CONTROL / COST LIMITS (membership.js, usageLimiter.js, accessGuard.js):
+ *   - Only members of the private course channel (COURSE_CHANNEL_ID) may use the bot.
+ *   - Every LLM-backed action costs credits from a per-student daily allowance
+ *     (STUDENT_LLM_DAILY_USAGE). Bank-served quiz questions, /lectures, keyword lecture
+ *     lookups, /HW overviews and other deterministic replies are free.
+ *   - DAILY_BACKSTOP_EUR pauses all LLM calls for everybody once the estimated daily
+ *     spend is reached. Quizzes then degrade to bank-only questions.
+ *   - /usage shows the student's remaining allowance.
  */
 
 const fs = require("fs");
@@ -36,6 +45,8 @@ const quizGenerator = require("./quizGenerator_fys501");
 const mvQuizGenerator = require("./multivalueQuizGenerator_fys501");
 const corpusLoader = require("./corpusLoader_fys501");
 const lectureLinks = require("./lectureLinks_fys501");
+const limiter = require("./usageLimiter");
+const { requireMember, requireLLMBudget, maybeWarnLow, refundLLM, usageText, MSG } = require("./accessGuard");
 
 const app = express();
 app.use(express.json());
@@ -346,6 +357,18 @@ const quizBot = {
       console.error("Telegram answerCallbackQuery failed:", e.response?.status, JSON.stringify(e.response?.data))
     );
   },
+  // Used by membership.js. Unlike the methods above this one must THROW on failure
+  // (with Telegram's description in the message) so membership.js can tell
+  // "user not found" apart from network/permission errors.
+  async getChatMember(chatId, userId) {
+    try {
+      const res = await tg("getChatMember", { chat_id: chatId, user_id: userId });
+      return res.data.result;
+    } catch (e) {
+      const desc = e.response?.data?.description || e.message;
+      throw new Error(`ETELEGRAM: ${e.response?.status || ""} ${desc}`.trim());
+    }
+  },
 };
 
 // Called by quizGenerator.startQuiz() when the student didn't name a
@@ -395,6 +418,7 @@ async function askClaude(chatId, question) {
       );
 
       const u = res.data.usage || {};
+      limiter.recordUsage(MODEL, u);
       console.log(
         `Claude ok | in=${u.input_tokens} cache_write=${u.cache_creation_input_tokens || 0} ` +
         `cache_read=${u.cache_read_input_tokens || 0} out=${u.output_tokens}`
@@ -446,6 +470,7 @@ async function askClaudeVision(imageBase64, mediaType, directive) {
         { model: VISION_MODEL, max_tokens: VISION_MAX_TOKENS, system: SYSTEM_BLOCKS, messages },
         { headers: ANTHROPIC_HEADERS, timeout: 120000 }
       );
+      limiter.recordUsage(VISION_MODEL, res.data.usage);
       return res.data.content
         .filter((b) => b.type === "text")
         .map((b) => b.text)
@@ -592,6 +617,8 @@ const HELP_TEXT =
   "- \"quiz me on chapter 2\" or \"quiz me on section 2.3\" — multiple choice, tap an answer to grade it\n" +
   "- add a number for how many questions, e.g. \"quiz me on chapter 2, 10 questions\"\n" +
   "- /mvquiz chapter 2 (or /mvquiz 2.3) — a \"select all that apply\" quiz: tap every letter that is correct, then Submit. Partial credit is given.\n\n" +
+  "Usage:\n" +
+  "- /usage — how many AI answers you have left today (bank quizzes and lecture links are free)\n\n" +
   "Lecture videos:\n" +
   "- /lectures (or /topics) — full listing, week by week\n" +
   "- \"is there a video on gain saturation?\" or \"recording for week 3?\" — I'll find the right one(s)\n\n" +
@@ -610,6 +637,7 @@ app.get("/healthz", (_req, res) =>
     quizBankLooksHealthy: quizGenerator.quizBankLooksHealthy(),
     multivalueQuizBankLooksHealthy: mvQuizGenerator.quizBankLooksHealthy(),
     lectureDataLooksHealthy: lectureLinks.lectureDataLooksHealthy(),
+    usage: limiter.status(),
   })
 );
 
@@ -647,6 +675,15 @@ async function handleUpdate(update) {
 
   if (!shouldAnswer(message)) return;
 
+  // ---- access control: course-channel members only (cached getChatMember).
+  // In group chats non-members are ignored silently, so a stray photo or command
+  // from an outsider doesn't make the bot post notices to the whole group.
+  const isPrivate = message.chat.type === "private";
+  if (!(await requireMember(quizBot, chatId, userId, { silent: !isPrivate }))) return;
+
+  // /usage is free (no LLM call).
+  if (/^\/usage\b/i.test(text)) return sendMessage(chatId, usageText(userId), message.message_id);
+
   // ---- photo submission: quick direction check, handled before anything else
   if (message.photo && message.photo.length) {
     if (!shouldAnswer(message)) return;
@@ -658,6 +695,9 @@ async function handleUpdate(update) {
     const caption = (message.caption || "").trim();
     console.log(`[${message.chat.type}:${chatId}] photo submitted, caption="${caption.slice(0, 80)}"`);
 
+    const photoBudget = await requireLLMBudget(quizBot, chatId, userId, "photo");
+    if (!photoBudget.ok) return;
+
     await tg("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
 
     try {
@@ -667,7 +707,9 @@ async function handleUpdate(update) {
       const directive = buildPhotoCheckDirective(caption);
       const reply = await askClaudeVision(base64, mediaType, directive);
       await sendMessage(chatId, reply, message.message_id);
+      await maybeWarnLow(quizBot, chatId, photoBudget);
     } catch (e) {
+      refundLLM(userId, photoBudget);
       console.error("Photo check failed:", e.message);
       await sendMessage(
         chatId,
@@ -706,7 +748,7 @@ async function handleUpdate(update) {
     console.log(`[${message.chat.type}:${chatId}] /mvquiz command: ${text.slice(0, 60)}`);
 
     return mvQuizGenerator
-      .startMultivalueQuiz(quizBot, chatId, mvQuizText, askWhichChapterMv)
+      .startMultivalueQuiz(quizBot, chatId, mvQuizText, askWhichChapterMv, userId)
       .catch((e) => console.error("mvQuizGenerator.startMultivalueQuiz (/mvquiz) crashed:", e.message));
   }
 
@@ -736,6 +778,9 @@ async function handleUpdate(update) {
       ? buildHwMinimalHintDirective(hwNum, problemNum)
       : buildHwHintDirective(hwNum, problemNum);
 
+    const hwBudget = await requireLLMBudget(quizBot, chatId, userId, "chat");
+    if (!hwBudget.ok) return;
+
     await tg("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
 
     try {
@@ -743,7 +788,9 @@ async function handleUpdate(update) {
       remember(chatId, "user", text);
       remember(chatId, "assistant", reply);
       await sendMessage(chatId, reply, message.message_id);
+      await maybeWarnLow(quizBot, chatId, hwBudget);
     } catch (e) {
+      refundLLM(userId, hwBudget);
       await sendMessage(
         chatId,
         "Sorry, I couldn't reach my brain just now. Please try again in a moment.",
@@ -768,14 +815,14 @@ async function handleUpdate(update) {
   // word "quiz", so the single-select regex would otherwise claim them.
   if (mvQuizGenerator.isMultivalueQuizRequest(question)) {
     return mvQuizGenerator
-      .startMultivalueQuiz(quizBot, chatId, question, askWhichChapterMv)
+      .startMultivalueQuiz(quizBot, chatId, question, askWhichChapterMv, userId)
       .catch((e) => console.error("mvQuizGenerator.startMultivalueQuiz crashed:", e.message));
   }
 
   // ---- "quiz me" / "quiz me on chapter 2" / "quiz me on section 2.3" ----
   if (quizGenerator.isQuizRequest(question)) {
     return quizGenerator
-      .startQuiz(quizBot, chatId, question, askWhichChapter)
+      .startQuiz(quizBot, chatId, question, askWhichChapter, userId)
       .catch((e) => console.error("quizGenerator.startQuiz crashed:", e.message));
   }
 
@@ -791,6 +838,9 @@ async function handleUpdate(update) {
     return;
   }
 
+  const chatBudget = await requireLLMBudget(quizBot, chatId, userId, "chat");
+  if (!chatBudget.ok) return;
+
   await tg("sendChatAction", { chat_id: chatId, action: "typing" }).catch(() => {});
 
   try {
@@ -798,7 +848,9 @@ async function handleUpdate(update) {
     remember(chatId, "user", question);
     remember(chatId, "assistant", reply);
     await sendMessage(chatId, reply, message.message_id);
+    await maybeWarnLow(quizBot, chatId, chatBudget);
   } catch (e) {
+    refundLLM(userId, chatBudget);
     await sendMessage(
       chatId,
       "Sorry, I couldn't reach my brain just now. Please try again in a moment.",
@@ -815,6 +867,14 @@ async function handleUpdate(update) {
 async function handleCallbackQuery(cq) {
   const data = cq.data || "";
 
+  // Same membership gate as for messages (membership may have been revoked mid-quiz).
+  // Free: answered from the 5-minute cache in the normal case.
+  const cqChatId = cq.message?.chat?.id;
+  if (!(await requireMember(quizBot, cqChatId, cq.from?.id, { silent: true }))) {
+    await quizBot.answerCallbackQuery(cq.id, { text: MSG.notMember }).catch(() => {});
+    return;
+  }
+
   // ---- multivalue ("select all that apply") quiz add-on — its own
   // callback_data namespace, kept separate from "quiz:"/"quizchapter:" ----
   if (data.startsWith("mv:")) {
@@ -829,7 +889,7 @@ async function handleCallbackQuery(cq) {
     await quizBot.answerCallbackQuery(cq.id);
     if (!chatId) return;
     return mvQuizGenerator
-      .startMultivalueQuiz(quizBot, chatId, `multiquiz chapter ${chapter}`, askWhichChapterMv)
+      .startMultivalueQuiz(quizBot, chatId, `multiquiz chapter ${chapter}`, askWhichChapterMv, cq.from?.id)
       .catch((e) => console.error("mvQuizGenerator.startMultivalueQuiz (chapter pick) crashed:", e.message));
   }
 
@@ -845,7 +905,7 @@ async function handleCallbackQuery(cq) {
     await quizBot.answerCallbackQuery(cq.id);
     if (!chatId) return;
     return quizGenerator
-      .startQuiz(quizBot, chatId, `quiz me on chapter ${chapter}`, askWhichChapter)
+      .startQuiz(quizBot, chatId, `quiz me on chapter ${chapter}`, askWhichChapter, cq.from?.id)
       .catch((e) => console.error("quizGenerator.startQuiz (chapter pick) crashed:", e.message));
   }
 

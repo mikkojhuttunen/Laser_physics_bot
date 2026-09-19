@@ -83,6 +83,7 @@ const fs = require('fs');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const corpusLoader = require('./corpusLoader_fys501');
+const limiter = require('./usageLimiter');
 const { getCorpusSection } = corpusLoader;
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -144,6 +145,8 @@ const UI = {
   countCapped: (max) => `Let's start with ${max}, you can always ask for another round.`,
   startFailed: "Sorry, I couldn't put together a multi-select quiz for that right now — try again in a bit.",
   noQuestions: "I couldn't find or generate any multi-select questions for that section — try a different chapter/section.",
+  generationPausedEmpty: "There are no ready-made multi-select questions for that section, and AI question generation is paused for today (daily allowance or shared capacity used up). Try another chapter/section, or come back tomorrow.",
+  generationPausedPartial: (n, wanted) => `Only ${n} of ${wanted} questions are available right now — extra AI-generated questions are paused for today.`,
   question: (n, total) => `Question ${n}/${total}`,
   selectAllNote: 'Select ALL letters that apply, then tap Submit.',
   submitLabel: '\u2705 Submit answer',
@@ -354,7 +357,7 @@ async function generateQuiz(chapter, section, count = 5) {
   const corpusExcerpt = getCorpusSection(chapter, section || undefined);
 
   const scopeLabel = section ? `Section ${section}` : `Chapter ${chapter}`;
-  const response = await anthropic.messages.create({
+  const response = await limiter.trackedCreate(anthropic, {
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1800,
     system: QUIZ_SYSTEM_PROMPT,
@@ -399,7 +402,7 @@ async function generateQuiz(chapter, section, count = 5) {
  * fallback for the shortfall only, with self-expansion of freshly generated
  * questions into the pending file.
  */
-async function getQuizQuestions(chatId, chapter, section, count) {
+async function getQuizQuestions(chatId, chapter, section, count, userId = chatId) {
   const excludeIds = getRecentlyServed(chatId);
   const { questions: bankQuestions, shortfall } = sampleFromBank(chapter, section, count, excludeIds);
 
@@ -409,10 +412,21 @@ async function getQuizQuestions(chatId, chapter, section, count) {
     return bankQuestions;
   }
 
+  // Graceful degradation: live generation costs LLM credits (bank-served questions are
+  // free). If the student's daily allowance or the shared daily backstop is used up,
+  // serve the bank questions only and tell startMultivalueQuiz() why via a flag.
+  const gate = limiter.reserve(userId, 'quiz');
+  if (!gate.ok) {
+    console.log(`multivalueQuizGenerator_fys501: live generation skipped (${gate.reason}) — serving ${bankQuestions.length}/${count} from the bank only`);
+    bankQuestions.generationSkipped = gate.reason;
+    return bankQuestions;
+  }
+
   let generated = [];
   try {
     generated = await generateQuiz(chapter, section, shortfall);
   } catch (err) {
+    limiter.refund(userId, gate.cost);
     console.warn(`multivalueQuizGenerator_fys501: live fallback generation failed (${err.message}) — serving ${bankQuestions.length}/${count} from the bank only`);
     return bankQuestions;
   }
@@ -485,7 +499,7 @@ async function sendQuestion(bot, chatId, session) {
 // the "mvquizchapter:N" picker callback (text "multiquiz chapter N").
 // `askWhichChapter(bot, chatId)` is called when the request doesn't name a
 // chapter/section; it should prompt the student and return null.
-async function startMultivalueQuiz(bot, chatId, text, askWhichChapter = defaultAskWhichChapter) {
+async function startMultivalueQuiz(bot, chatId, text, askWhichChapter = defaultAskWhichChapter, userId = chatId) {
   const chapter = extractChapterHint(text) || (await askWhichChapter(bot, chatId));
   if (!chapter) return;
 
@@ -503,7 +517,7 @@ async function startMultivalueQuiz(bot, chatId, text, askWhichChapter = defaultA
 
   let questions;
   try {
-    questions = await getQuizQuestions(chatId, chapter, section, requestedCount);
+    questions = await getQuizQuestions(chatId, chapter, section, requestedCount, userId);
   } catch (err) {
     console.error(`multivalueQuizGenerator_fys501: startMultivalueQuiz failed for chapter ${chapter}${section ? '.' + section : ''}: ${err.message}`);
     await bot.sendMessage(chatId, UI.startFailed);
@@ -511,8 +525,11 @@ async function startMultivalueQuiz(bot, chatId, text, askWhichChapter = defaultA
   }
 
   if (!questions.length) {
-    await bot.sendMessage(chatId, UI.noQuestions);
+    await bot.sendMessage(chatId, questions.generationSkipped ? UI.generationPausedEmpty : UI.noQuestions);
     return;
+  }
+  if (questions.generationSkipped && questions.length < requestedCount) {
+    await bot.sendMessage(chatId, UI.generationPausedPartial(questions.length, requestedCount));
   }
 
   const session = createSession(chatId, questions);

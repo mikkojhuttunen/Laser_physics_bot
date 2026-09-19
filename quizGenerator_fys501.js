@@ -32,6 +32,7 @@ const fs = require('fs');
 const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const corpusLoader = require('./corpusLoader_fys501');
+const limiter = require('./usageLimiter');
 const { getCorpusSection } = corpusLoader;
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -255,7 +256,7 @@ async function generateQuiz(chapter, section, count = 5) {
   const corpusExcerpt = getCorpusSection(chapter, section || undefined);
 
   const scopeLabel = section ? `Section ${section}` : `Chapter ${chapter}`;
-  const response = await anthropic.messages.create({
+  const response = await limiter.trackedCreate(anthropic, {
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1500,
     system: QUIZ_SYSTEM_PROMPT,
@@ -292,7 +293,7 @@ async function generateQuiz(chapter, section, count = 5) {
  * startQuiz(). Bank-first, live-generation fallback for the shortfall only,
  * with self-expansion of any freshly generated questions.
  */
-async function getQuizQuestions(chatId, chapter, section, count) {
+async function getQuizQuestions(chatId, chapter, section, count, userId = chatId) {
   const excludeIds = getRecentlyServed(chatId);
   const { questions: bankQuestions, shortfall } = sampleFromBank(chapter, section, count, excludeIds);
 
@@ -305,10 +306,21 @@ async function getQuizQuestions(chatId, chapter, section, count) {
   // Top up the shortfall with a live call, scoped to just this
   // chapter/section — not the whole chapter's worth of sections — to keep
   // the excerpt (and cost) small.
+  // Graceful degradation: live generation costs LLM credits (bank-served questions are
+  // free). If the student's daily allowance or the shared daily backstop is used up,
+  // serve the bank questions only and tell startQuiz() why via a flag.
+  const gate = limiter.reserve(userId, 'quiz');
+  if (!gate.ok) {
+    console.log(`quizGenerator: live generation skipped (${gate.reason}) — serving ${bankQuestions.length}/${count} from the bank only`);
+    bankQuestions.generationSkipped = gate.reason;
+    return bankQuestions;
+  }
+
   let generated = [];
   try {
     generated = await generateQuiz(chapter, section, shortfall);
   } catch (err) {
+    limiter.refund(userId, gate.cost);
     console.warn(`quizGenerator: live fallback generation failed (${err.message}) — serving ${bankQuestions.length}/${count} from the bank only`);
     return bankQuestions;
   }
@@ -364,7 +376,7 @@ async function defaultAskWhichChapter(bot, chatId) {
 // chapter/section; it should prompt the student and return null (startQuiz
 // then stops, since there's nothing more to do until they respond) or,
 // if it can resolve one itself, return a chapter number/string directly.
-async function startQuiz(bot, chatId, text, askWhichChapter = defaultAskWhichChapter) {
+async function startQuiz(bot, chatId, text, askWhichChapter = defaultAskWhichChapter, userId = chatId) {
   const chapter = extractChapterHint(text) || (await askWhichChapter(bot, chatId));
   if (!chapter) return; // askWhichChapter already sent a prompt (or startQuiz has nothing to do)
 
@@ -382,7 +394,7 @@ async function startQuiz(bot, chatId, text, askWhichChapter = defaultAskWhichCha
 
   let questions;
   try {
-    questions = await getQuizQuestions(chatId, chapter, section, requestedCount);
+    questions = await getQuizQuestions(chatId, chapter, section, requestedCount, userId);
   } catch (err) {
     console.error(`quizGenerator: startQuiz failed for chapter ${chapter}${section ? '.' + section : ''}: ${err.message}`);
     await bot.sendMessage(chatId, "Sorry, I couldn't put together a quiz for that right now — try again in a bit.");
@@ -390,8 +402,16 @@ async function startQuiz(bot, chatId, text, askWhichChapter = defaultAskWhichCha
   }
 
   if (!questions.length) {
-    await bot.sendMessage(chatId, "I couldn't find or generate any questions for that section — try a different chapter/section.");
+    await bot.sendMessage(
+      chatId,
+      questions.generationSkipped
+        ? "There are no ready-made questions for that section, and AI question generation is paused for today (daily allowance or shared capacity used up). Try another chapter/section, or come back tomorrow."
+        : "I couldn't find or generate any questions for that section — try a different chapter/section."
+    );
     return;
+  }
+  if (questions.generationSkipped && questions.length < requestedCount) {
+    await bot.sendMessage(chatId, `Only ${questions.length} of ${requestedCount} questions are available right now — extra AI-generated questions are paused for today.`);
   }
 
   const session = createSession(chatId, questions);

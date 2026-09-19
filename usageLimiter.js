@@ -7,7 +7,8 @@
  *   DAILY_BACKSTOP_EUR        shared estimated spend cap per day, 0=off (default 5)
  *   USD_TO_EUR                conversion used for the estimate          (default 0.9)
  *   LLM_WEIGHT_CHAT           credit cost of a chat/Q&A answer          (default 1)
- *   LLM_WEIGHT_QUIZ           credit cost of a quiz action              (default 1)
+ *   LLM_WEIGHT_PHOTO          credit cost of a homework photo check     (default 1)
+ *   LLM_WEIGHT_QUIZ           credit cost of a live quiz-question top-up (default 1)
  *   LLM_WEIGHT_CHECKHW        credit cost of a /checkhw submission      (default 3)
  *   ADMIN_USER_IDS            comma-separated Telegram IDs exempt from limits
  *   PRICING_JSON              optional price override (USD per million tokens),
@@ -33,6 +34,7 @@ function cfg() {
     usdToEur: num('USD_TO_EUR', 0.9),
     weights: {
       chat: num('LLM_WEIGHT_CHAT', 1),
+      photo: num('LLM_WEIGHT_PHOTO', 1),
       quiz: num('LLM_WEIGHT_QUIZ', 1),
       checkhw: num('LLM_WEIGHT_CHECKHW', 3),
     },
@@ -138,6 +140,12 @@ function reserve(userId, kind = 'chat') {
   return { ok: true, cost, used: used + cost, remaining: c.dailyLimit - used - cost, limit: c.dailyLimit };
 }
 
+/** True while the shared daily backstop is active (optional LLM calls should be skipped). */
+function isPaused() {
+  rollover();
+  return backstopReached();
+}
+
 /** Give credits back if the LLM call failed. */
 function refund(userId, cost) {
   rollover();
@@ -190,4 +198,4 @@ function status() {
   };
 }
 
-module.exports = { reserve, refund, recordUsage, trackedCreate, userStatus, status, isAdmin };
+module.exports = { reserve, refund, recordUsage, trackedCreate, userStatus, status, isAdmin, isPaused };

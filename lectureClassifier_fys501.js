@@ -7,6 +7,7 @@
 // hallucination-free, same as keeping checkNumeric out of the LLM's hands.
 
 const CLASSIFIER_MODEL = 'claude-haiku-4-5-20251001';
+const limiter = require('./usageLimiter');
 
 /**
  * @param {string} userText - the student's raw message
@@ -15,6 +16,10 @@ const CLASSIFIER_MODEL = 'claude-haiku-4-5-20251001';
  *          Returns null if the API call/parse fails, signaling the caller to fall back.
  */
 async function classifyLectureQuery(userText, topicsSummary) {
+  // Shared daily backstop reached: skip the (optional) LLM classifier. Returning null makes
+  // the caller fall back to the local keyword scoring, so lecture links keep working.
+  if (limiter.isPaused()) return null;
+
   const systemPrompt = buildSystemPrompt(topicsSummary);
 
   try {
@@ -38,6 +43,7 @@ async function classifyLectureQuery(userText, topicsSummary) {
     }
 
     const data = await response.json();
+    limiter.recordUsage(CLASSIFIER_MODEL, data.usage);
     const textBlock = (data.content || []).find((b) => b.type === 'text');
     if (!textBlock) throw new Error('No text block in classifier response');
 

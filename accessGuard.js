@@ -22,10 +22,13 @@ const MSG = {
   usageAdmin: 'Admin: no limits apply to you.',
 };
 
-/** Call at the top of every message / callback_query handler. Returns true if allowed. */
-async function requireMember(bot, chatId, userId) {
-  if (await isCourseMember(bot, userId)) return true;
-  await bot.sendMessage(chatId, MSG.notMember);
+/**
+ * Call at the top of every message / callback_query handler. Returns true if allowed.
+ * Pass { silent: true } in group chats so non-members don't trigger notices there.
+ */
+async function requireMember(bot, chatId, userId, { silent = false } = {}) {
+  if (userId !== undefined && userId !== null && (await isCourseMember(bot, userId))) return true;
+  if (!silent) await bot.sendMessage(chatId, MSG.notMember);
   return false;
 }
 
