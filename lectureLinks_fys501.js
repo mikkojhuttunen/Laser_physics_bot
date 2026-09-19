@@ -152,6 +152,19 @@ async function handleLectureQuery(query) {
 }
 
 /**
+ * Display-only title shortening. The week headings and the course context
+ * already say "Laser Physics", so numbered lectures drop the redundant
+ * prefix: "Laser Physics 1.1 — Emission" -> "1.1 — Emission". Also strips
+ * the "FYS.510"/"FYS.501" course-code prefix some titles carry. Titles with
+ * no lecture number after the prefix (e.g. "Laser Physics — Course Intro")
+ * are left alone, so the intro still names the course. The stored data in
+ * lecture_data_fys501.json is untouched.
+ */
+function shortLectureTitle(title) {
+  return title.replace(/^(?:FYS\.\d+\s+)?Laser Physics\s+(?=\d)/i, '');
+}
+
+/**
  * Formats a single week's lectures as Telegram HTML (matches the bot's
  * existing HTML parse_mode convention — no LaTeX/Markdown here).
  */
@@ -159,7 +172,7 @@ function formatWeekMessage(week) {
   if (!week) return "I couldn't find lectures for that week.";
   const lines = [`<b>Week ${week.week} — ${escapeHtml(week.topic)}</b>`];
   for (const lec of week.lectures) {
-    lines.push(`• <a href="${lec.url}">${escapeHtml(lec.title)}</a> (${lec.duration})`);
+    lines.push(`• <a href="${lec.url}">${escapeHtml(shortLectureTitle(lec.title))}</a> (${lec.duration})`);
   }
   return lines.join('\n');
 }
