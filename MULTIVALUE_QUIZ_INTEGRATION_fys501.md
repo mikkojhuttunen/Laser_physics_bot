@@ -46,3 +46,21 @@ Section keys follow `corpusLoader_fys501.js` (3.4 = Eigenmodes, 3.5 = Stability)
 ## Known prerequisite: corpus file
 
 Live generation calls `corpusLoader.getCorpusSection()`, which reads `course_corpus_fys501.txt`. At the time of this port, that committed file contains only the homework sheets (~23 KB) and the loader throws *"could not locate chapter N content"* — so live generation (here **and** in the single-select fallback) can't work until the loader/bot point at a corpus containing chapter content (e.g. `course_corpus_fys501_v2.txt`, ~334 KB). Verified in a scratch copy: with the v2 file in place, all four chapters resolve and live generation works.
+
+---
+
+## Quiz-bank expansion and bias fix (2026-09-20)
+
+**Banks.** `quizBank_fys501.json` (single-select) and `multivalueQuizBank_fys501.json` (multi-select) now hold **160 questions each, exactly 8 per section** (20 sections). All questions were reviewed by the course instructor on 2026-09-20 and carry `"reviewed": true`; revised single-select questions also carry `"revisedAt": "2026-09-20"`. Section numbering is unchanged (3.4 = eigenmodes/Gaussian beams, 3.5 = stability).
+
+**Why.** The old single-select bank had a strong answer-position/length shortcut: the correct option was the longest in 81% of questions (chance 25%) and was option A or B in 98%. Because `quizGenerator_fys501.js` only shuffled *which questions* were drawn (never the options), students saw the options in stored order.
+
+**Fixes.**
+1. All 91 old single-select questions were rewritten with plausible, length-matched distractors; correct positions are stored balanced (exactly 2 per letter in every section).
+2. `quizGenerator_fys501.js` now calls `randomizeOptions()` on every question it serves (bank-drawn *and* live-generated), remapping `correctIndex`. Questions containing positional option text ("all of the above", "option B") are left unshuffled.
+3. The live-generation system prompt now asks for similar-length options and a varied correct index.
+4. Four existing single-select questions had wrong or inconsistent answers/explanations (`q3.4_001`, `q3.4_002`, `q4.1_004`, `q4.4_003`) and were corrected.
+
+**Measured (length-cue AUC, 0.5 = no cue).** Single-select 0.88 → 0.59; new multi-select questions 0.51 (whole multi bank 0.55). Correct option is the longest in 52/160 single-select questions (was 74/91). Always-picking-the-longest scores ≈31% and always-picking-A ≈27% in a full playthrough (chance is 25%).
+
+**Tests run.** Unit test of `randomizeOptions` (160 questions × 200 shuffles: correct answer always preserved, positions uniform), plus full end-to-end playthrough through the real `startQuiz` / `handleQuizAnswer` / `startMultivalueQuiz` / `handleMultivalueQuizAnswer` with the Telegram API stubbed: all 20 sections × (correct play → 100%, wrong strategies → chance-level, "tick everything" → 0% for multi-select), no message over Telegram's length limit. The harness is `e2e_quiz_test.js` (run from the repo root: `node e2e_quiz_test.js`).

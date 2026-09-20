@@ -170,6 +170,26 @@ function shuffle(arr) {
 }
 
 /**
+ * Returns a copy of `q` with its options in random order and correctIndex
+ * remapped, so students cannot exploit the position in which the bank (or the
+ * live generator) happens to store the correct answer. Questions whose options
+ * refer to each other by position ("all of the above", "option B", ...)
+ * are returned unchanged.
+ */
+const POSITIONAL_OPTION_RE = /\b(?:all|none|any) of the above\b|\b(?:options?|answers?|choices?) [A-D]\b/i;
+function randomizeOptions(q) {
+  if (!q || !Array.isArray(q.options) || q.options.length < 2) return q;
+  if (!Number.isInteger(q.correctIndex) || q.correctIndex < 0 || q.correctIndex >= q.options.length) return q;
+  if (q.options.some((o) => POSITIONAL_OPTION_RE.test(String(o)))) return q;
+  const order = shuffle(q.options.map((_, i) => i));
+  return {
+    ...q,
+    options: order.map((i) => q.options[i]),
+    correctIndex: order.indexOf(q.correctIndex),
+  };
+}
+
+/**
  * Draws up to `count` unused questions from quizBank_fys501.json for a given
  * chapter (+ optional section). No API call.
  *
@@ -242,6 +262,9 @@ course, grounded STRICTLY in the provided corpus excerpt. Rules:
 - Do NOT use any homework problems or numeric answer keys as source material.
 - Each question: 1 stem, 4 options, exactly 1 correct index (0-3), and a short
   (<40 word) explanation for the correct answer.
+- Make all four options similar in length and level of detail, and make the
+  wrong options plausible misconceptions. Never make the correct option
+  systematically the longest or the most specific, and vary its index.
 - Return ONLY valid JSON, no markdown fences, no preamble. Format:
   { "questions": [ { "stem": "...", "options": ["...","...","...","..."],
     "correctIndex": 0, "explanation": "..." } ] }`;
@@ -295,7 +318,8 @@ async function generateQuiz(chapter, section, count = 5) {
  */
 async function getQuizQuestions(chatId, chapter, section, count, userId = chatId) {
   const excludeIds = getRecentlyServed(chatId);
-  const { questions: bankQuestions, shortfall } = sampleFromBank(chapter, section, count, excludeIds);
+  const { questions: rawBankQuestions, shortfall } = sampleFromBank(chapter, section, count, excludeIds);
+  const bankQuestions = rawBankQuestions.map(randomizeOptions);
 
   markServed(chatId, bankQuestions.map((q) => q.id));
 
@@ -327,7 +351,7 @@ async function getQuizQuestions(chatId, chapter, section, count, userId = chatId
 
   // Tag with a synthetic id (bank questions already have one) so downstream
   // code can treat all questions uniformly.
-  const stamped = generated.map((q, i) => ({
+  const stamped = generated.map((q, i) => randomizeOptions({
     ...q,
     id: `gen_${chapter}${section ? '.' + section.split('.')[1] : ''}_${Date.now()}_${i}`,
   }));
@@ -471,6 +495,7 @@ module.exports = {
   // exported for buildQuizBank.js and tests
   generateQuiz,
   sampleFromBank,
+  randomizeOptions,
   getQuizQuestions,
   loadQuizBank,
   quizBankLooksHealthy,

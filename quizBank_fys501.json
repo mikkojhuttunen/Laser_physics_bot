@@ -5,71 +5,126 @@
         "id": "q1.1_001",
         "stem": "Under the semiclassical two-level-atom model used in this course, what four processes can occur between light and matter?",
         "options": [
-          "Absorption, stimulated emission, spontaneous emission, nonradiative decay",
-          "Absorption, reflection, refraction, scattering",
-          "Ionization, excitation, absorption, emission",
-          "Absorption, stimulated emission, fluorescence, phosphorescence"
+          "Stimulated emission, spontaneous emission, nonradiative decay, scattering",
+          "Absorption, spontaneous emission, fluorescence, phosphorescence",
+          "Absorption, stimulated emission, spontaneous emission, photoionization",
+          "Absorption, stimulated emission, spontaneous emission, nonradiative decay"
         ],
-        "correctIndex": 0,
+        "correctIndex": 3,
         "explanation": "The notes state that under the model's assumptions, only these four processes can happen.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.1_002",
         "stem": "In stimulated emission, how does the emitted photon relate to the incoming photon that triggered it?",
         "options": [
-          "It has random phase and direction",
-          "It is an exact replica in phase, direction, and frequency",
-          "It has exactly double the frequency",
-          "It is polarized perpendicular to the incoming photon"
+          "It has the same frequency and phase but is emitted in all directions",
+          "It has the same direction and phase but exactly twice the frequency",
+          "It has the same frequency but a random phase and a random direction",
+          "It is an exact replica in phase, direction, and frequency"
         ],
-        "correctIndex": 1,
+        "correctIndex": 3,
         "explanation": "The notes describe the emitted photon as \"an exact replica, in phase, direction and frequency\" of the incoming one.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.1_003",
         "stem": "What distinguishes spontaneously emitted photons from stimulated-emission photons?",
         "options": [
           "Spontaneous photons are oriented along random directions with random phase",
-          "Spontaneous emission produces no photon at all",
-          "Spontaneous emission requires an external field to trigger it",
-          "Spontaneous emission only occurs at absolute zero"
+          "Spontaneous emission needs a triggering photon of frequency ν0 to occur",
+          "Spontaneous photons are emitted only along the direction of the incoming light",
+          "Spontaneous emission happens only after the atom has absorbed a second photon"
         ],
         "correctIndex": 0,
         "explanation": "Spontaneously emitted photons \"are oriented along random directions, and possess random phase,\" unlike stimulated emission.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.1_004",
         "stem": "What is the relationship between the absorption cross-section σ12 and the stimulated-emission cross-section σ21 for a non-degenerate two-level system?",
         "options": [
-          "σ12 = 2σ21",
-          "σ12 = σ21",
-          "σ12 = σ21²",
-          "There is no fixed relationship between them"
+          "σ21 is larger, since stimulated emission adds a photon to the beam",
+          "They are equal, σ12 = σ21 ≡ σ, as proved by Einstein (non-degenerate case)",
+          "σ12 is twice σ21, because the ground level holds more of the population",
+          "They are unrelated and must be measured independently for each medium"
         ],
         "correctIndex": 1,
         "explanation": "The notes state σ12 = σ21 ≡ σ, an identity proven by Einstein.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.1_005",
         "stem": "What physically happens during nonradiative decay?",
         "options": [
-          "A photon is absorbed by the medium",
-          "The system relaxes to the ground state without emitting a photon, releasing energy via e.g. collisions or electron-phonon interactions",
-          "The system emits a photon of random phase and direction",
-          "The system's population inversion increases"
+          "The atom emits a photon of random phase that is then lost from the lasing mode",
+          "The atom relaxes by emitting a photon identical to the one that stimulated it",
+          "The atom relaxes without a photon, passing its energy to the surroundings as heat",
+          "The atom absorbs a photon from the field and moves to a higher excited level"
         ],
-        "correctIndex": 1,
+        "correctIndex": 2,
         "explanation": "Nonradiative decay releases energy \"without emitting any photon,\" via collisions, electron-phonon interactions, etc.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q1.1_006",
+        "stem": "Atoms decay only by spontaneous emission with radiative lifetime τsp = 20 ns. What fraction of the initial excited population remains after 40 ns?",
+        "options": [
+          "About 37%, because 1/e of the population remains at any time t ≥ τsp",
+          "About 14%, because N2 falls as e^(−t/τsp) and t = 2τsp",
+          "About 0%, because the population has decayed completely after 2τsp",
+          "About 25%, because the population halves every lifetime τsp"
+        ],
+        "correctIndex": 1,
+        "explanation": "N2(t) = N2(0)e^(−t/τsp); at t = 40 ns = 2τsp this is e⁻² ≈ 0.135. Exactly a factor 1/e (not 1/2) is lost per lifetime, and the population never reaches zero at a finite time.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q1.1_007",
+        "stem": "An atom relaxes from a level 1.165 eV above its ground level by emitting a photon (use hc ≈ 1240 eV·nm). What is the photon wavelength?",
+        "options": [
+          "About 1064 nm, in the near infrared",
+          "About 532 nm, in the green",
+          "About 850 nm, in the near infrared",
+          "About 2130 nm, in the mid infrared"
+        ],
+        "correctIndex": 0,
+        "explanation": "ν0 = (E2 − E1)/h, so λ = hc/ΔE ≈ 1240 eV·nm / 1.165 eV ≈ 1064 nm — the Nd:YAG laser wavelength.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q1.1_008",
+        "stem": "In the stimulated-emission rate W21 = σ21F, what is the photon flux F?",
+        "options": [
+          "The number of photons per unit volume inside the cavity (m⁻³)",
+          "The optical energy crossing a unit area per unit time (W m⁻²)",
+          "The number of photons crossing a unit area per unit time (s⁻¹m⁻²)",
+          "The total number of photons emitted by the source per second (s⁻¹)"
+        ],
+        "correctIndex": 2,
+        "explanation": "F counts photons per unit area per unit time. Energy per unit area and time would be the intensity I = ħωF, and photons per unit volume or per second are different quantities.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "1.2": [
@@ -77,71 +132,126 @@
         "id": "q1.2_001",
         "stem": "What population condition must hold for stimulated emission to dominate over absorption (the amplification/population-inversion condition)?",
         "options": [
+          "N2 > N1, independent of the degeneracies",
+          "N2 > (g1/g2)N1",
           "N2 > (g2/g1)N1",
-          "N2 < N1",
-          "N1 = N2",
-          "N2 = 0"
+          "N2 = (g2/g1)N1 exactly, no more and no less"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "This is exactly the lasing/amplification condition given in the notes (Eq. 1.17).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.2_002",
         "stem": "Can an active medium at thermal equilibrium satisfy the population-inversion condition, no matter how high its temperature?",
         "options": [
-          "Yes, at any sufficiently high finite temperature",
-          "No — at thermal equilibrium the ground state is always favored, so N2 < (g2/g1)N1 always holds",
-          "Yes, but only near absolute zero",
-          "Only if g1 equals g2"
+          "Yes, once T is high enough that kT exceeds the energy gap E2 − E1",
+          "No, unless the medium is also illuminated with light at the transition frequency",
+          "Yes, but only if the excited level is much more degenerate than the ground level",
+          "No: the Boltzmann distribution always favours the ground state, so N2 < (g2/g1)N1"
         ],
-        "correctIndex": 1,
+        "correctIndex": 3,
         "explanation": "The notes show that at thermal equilibrium N2 < (g2/g1)N1 for any finite T, so amplification never occurs without pumping.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.2_003",
         "stem": "What is needed to bring an active medium out of thermal equilibrium so that population inversion can be achieved?",
         "options": [
-          "Increasing the cavity length",
-          "An appropriate pumping mechanism",
-          "Lowering the temperature to absolute zero",
-          "Increasing mirror reflectivity alone"
+          "A longer cavity, so that photons pass through more gain medium",
+          "Mirrors with higher reflectivity, which raise the round-trip gain",
+          "Cooling the medium so that the ground state is fully populated",
+          "A pumping mechanism that supplies energy to the medium"
         ],
-        "correctIndex": 1,
+        "correctIndex": 3,
         "explanation": "The notes state the system \"must ... be brought out of equilibrium by means of an appropriate pumping scheme.\"",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.2_004",
         "stem": "According to the critical-population-inversion condition, what happens once the population inversion ΔN reaches or exceeds the critical value ΔNc?",
         "options": [
-          "Laser oscillation becomes impossible",
-          "The amplification compensates the cavity losses, and laser oscillation can start from a single spontaneously emitted photon",
-          "The mirrors must be replaced",
-          "Only nonradiative decay occurs from that point on"
+          "Spontaneous emission ceases, and only photons of exactly frequency ν0 remain",
+          "Gain compensates the losses, so oscillation can grow from one spontaneous photon",
+          "Stimulated emission switches off, and the photon flux settles at a constant value",
+          "The medium becomes perfectly transparent, so the mirrors are no longer needed"
         ],
         "correctIndex": 1,
         "explanation": "The notes state that once ΔNc is reached, gain compensates losses and oscillation can start from a spontaneous photon.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.2_005",
         "stem": "How are the \"logarithmic losses\" γ1,2 of the cavity mirrors defined in terms of their reflectivities R1,2?",
         "options": [
-          "γ1,2 = R1,2²",
+          "γ1,2 = ln(1 − R1,2)",
           "γ1,2 = −ln(R1,2)",
-          "γ1,2 = 1/R1,2",
-          "γ1,2 = ln(1−R1,2)"
+          "γ1,2 = −ln(1 − R1,2)",
+          "γ1,2 = 1 − ln(R1,2)"
         ],
         "correctIndex": 1,
         "explanation": "The notes define γ1,2 ≡ −ln(R1,2).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q1.2_006",
+        "stem": "An active medium has level degeneracies g1 = 2 and g2 = 4, and its populations satisfy N2 = 1.5 N1. How does a weak beam at ν0 behave in it?",
+        "options": [
+          "It is absorbed, since N2 < (g2/g1)N1 = 2N1",
+          "It is amplified, since N2 > N1",
+          "It cannot be decided without knowing the temperature",
+          "It passes unchanged, since the medium is exactly transparent"
+        ],
+        "correctIndex": 0,
+        "explanation": "Amplification needs N2 > (g2/g1)N1 = 2N1. With N2 = 1.5N1 absorption dominates even though N2 > N1; transparency would need exactly N2 = 2N1.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q1.2_007",
+        "stem": "A cavity has R1 = 1, R2 = 0.98, internal loss Lint = 0.005 per pass, active length L = 7.5 cm and σ = 2.8 × 10⁻¹⁹ cm². What is the critical inversion ΔNc = γ/(2σL)?",
+        "options": [
+          "About 7 × 10¹⁵ cm⁻³",
+          "About 6 × 10¹⁵ cm⁻³",
+          "About 3.6 × 10¹⁵ cm⁻³",
+          "About 1.4 × 10¹⁶ cm⁻³"
+        ],
+        "correctIndex": 0,
+        "explanation": "γ = γ1 + γ2 + 2γi = 0 + 0.0202 + 2(0.0050) ≈ 0.0302, so ΔNc = 0.0302/(2 × 2.8×10⁻¹⁹ × 7.5) ≈ 7.2×10¹⁵ cm⁻³. Dropping the factor 2 gives 1.4×10¹⁶, counting the internal loss once gives 6.0×10¹⁵, and γ/(4σL) gives 3.6×10¹⁵.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q1.2_008",
+        "stem": "Why does laser oscillation not require an external seed beam once the inversion reaches ΔNc?",
+        "options": [
+          "The pump light itself acts as the seed beam at the laser frequency ν0 in the mode",
+          "Stimulated emission can occur without any photon if the inversion is large enough",
+          "One spontaneously emitted photon can be amplified once the gain compensates losses",
+          "The mirrors create the first photons by reflecting thermal background radiation"
+        ],
+        "correctIndex": 2,
+        "explanation": "When ΔN ≥ ΔNc the round-trip gain compensates the losses, so oscillation can grow from one spontaneously emitted photon; stimulated emission always needs a photon to stimulate it.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "1.3": [
@@ -149,57 +259,125 @@
         "id": "q1.3_001",
         "stem": "Why can't population inversion be achieved via simple optical pumping in a plain 2-level system?",
         "options": [
-          "Absorption and stimulated emission balance each other once ground and excited populations are equal (the transparency condition)",
-          "2-level systems have no excited state",
-          "Photons cannot be absorbed by a 2-level system",
-          "Spontaneous emission is impossible in 2-level systems"
+          "Absorption and stimulated emission balance once the two populations are equal (transparency)",
+          "A two-level system cannot absorb photons at the pump frequency ν0",
+          "Spontaneous emission depopulates the excited state faster than any pump can fill it",
+          "The excited level of a two-level system is too short-lived to be populated at all"
         ],
         "correctIndex": 0,
         "explanation": "At equal populations, absorption and stimulated emission rates balance, so net photon flux stops changing — the transparency condition.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.3_002",
         "stem": "In a 3-level laser system, what happens to the population pumped into the ancillary state |a⟩?",
         "options": [
-          "It stays there indefinitely",
+          "It stays populated and is itself the upper laser level",
+          "It is re-excited by the laser field back to a higher level",
           "It decays rapidly and nonradiatively to the upper laser level |e⟩",
-          "It is used directly for the laser transition",
-          "It converts spontaneously back into a pump photon"
+          "It decays radiatively to the ground state, emitting the laser photon"
         ],
-        "correctIndex": 1,
+        "correctIndex": 2,
         "explanation": "The notes describe rapid nonradiative decay from the ancillary state to the upper laser level.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.3_003",
         "stem": "What is a key practical limitation of 3-level laser systems compared to 4-level systems?",
         "options": [
+          "They require a second pump wavelength to empty the lower laser level",
+          "Their upper laser level has a much shorter lifetime than the pump level",
           "They require a very high-intensity pump to sufficiently deplete the ground state",
-          "They cannot produce any amplification at all",
-          "They only operate at cryogenic temperatures",
-          "They require two separate pump lasers"
+          "They cannot operate continuously because the lower level always saturates"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "The notes state the pump \"must be significantly powerful\" to efficiently deplete the ground state in a 3-level system.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.3_004",
         "stem": "Why are 4-level systems generally more efficient than 3-level systems for achieving population inversion?",
         "options": [
-          "The lower laser level rapidly empties via nonradiative decay, keeping N1 ≈ 0 so inversion (N2 > N1) is easily satisfied",
-          "The upper laser level is not required",
-          "They do not need any pumping mechanism",
-          "The ground state becomes the upper laser level"
+          "The pump photon energy equals the laser photon energy, so no energy is lost",
+          "The ground state is never populated, so absorption cannot occur",
+          "The upper laser level lives longer than in a 3-level system by construction",
+          "The lower laser level empties rapidly, so N1 ≈ 0 and inversion is easily reached"
         ],
-        "correctIndex": 0,
+        "correctIndex": 3,
         "explanation": "Fast nonradiative decay out of the lower laser level keeps N1 ≈ 0, so ΔN > 0 is always satisfied.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q1.3_005",
+        "stem": "A laser is pumped at 808 nm and emits at 1064 nm. What fraction of the pump photon energy is the quantum defect q/hνp?",
+        "options": [
+          "About 76%, the fraction converted into laser photons",
+          "About 24%, since q/hνp = 1 − 808/1064",
+          "About 0%, since photon energy is conserved",
+          "About 32%, since q/hνp = 1064/808 − 1"
+        ],
+        "correctIndex": 1,
+        "explanation": "q = hνp − hν0, so q/hνp = 1 − λp/λ0 = 1 − 808/1064 ≈ 0.24. The 32% is the defect relative to the laser photon, 76% is the maximum efficiency, and the non-radiative step is exactly where photon energy is not conserved.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q1.3_006",
+        "stem": "In a non-degenerate three-level laser with atoms only in |g⟩ and |e⟩, what fraction of the atoms must be in |e⟩ for population inversion?",
+        "options": [
+          "More than a quarter, since the pump level also holds atoms",
+          "More than half, so that Ne > Ng",
+          "Any non-zero fraction, as long as Ne > 0",
+          "All of them, because inversion needs an empty ground state"
+        ],
+        "correctIndex": 1,
+        "explanation": "The lower laser level is the ground state, so inversion (Ne > Ng) requires more than half of all atoms in |e⟩. This is why the pump must be intense.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q1.3_007",
+        "stem": "Why can a four-level laser reach threshold with a weaker pump than a three-level laser?",
+        "options": [
+          "Its pump photons carry more energy than the laser photons, so the pump is stronger",
+          "Its upper laser level has a longer natural lifetime by definition",
+          "It has no non-radiative decay, so no pump energy is lost as heat",
+          "Its lower laser level empties rapidly, so N1 ≈ 0 and any N2 > 0 gives inversion"
+        ],
+        "correctIndex": 3,
+        "explanation": "In a four-level scheme the lower laser level |1⟩ decays rapidly to the ground state, so N1 ≈ 0 and ΔN > 0 is easily satisfied without depleting the ground state.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q1.3_008",
+        "stem": "Which lifetime relation lets population accumulate in the upper laser level |e⟩ of a three-level laser?",
+        "options": [
+          "The pumped state |a⟩ decays to |e⟩ much faster than |e⟩ itself decays (τ32 ≪ τ2)",
+          "Both states must have equal lifetimes so that the populations stay balanced",
+          "The state |e⟩ must decay to |g⟩ faster than |a⟩ decays to |e⟩ (τ2 ≪ τ32)",
+          "The state |a⟩ must be longer-lived than |e⟩ (τ32 ≫ τ2), so the pump energy is stored there"
+        ],
+        "correctIndex": 0,
+        "explanation": "Population can accumulate in |e⟩ only if |a⟩ empties into it quickly compared with the lifetime of |e⟩, i.e. τ32 is short compared with τ2.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "1.4": [
@@ -207,71 +385,126 @@
         "id": "q1.4_001",
         "stem": "Why is real laser light quasi-monochromatic rather than perfectly monochromatic?",
         "options": [
-          "The gain medium is always very hot",
-          "Emission spans a finite linewidth around ν0, further narrowed by the cavity's resonant frequencies",
-          "Laser cavities intentionally randomize the output frequency",
-          "Spontaneous emission always dominates over stimulated emission"
+          "Emission spans a finite linewidth around ν0, which the cavity resonances narrow further",
+          "The pump light is not monochromatic, and its bandwidth is copied onto the laser",
+          "Only spontaneous emission contributes to the output, and it has a broad spectrum",
+          "The cavity randomly shifts the emission frequency from one round trip to the next"
         ],
-        "correctIndex": 1,
+        "correctIndex": 0,
         "explanation": "The notes describe a finite linewidth around ν0 and note that the resonant cavity further restricts emission to its resonant frequencies.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.4_002",
         "stem": "What is spatial coherence?",
         "options": [
-          "Correlation of the electric field at the same point at two different times",
-          "Correlation of the electric field between two different points on the wavefront",
-          "The range of frequencies present in the beam",
-          "The angular divergence of the beam"
+          "The angular spread of the beam far from the aperture (divergence)",
+          "The spread of optical frequencies present in the emitted beam (linewidth)",
+          "Correlation of the field at one point at two different times",
+          "Correlation of the field between two different points on the wavefront"
         ],
-        "correctIndex": 1,
+        "correctIndex": 3,
         "explanation": "The notes define spatial coherence as correlation between the field at two different points on the wavefront.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.4_003",
         "stem": "What is the physical origin of a laser beam's directionality?",
         "options": [
-          "The temperature of the active medium",
-          "The optical cavity sustaining, over many round-trips, only waves propagating near its optical axis",
-          "Diffraction at the output aperture alone",
-          "The pump source's own directionality"
+          "The heating of the medium, which bends the light towards the axis",
+          "The pump source is itself directional, and the beam inherits its direction",
+          "The cavity sustains, over many round trips, only waves travelling near its axis",
+          "Diffraction at the output aperture alone, independent of the cavity design"
         ],
-        "correctIndex": 1,
+        "correctIndex": 2,
         "explanation": "The notes attribute directionality to the cavity: only waves near the optical axis are sustained over many round-trips.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.4_004",
         "stem": "Using the diffraction relation θ ≈ λ/D, what happens to the beam's divergence angle θ as the aperture size D increases, at fixed wavelength?",
         "options": [
-          "θ increases",
-          "θ decreases",
-          "θ stays constant",
-          "θ becomes negative"
+          "θ decreases as 1/D², much faster than D grows",
+          "θ decreases in inverse proportion to D",
+          "θ increases in proportion to D",
+          "θ stays constant, since only λ matters"
         ],
         "correctIndex": 1,
         "explanation": "Since θ ≈ λ/D, increasing D (at fixed λ) decreases θ.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q1.4_005",
         "stem": "How is the brightness B of a light source defined?",
         "options": [
-          "The total power emitted regardless of direction",
+          "The power emitted per unit solid angle divided by the coherence time",
           "The power emitted per unit surface area per unit solid angle",
-          "The power per unit wavelength",
-          "The power divided by the coherence time"
+          "The power emitted per unit wavelength interval and per unit area",
+          "The total power emitted per unit area, integrated over all directions"
         ],
         "correctIndex": 1,
         "explanation": "The notes define brightness via dP = B cos θ dS dΩ — power per unit area per unit solid angle.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q1.4_006",
+        "stem": "A solid-state laser has linewidth Δν ≈ 1 kHz, i.e. a coherence time τc ≈ 1 ms. What is its coherence length cτc (c = 3 × 10⁸ m/s)?",
+        "options": [
+          "About 300 km",
+          "About 30 cm",
+          "About 3 × 10⁵ km",
+          "About 300 m"
+        ],
+        "correctIndex": 0,
+        "explanation": "L = cτc = 3×10⁸ m/s × 10⁻³ s = 3×10⁵ m = 300 km. Values of 30 cm and 3×10⁵ km belong to Δν ~ 1 GHz and Δν ~ 1 Hz.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q1.4_007",
+        "stem": "A diffraction-limited Gaussian beam has λ = 633 nm and waist w0 = 0.5 mm. What is its divergence θ = λ/(πw0)?",
+        "options": [
+          "About 1.3 mrad",
+          "About 0.13 mrad",
+          "About 0.4 mrad",
+          "About 4 mrad"
+        ],
+        "correctIndex": 2,
+        "explanation": "θ = 633×10⁻⁹ m / (π × 5×10⁻⁴ m) ≈ 4.0×10⁻⁴ rad ≈ 0.4 mrad. Forgetting the factor π gives 1.3 mrad.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q1.4_008",
+        "stem": "The waist of a diffraction-limited beam of fixed power P and wavelength λ is doubled. What happens to its brightness?",
+        "options": [
+          "It grows fourfold, since the divergence is four times smaller",
+          "It doubles, since the divergence is halved",
+          "It drops to a quarter, since the beam area grows fourfold",
+          "It is unchanged, since B = P/λ² does not depend on the beam size"
+        ],
+        "correctIndex": 3,
+        "explanation": "B = P/(πSθ²) with S = πw0² and θ = λ/(πw0): the larger area is exactly compensated by the smaller divergence, so B = P/λ² whatever the beam size.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ]
   },
@@ -281,71 +514,126 @@
         "id": "q2.1_001",
         "stem": "Within the electric-dipole approximation, how is the interaction Hamiltonian for an atom in an external electric field written?",
         "options": [
-          "Ĥint = E(r,t)·μ̂",
-          "Ĥint = p̂²/2m",
-          "Ĥint = ℏω₀σz",
-          "Ĥint = −eV(r)"
+          "Ĥint = ℏω₀σz, i.e. the energy splitting of the two levels",
+          "Ĥint = p̂²/2m, i.e. the kinetic energy of the electron",
+          "Ĥint = E(r,t)·μ̂, the field times the electric dipole moment",
+          "Ĥint = −eV(r), i.e. the Coulomb potential of the nucleus"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "The notes give Ĥint = E(r,t)·μ̂ where μ̂ is the electric dipole moment operator.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.1_002",
         "stem": "Why can the spatial variation of the electric field across a single atom be neglected in this derivation?",
         "options": [
-          "Because the atom's Bohr radius is much smaller than the optical wavelength, so kaB ≪ 1",
-          "Because atoms are treated as point charges with no internal structure",
-          "Because the field is assumed to be static (time-independent)",
-          "Because the field has no spatial dependence anywhere"
+          "Because the atom is treated as a point charge with no internal structure",
+          "Because the atom's Bohr radius is much smaller than the optical wavelength, so k·aB ≪ 1",
+          "Because the wavelength is comparable to the atom, which averages the field to zero",
+          "Because the field is assumed to be static, so it has no spatial dependence"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "With aB ≈ 10⁻¹¹ m and λ ≈ 10⁻⁷ m, kaB ≪ 1, so the field is essentially uniform over the atom's size.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.1_003",
         "stem": "What parity selection rule applies to the dipole interaction Hamiltonian's matrix elements?",
         "options": [
-          "It only connects states of the same parity",
           "It only connects states of different parity, since the dipole operator has odd parity",
-          "Parity plays no role in these matrix elements",
-          "It only connects states of equal energy"
+          "It connects states of any parity, provided their energies differ by exactly ℏω0",
+          "It only connects states of the same parity, since the dipole operator has even parity",
+          "It only connects states of equal energy, since the dipole operator conserves energy"
         ],
-        "correctIndex": 1,
+        "correctIndex": 0,
         "explanation": "The dipole moment operator has odd parity, so ⟨g|Ĥint|g⟩ = ⟨e|Ĥint|e⟩ = 0; only different-parity states are connected.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.1_004",
         "stem": "In the perturbative (power-series-in-Ω) solution for the state amplitudes C1(t), C2(t), what parity pattern is found?",
         "options": [
           "C1(t) contains only even powers of Ω, C2(t) contains only odd powers",
-          "Both contain only even powers of Ω",
-          "Both contain only odd powers of Ω",
-          "There is no definite parity pattern"
+          "Both amplitudes contain only even powers of Ω, since |C|² is even in Ω",
+          "C1(t) contains only odd powers of Ω, C2(t) contains only even powers",
+          "Both amplitudes contain only odd powers of Ω, since the coupling is odd"
         ],
         "correctIndex": 0,
         "explanation": "The notes state this explicitly: C1(t) has only even powers of Ω, C2(t) only odd powers.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.1_005",
         "stem": "What does the Rotating Wave Approximation (RWA), used here, amount to physically?",
         "options": [
-          "Neglecting the fast co-rotating term (∝ ω+ω0) and keeping only the slowly-varying (ω−ω0) term, valid since ω0t ≫ 1 on the relevant timescale",
-          "Assuming the atom has zero physical size",
-          "Assuming there is no electromagnetic field present at all",
-          "Assuming the atom stays in its ground state forever"
+          "Neglecting the slow term ∝ (ω−ω0) and keeping only the fast (ω+ω0) term, valid since ω0t ≫ 1",
+          "Assuming the field rotates its polarisation at ω0, so that only one circular component acts",
+          "Assuming the atom stays in its ground state, so that only absorption terms survive",
+          "Neglecting the fast term ∝ (ω+ω0) and keeping the slowly varying (ω−ω0) term, valid since ω0t ≫ 1"
         ],
-        "correctIndex": 0,
+        "correctIndex": 3,
         "explanation": "Because ω0t ≫ 1 for typical interaction times, the fast term averages out and only the near-resonant term survives.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q2.1_006",
+        "stem": "The Bohr radius is a_B ~ 10⁻¹¹ m and the light has wavelength λ = 500 nm. What is k·a_B (k = 2π/λ), and what does it imply?",
+        "options": [
+          "About 1, so the field varies strongly across the atom",
+          "About 10⁴, so the atom is much larger than the wavelength",
+          "About 0.1, so the field phase changes by roughly 10% across the atom",
+          "About 10⁻⁴, so the field is essentially uniform across the atom"
+        ],
+        "correctIndex": 3,
+        "explanation": "k·a_B = (2π/500 nm) × 10⁻¹¹ m ≈ 1.3×10⁻⁴ ≪ 1, so the atom sees a locally constant field — the basis of the dipole approximation.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.1_007",
+        "stem": "The ground state |g⟩ is even and the excited state |e⟩ is odd, and H_int is an odd operator. Which matrix elements of H_int vanish?",
+        "options": [
+          "⟨e|H|g⟩ vanishes, while ⟨g|H|g⟩ and ⟨e|H|e⟩ do not",
+          "None of them vanishes, since H_int depends on time",
+          "⟨g|H|g⟩ and ⟨e|H|e⟩ vanish, while ⟨e|H|g⟩ does not",
+          "All three vanish, so no transition can be driven"
+        ],
+        "correctIndex": 2,
+        "explanation": "Diagonal elements involve an odd integrand (even·odd·even or odd·odd·odd) and vanish; the off-diagonal element ⟨e|H|g⟩ has an even integrand and drives the transition.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.1_008",
+        "stem": "In the power-series solution in Ω with C_g(0) = 1 and C_e(0) = 0, what is the first-order ground-state amplitude C_g^(1)?",
+        "options": [
+          "cos(ωt)e^(iω₀t), the same time dependence as the excited-state amplitude",
+          "Zero: only even powers of Ω appear in C_g, so its first correction is O(Ω²)",
+          "Equal to 1, since the ground-state amplitude does not change with Ω",
+          "Equal to −C_e^(1), which keeps the total probability normalised to 1"
+        ],
+        "correctIndex": 1,
+        "explanation": "At first order the ground-state amplitude does not change (C_g^(1) = 0); C_g contains only even and C_e only odd powers of Ω.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "2.2": [
@@ -353,57 +641,125 @@
         "id": "q2.2_001",
         "stem": "Which Einstein coefficient governs the rate of spontaneous emission?",
         "options": [
-          "The A coefficient",
-          "The B coefficient",
-          "Both A and B equally",
-          "Neither — spontaneous emission has no rate coefficient"
+          "The B coefficient, multiplied by the radiative energy density ⟨W(ω)⟩",
+          "Neither; spontaneous emission has no rate coefficient in this theory",
+          "Both A and B contribute equally to the rate of spontaneous emission",
+          "The A coefficient, with A = 1/τR the radiative decay rate"
         ],
-        "correctIndex": 0,
+        "correctIndex": 3,
         "explanation": "The notes state absorption/stimulated emission are governed by B, while spontaneous emission is governed by A.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.2_002",
         "stem": "What key property distinguishes the rate of spontaneous emission from absorption and stimulated emission?",
         "options": [
-          "Spontaneous emission depends on the radiative energy density ⟨W(ω)⟩, the others don't",
-          "Spontaneous emission does NOT depend on ⟨W(ω)⟩ and can occur even without an external field, due to vacuum fluctuations",
-          "All three depend equally on the external field",
-          "None of the three depend on the external field"
+          "Spontaneous emission does not depend on ⟨W(ω)⟩ and occurs even without an external field",
+          "Spontaneous emission scales with ⟨W(ω)⟩², while the other two scale linearly",
+          "Spontaneous emission needs a thermal field, whereas the other two need a laser beam",
+          "Spontaneous emission depends on ⟨W(ω)⟩, whereas absorption and stimulated emission do not"
         ],
-        "correctIndex": 1,
+        "correctIndex": 0,
         "explanation": "The notes state spontaneous emission's rate A doesn't depend on ⟨W(ω)⟩, unlike absorption/stimulated emission.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.2_003",
         "stem": "What is the final semiclassical expression derived in the notes for the Einstein B coefficient?",
         "options": [
+          "B = πe²|μ12|²/(3ε0ℏ)",
           "B = πe²|μ12|²/(3ε0ℏ²)",
-          "B = ℏω0³/(π²c³)",
-          "B = e²ω0³/(3πε0ℏc³)",
-          "B = 1/τR"
+          "B = πe²|μ12|²/(ε0ℏ²)",
+          "B = 3πe²|μ12|²/(ε0ℏ²)"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "This is the closed-form result given for B (Eq. 2.29) in the notes.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.2_004",
         "stem": "According to the notes, how is the Einstein A coefficient related to B?",
         "options": [
-          "A equals B numerically",
           "A = (ℏω0³g1)/(π²c³g2) · B",
-          "A and B are entirely unrelated quantities",
-          "A = 1/B"
+          "A = (ℏω0³)/(π²c³ g1 g2) · B",
+          "A = (ℏω0 g1)/(π²c g2) · B",
+          "A = (ℏω0³g2)/(π²c³g1) · B"
         ],
-        "correctIndex": 1,
+        "correctIndex": 0,
         "explanation": "The notes give this explicit relation linking A to B via ω0 and the degeneracies g1, g2 (Eq. 2.31).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q2.2_005",
+        "stem": "The radiative energy density ⟨W(ω)⟩ is doubled and the transition dipole moment |μ| is doubled. By what factor does the absorption rate W_abs = B⟨W(ω)⟩, with B ∝ |μ|², change?",
+        "options": [
+          "A factor 4",
+          "A factor 6",
+          "A factor 16",
+          "A factor 8"
+        ],
+        "correctIndex": 3,
+        "explanation": "W_abs ∝ ⟨W⟩·|μ|²: doubling ⟨W⟩ gives ×2 and doubling |μ| gives ×4, so the rate grows by 2 × 4 = 8.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.2_006",
+        "stem": "For fixed |μ| and degeneracies, how does the Einstein A coefficient change when the transition frequency ω₀ is doubled?",
+        "options": [
+          "It doubles, since A grows in proportion to ω₀ for a fixed dipole moment",
+          "It grows by a factor 4, since A ∝ ω₀² for a fixed dipole moment",
+          "It grows by a factor 8, since A ∝ ω₀³ and B is independent of ω₀",
+          "It stays the same, since A depends only on |μ| and the degeneracies"
+        ],
+        "correctIndex": 2,
+        "explanation": "A = (ħω₀³g_g/π²c³g_e)B with B = π|μ|²/(3ε₀ħ²) independent of ω₀, so A ∝ ω₀³ and doubling ω₀ multiplies it by 8.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.2_007",
+        "stem": "What does the radiative energy density ⟨W(ω)⟩ in W_abs = B⟨W(ω)⟩ contain?",
+        "options": [
+          "The energy stored in the excited-state population of the atoms, ħω₀N₂",
+          "The energy of the incident field plus thermal radiation of the environment at T",
+          "The energy carried by the spontaneously emitted photons in all directions",
+          "Only the energy of the incident laser field; thermal radiation is negligible"
+        ],
+        "correctIndex": 1,
+        "explanation": "⟨W(ω)⟩ is the spectral energy density seen by the atom: the incident field plus thermal radiation of the surroundings at temperature T.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.2_008",
+        "stem": "Why does the derivation of the B coefficient replace a monochromatic transition (a δ-peak) by a finite linewidth Δω?",
+        "options": [
+          "To include spontaneous emission, which a monochromatic field cannot describe",
+          "To make the transition probability grow as t² instead of linearly in t",
+          "Real transitions have a linewidth, so ⟨W(ω)⟩ must be integrated across Δω",
+          "To account for the atom's motion, which Doppler-shifts the resonance"
+        ],
+        "correctIndex": 2,
+        "explanation": "All transitions have a linewidth Δω, so E₀² = (2/ε₀)∫⟨W(ω)⟩dω must be integrated across it; this produces the linear growth of |C_e|² in time and hence a constant rate.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "2.3": [
@@ -411,43 +767,124 @@
         "id": "q2.3_001",
         "stem": "What mathematical limit is used to derive Fermi's Golden Rule from the transition probability |C2(t)|²/t?",
         "options": [
-          "A large-time limit (tω → ∞) in which a sinc-squared function approaches a Dirac delta function",
-          "A small-time limit (t → 0)",
-          "The classical limit ℏ → 0",
-          "The non-relativistic limit c → ∞"
+          "A small-time limit (t → 0) in which the sinc² function approaches a constant",
+          "The weak-field limit Ω → 0 in which the excited-state amplitude vanishes",
+          "The classical limit ℏ → 0 in which the transition probability becomes deterministic",
+          "A large-time limit (tΔω ≫ 1) in which a sinc² function approaches a Dirac delta function"
         ],
-        "correctIndex": 0,
+        "correctIndex": 3,
         "explanation": "The notes use the identity that a sinc² function tends to a Dirac delta as t → ∞ to derive the golden rule.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.3_002",
         "stem": "What does Fermi's Golden Rule, as derived in the notes, allow you to calculate?",
         "options": [
-          "Transition rates between atomic states with continuous or discrete energy spectra",
-          "The exact position of an electron at a given time",
-          "The temperature of the active medium",
-          "The refractive index of a material"
+          "The steady-state temperature reached by the active medium under pumping",
+          "Transition rates between states with continuous or discrete energy spectra",
+          "The refractive index of the medium as a function of the pump intensity",
+          "The exact position of the electron as a function of time inside the atom"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "The notes describe the golden rule as allowing calculation of transition rates for continuous or discrete spectra.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.3_003",
         "stem": "Is the result generalized as Fermi's Golden Rule restricted to two-level systems only?",
         "options": [
-          "Yes, it strictly requires exactly two energy levels",
-          "No — it generalizes to any system with a similar interaction Hamiltonian, a continuous frequency distribution, and possibly multiple final states",
-          "Yes, and only for isolated atoms, never molecules",
-          "No, but only for purely classical systems"
+          "No: it holds for dipole-like interactions, continuous spectra and several final states",
+          "Yes for atoms, but it cannot be applied to electrons in semiconductors or solids",
+          "No, but it is restricted to isolated atoms and to a strictly monochromatic field",
+          "Yes: it requires exactly two levels, since the derivation uses the two amplitudes Cg and Ce"
         ],
-        "correctIndex": 1,
+        "correctIndex": 0,
         "explanation": "The notes explicitly state the result \"does not hold for a two-level system only\" and generalizes further.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q2.3_004",
+        "stem": "According to Fermi's golden rule, what is the transition rate if the matrix element ⟨f|H_int|i⟩ vanishes, e.g. because |i⟩ and |f⟩ have the same parity?",
+        "options": [
+          "Infinite, because the δ-function is unbounded",
+          "Zero, however large the density of final states is",
+          "Equal to the spontaneous emission rate A",
+          "Determined by the density of states alone"
+        ],
+        "correctIndex": 1,
+        "explanation": "The rate is proportional to |⟨f|H_int|i⟩|² times the density of states, so a vanishing matrix element (a forbidden transition) gives zero rate.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.3_005",
+        "stem": "In Γ = (2π/ħ)∫_BZ (d³k/4π³)|⟨f_C|H_int|i_V⟩|² δ(E_c(k) − E_v(k) − ħω), what does the δ-function require?",
+        "options": [
+          "The electron energies in the valence and conduction band must be equal",
+          "The photon momentum must equal the change of the electron momentum",
+          "ħω must equal the conduction–valence energy difference at the same k",
+          "The photon frequency must equal the atomic resonance frequency ω₀"
+        ],
+        "correctIndex": 2,
+        "explanation": "The δ-function is energy conservation for a vertical transition: only wave vectors k with E_c(k) − E_v(k) = ħω contribute, and the Brillouin-zone integral adds them up.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.3_006",
+        "stem": "In W = (2π/ħ)|⟨f|H|i⟩|²·DOS(i→f), what does DOS(i→f) represent for a process between pairs of states?",
+        "options": [
+          "The number of photons per unit volume in the incident field mode",
+          "The population density of atoms in the initial state before excitation",
+          "The density of thermal phonon modes in the surrounding lattice",
+          "The joint density of initial–final state pairs at the transition energy"
+        ],
+        "correctIndex": 3,
+        "explanation": "For a transition between pairs of states, the density of states is the joint density of initial–final pairs at the transition energy, e.g. the joint DOS of valence and conduction band.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.3_007",
+        "stem": "For long times |C_e(t)|² grows as (π/2)Ω²δ(ω − ω₀)·t. What does this imply for the absorption rate d|C_e|²/dt?",
+        "options": [
+          "It is constant in time, W_abs = (π/2)Ω²δ(ω − ω₀)",
+          "It decays exponentially as the atom gets excited",
+          "It grows linearly in time, since |C_e|² grows",
+          "It oscillates in time at the frequency ω − ω₀"
+        ],
+        "correctIndex": 0,
+        "explanation": "A probability that grows linearly in time means a constant transition probability per unit time — the golden-rule rate.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.3_008",
+        "stem": "How does the golden-rule absorption rate W_abs = (π/2)Ω²δ(ω − ω₀), with Ω = E₀⟨e|H_int|g⟩, scale with the field amplitude E₀?",
+        "options": [
+          "In proportion to E₀⁴, as for a two-photon process",
+          "In proportion to E₀, i.e. to the square root of the intensity",
+          "In proportion to E₀², i.e. to the incident intensity",
+          "It is independent of E₀ once ω = ω₀"
+        ],
+        "correctIndex": 2,
+        "explanation": "Ω ∝ E₀ and W_abs ∝ Ω², so the rate is proportional to E₀², i.e. to the intensity.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "2.4": [
@@ -455,29 +892,123 @@
         "id": "q2.4_001",
         "stem": "For a slab of active medium containing many atoms, what determines the fraction of incident photon flux absorbed?",
         "options": [
-          "The fraction of the slab's cross-sectional area effectively \"filled\" by the atomic absorption cross-sections",
-          "The temperature of the medium alone",
-          "The polarization of the incident light only",
-          "The refractive index of the surrounding vacuum"
+          "The polarisation of the incident light relative to the slab surface",
+          "The photon energy alone, independent of the density of absorbing atoms",
+          "The fraction of the slab area effectively 'filled' by the atomic cross-sections",
+          "The temperature of the medium, which sets how many atoms are in the ground state"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "The notes derive dF/F = −dS/S, where dS is the total atomic cross-sectional area in the slab.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.4_002",
         "stem": "How does the absorption rate per unit volume relate to the single-atom absorption rate W and the ground-state population density N1?",
         "options": [
-          "It equals W·N1",
-          "It equals W/N1",
-          "It equals W + N1",
-          "It is independent of N1"
+          "W/N1, the single-atom rate shared among the ground-state atoms",
+          "W·N1, the single-atom rate times the ground-state density",
+          "W·N1², since each atom also feels its neighbours",
+          "W alone, since the absorption rate does not depend on N1"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "The notes state that W·N1 is the absorption rate per unit volume.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q2.4_003",
+        "stem": "What are the dimensions of the absorption cross-section σ, given that W = σF must be a rate (s⁻¹) for F in photons m⁻²s⁻¹?",
+        "options": [
+          "An area (m²), an effective capture area per atom",
+          "An inverse area (m⁻²), a number of atoms per unit area",
+          "An inverse time (s⁻¹), a rate per atom",
+          "A volume (m³), the volume swept out by a photon"
+        ],
+        "correctIndex": 0,
+        "explanation": "σ = absorbed power / intensity is an effective area: W = σF in s⁻¹ requires σ in m² for F in photons per m² per s.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.4_004",
+        "stem": "A thin slab of thickness 0.1 mm contains N₁ = 10²⁵ m⁻³ ground-state atoms with σ = 2.8 × 10⁻²³ m². What fraction of the incident photon flux does it absorb (dF/F = −σN₁dz)?",
+        "options": [
+          "About 0.028%",
+          "About 2.8%",
+          "About 28%",
+          "About 0.28%"
+        ],
+        "correctIndex": 1,
+        "explanation": "|dF|/F = σN₁dz = 2.8×10⁻²³ × 10²⁵ × 10⁻⁴ = 0.028, i.e. 2.8%.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.4_005",
+        "stem": "What must the lineshape function g(ω − ω₀) satisfy in order to replace δ(ω − ω₀) in the cross-section of a collection of atoms?",
+        "options": [
+          "g(0) = 1, with its width equal to the atomic density",
+          "∫g dω = N₁, the number density of ground-state atoms",
+          "∫g dω = 1, with its peak at ω = ω₀",
+          "∫g dω = ω₀, with its peak at ω = 0"
+        ],
+        "correctIndex": 2,
+        "explanation": "g takes over the properties of the δ-function: unit area and a peak at ω₀; its shape depends on the broadening mechanism.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.4_006",
+        "stem": "In the thin-slab argument dS = N₁Sσ dz, what does the product N₁S dz represent?",
+        "options": [
+          "The number of excited atoms that can emit into the beam",
+          "The number of photons crossing the slab per second",
+          "The volume of the slab measured in units of σ",
+          "The number of ground-state atoms inside the thin slab"
+        ],
+        "correctIndex": 3,
+        "explanation": "N₁ is the ground-state atoms per unit volume and S dz is the slab volume, so N₁S dz is the number of atoms in the slab; multiplying by σ gives the area they block.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.4_007",
+        "stem": "A medium's lineshape is broadened to twice its width while ∫g dω = 1 is kept. How does the peak cross-section σ(ω₀) ∝ ω₀|μ|²g(0) change?",
+        "options": [
+          "It doubles, since a wider line can absorb photons over more frequencies",
+          "It is unchanged, since only ω₀ and |μ| enter the cross-section",
+          "It is quartered, since the width enters the peak value squared",
+          "It is halved, since the same area is spread over twice the width"
+        ],
+        "correctIndex": 3,
+        "explanation": "With fixed unit area, doubling the width halves the peak value g(0), so σ(ω₀) is halved while absorption occurs over a wider frequency range.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.4_008",
+        "stem": "The ground-state density N₁ of a thin absorbing slab is doubled at fixed σ and thickness. What happens to the absorbed fraction |dF|/F = σN₁dz?",
+        "options": [
+          "It doubles",
+          "It quadruples, since more atoms mean more overlap of cross-sections",
+          "It is unchanged, since σ is a property of a single atom",
+          "It is halved, since the atoms shield each other"
+        ],
+        "correctIndex": 0,
+        "explanation": "For a thin slab the blocked area fraction is N₁σ dz, proportional to N₁; shielding (overlap) is negligible in the thin-slab limit.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "2.5": [
@@ -485,71 +1016,126 @@
         "id": "q2.5_001",
         "stem": "What lineshape function characterizes homogeneous broadening in this course's treatment?",
         "options": [
-          "A Gaussian",
-          "A Lorentzian",
-          "A Dirac delta function",
-          "A uniform (top-hat) distribution"
+          "A top-hat distribution of width Δω0",
+          "A Dirac delta function at ω0, with zero width",
+          "A Lorentzian, with FWHM Δω0 = 1/τtot",
+          "A Gaussian, with a width set by the velocity distribution"
         ],
-        "correctIndex": 1,
+        "correctIndex": 2,
         "explanation": "The notes derive gh(ω−ω0) in a form explicitly identified as the Lorentzian lineshape.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.5_002",
         "stem": "What are the two main physical mechanisms causing homogeneous broadening?",
         "options": [
-          "Doppler effect and static-field inhomogeneities",
-          "Collision broadening and natural broadening",
-          "Thermal expansion and pressure broadening",
-          "Magnetic fluctuations and gravitational redshift"
+          "Pressure-induced level shifts and thermal expansion of the medium",
+          "Doppler broadening and local-field inhomogeneities in the medium",
+          "Zeeman splitting and gravitational redshift of the emitted light",
+          "Natural broadening (finite lifetime) and collision broadening"
         ],
-        "correctIndex": 1,
+        "correctIndex": 3,
         "explanation": "The notes name collision broadening and natural broadening as the two homogeneous mechanisms.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.5_003",
         "stem": "What distinguishes inhomogeneous broadening from homogeneous broadening?",
         "options": [
-          "In inhomogeneous broadening, all atoms contribute identically to the lineshape",
-          "In inhomogeneous broadening, different atoms have different transition frequencies, distributed around a mean value",
-          "Inhomogeneous broadening only occurs at absolute zero temperature",
-          "Inhomogeneous broadening produces no observable lineshape"
+          "Different atoms have different transition frequencies, distributed around a mean value",
+          "The atoms have the same frequency but different lifetimes, which shifts each line",
+          "The lineshape is Lorentzian for every atom and changes with the pump intensity",
+          "All atoms share the same lineshape and the same transition frequency ω0"
         ],
-        "correctIndex": 1,
+        "correctIndex": 0,
         "explanation": "The notes state that in inhomogeneous broadening the transition frequencies vary from atom to atom around a mean ω0.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.5_004",
         "stem": "What physically causes inhomogeneous (Doppler) broadening in gas lasers specifically?",
         "options": [
-          "Collisions between gas atoms",
-          "The thermal velocity distribution of atoms causing Doppler-shifted absorption/emission frequencies",
-          "The finite lifetime of the excited state",
-          "Lattice vibrations in the gas"
+          "Collisions between the gas atoms, which interrupt the phase of the dipole",
+          "The finite excited-state lifetime caused by spontaneous emission of the atoms",
+          "The thermal velocities of the atoms, which Doppler-shift their resonance frequencies",
+          "Vibrations of the surrounding lattice, which modulate the local electric field"
         ],
-        "correctIndex": 1,
+        "correctIndex": 2,
         "explanation": "The notes derive the Doppler-shifted resonance condition ω = ω0/(1−v/c) from atomic thermal motion.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.5_005",
         "stem": "What is the resulting lineshape when homogeneous and inhomogeneous broadening both contribute comparably?",
         "options": [
-          "A pure Lorentzian",
-          "A pure Gaussian",
+          "A pure Lorentzian, since each atom is homogeneously broadened",
           "A Voigt function — the convolution of the Lorentzian and Gaussian lineshapes",
-          "A rectangular lineshape"
+          "A pure Gaussian, since the inhomogeneous distribution always wins",
+          "The sum of a Lorentzian and a Gaussian, with the widths adding linearly"
         ],
-        "correctIndex": 2,
+        "correctIndex": 1,
         "explanation": "The notes name the Lorentzian–Gaussian convolution the Voigt function.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q2.5_006",
+        "stem": "A transition has natural lifetime τsp = 10 ns and collision time τcol = 5 ns, with no non-radiative decay. What is its homogeneous linewidth Δω0?",
+        "options": [
+          "6.7 × 10⁷ s⁻¹, from Δω0 = 1/(τsp + τcol)",
+          "3 × 10⁸ s⁻¹, from Δω0 = 1/τsp + 1/τcol",
+          "1.5 × 10⁸ s⁻¹, from the mean of the two rates",
+          "2 × 10⁸ s⁻¹, from the collision rate alone"
+        ],
+        "correctIndex": 1,
+        "explanation": "Inverse times add: Δω0 = 1/10 ns + 1/5 ns = 3×10⁸ s⁻¹ (τtot ≈ 3.3 ns).",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.5_007",
+        "stem": "A gas medium is heated from 300 K to 1200 K at fixed transition frequency and atomic mass. How does its Doppler FWHM Δω0* change?",
+        "options": [
+          "It doubles, since Δω0* ∝ (T/M)^(1/2)",
+          "It is unchanged, since Δω0* depends only on ω0",
+          "It halves, since hotter atoms move more coherently",
+          "It quadruples, since Δω0* ∝ T"
+        ],
+        "correctIndex": 0,
+        "explanation": "Δω0* = 2ω0[2kBT ln2/(Mc²)]^(1/2) ∝ √T, so quadrupling T doubles the width.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.5_008",
+        "stem": "What is the origin of the broad tuning range (about 700–1100 nm) of the titanium–sapphire laser?",
+        "options": [
+          "Doppler broadening of Ti atoms moving inside the sapphire crystal",
+          "Collision broadening from frequent collisions between the Ti atoms",
+          "Natural broadening from the very short lifetimes of Ti atoms in sapphire",
+          "Local-field effects in the crystalline host broaden the Ti transition"
+        ],
+        "correctIndex": 3,
+        "explanation": "In solids and liquids inhomogeneity of the local electric field broadens transitions; Ti:sapphire's broad tuning relies on such local-field effects in crystalline sapphire, which amorphous Al₂O₃ does not reproduce.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "2.6": [
@@ -557,71 +1143,126 @@
         "id": "q2.6_001",
         "stem": "What population condition makes a medium behave as an amplifier rather than an absorber, per the gain/saturation treatment?",
         "options": [
-          "N2 > N1 (population inversion)",
-          "N1 > N2",
-          "N1 = N2",
-          "N2 = 0"
+          "N2 = N1: the two populations are exactly equal (transparency)",
+          "N1 > N2: the ground state is more populated than the excited state",
+          "N2 = 0: all atoms are in the ground state and can absorb photons",
+          "N2 > N1: the excited state is more populated than the ground state"
         ],
-        "correctIndex": 0,
+        "correctIndex": 3,
         "explanation": "F(z) > F(0) (amplification) occurs when N2 > N1, per the notes.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.6_002",
         "stem": "How is the gain coefficient g(ω) of an active medium defined?",
         "options": [
           "g(ω) = σ(ω)(N2 − N1)",
+          "g(ω) = σ(ω)(N2 + N1)",
           "g(ω) = σ(ω)(N1 − N2)",
-          "g(ω) = σ(ω)/N1",
-          "g(ω) = N1 + N2"
+          "g(ω) = σ(ω)(N2 − N1)/N1"
         ],
         "correctIndex": 0,
         "explanation": "The notes define g(ω) = σ(ω)(N2−N1) > 0 for an amplifying medium.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.6_003",
         "stem": "What is \"saturation,\" as described for the absorption coefficient α(ω)?",
         "options": [
-          "α(ω) increasing without bound as incoming intensity increases",
-          "α(ω) decreasing as incoming intensity increases, following α(ω) = α0/(1+I/Isat)",
-          "The gain becoming infinite at high intensity",
-          "The population inversion becoming negative"
+          "α increasing with the incoming intensity, following α = α0(1+I/Isat)",
+          "The gain diverging at high intensity as the inversion builds up in the medium",
+          "α decreasing as the incoming intensity increases, following α = α0/(1+I/Isat)",
+          "The population inversion turning negative once the intensity grows large"
         ],
-        "correctIndex": 1,
+        "correctIndex": 2,
         "explanation": "The notes give α(ω) = α0/(1+I/Isat), decreasing absorption with increasing intensity — this is saturation.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.6_004",
         "stem": "What happens to the population difference ΔN at very high incoming intensity (I ≫ Isat)?",
         "options": [
-          "ΔN approaches the total population Nt",
-          "ΔN approaches 0, producing \"induced transparency\" (no net absorption)",
-          "ΔN diverges to infinity",
-          "ΔN becomes strongly negative"
+          "ΔN approaches 0, producing induced transparency (no net absorption)",
+          "ΔN diverges, since stimulated emission adds photons without limit",
+          "ΔN becomes negative, so the medium turns into an amplifier",
+          "ΔN approaches the total population Nt, so absorption is at its maximum"
         ],
-        "correctIndex": 1,
+        "correctIndex": 0,
         "explanation": "The notes state that at large I, ΔN → 0 and α → 0, i.e. induced transparency.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q2.6_005",
         "stem": "How is the saturation intensity Isat physically interpreted in the notes?",
         "options": [
-          "The intensity at which the gain becomes negative",
-          "The intensity at which the absorption coefficient drops to half its unsaturated value α0",
-          "The maximum intensity a cavity can sustain before damage",
-          "The threshold intensity for stimulated emission to begin at all"
+          "The threshold intensity above which stimulated emission begins to occur at all",
+          "The intensity at which the absorption coefficient falls to half its unsaturated value α0",
+          "The intensity at which the population inversion of the medium becomes negative",
+          "The largest intensity the gain crystal can withstand before optical damage sets in"
         ],
         "correctIndex": 1,
         "explanation": "The notes state that when I = Isat, absorption \"decreases by a factor of 2\" compared to α0.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q2.6_006",
+        "stem": "An absorber is illuminated with intensity I = 3 I_sat. By what factor is its absorption coefficient reduced relative to the unsaturated value α0?",
+        "options": [
+          "It is not reduced, since saturation only starts above 10 I_sat",
+          "By a factor 4, since α = α0/(1 + I/I_sat) = α0/4",
+          "By a factor 3, in proportion to I/I_sat",
+          "By a factor 2, as at I = I_sat"
+        ],
+        "correctIndex": 1,
+        "explanation": "α = α0/(1 + I/I_sat) = α0/(1 + 3) = α0/4; saturation is already visible below I_sat.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.6_007",
+        "stem": "For the same σ, τ and ω, how does the saturation intensity of gain compare with that of absorption?",
+        "options": [
+          "It is four times as large, since gain involves both N2 and N1",
+          "It is half as large, since gain saturates earlier than absorption",
+          "It is twice as large: I_sat(gain) = ħω/(στ) versus ħω/(2στ)",
+          "They are identical, since both depend on στ and ω only"
+        ],
+        "correctIndex": 2,
+        "explanation": "I_sat(abs) = ħω/(2στ) for the two-level absorber and I_sat(gain) = ħω/(στ) for the four-level gain, so I_gain = 2 I_abs: gain saturates at higher intensity.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q2.6_008",
+        "stem": "A medium has σ = 2 × 10⁻²³ m² and Ng − Ne = 10²⁴ m⁻³. What fraction of a weak beam is transmitted through 5 cm?",
+        "options": [
+          "About 90%, taking α = σ(Ng − Ne)/10",
+          "About 63%, the fraction that is absorbed",
+          "About 5%, taking αz = 3",
+          "About 37% (e⁻¹), since α = 20 m⁻¹"
+        ],
+        "correctIndex": 3,
+        "explanation": "α = σ(Ng − Ne) = 20 m⁻¹, so F(z)/F(0) = e^(−αz) = e^(−1) ≈ 0.37 after 5 cm; 63% is the absorbed fraction.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ]
   },
@@ -631,43 +1272,49 @@
         "id": "q3.1_001",
         "stem": "What approximation allows a linear ray-matrix (ABCD) formalism to replace full diffraction theory for describing light in a laser cavity?",
         "options": [
+          "The scalar diffraction approximation — polarisation is ignored entirely",
           "The paraxial approximation — rays stay close to the optical axis",
-          "The far-field approximation",
-          "The thin-film interference approximation",
-          "The scalar diffraction approximation"
+          "The thin-lens approximation — every element is infinitely thin",
+          "The far-field approximation — the observation plane is far from the source"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "Under the paraxial approximation, rays remain confined near the axis, allowing the linear ABCD matrix formalism.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.1_002",
         "stem": "In the ABCD matrix formalism, what two variables uniquely characterize a ray at a given transverse plane?",
         "options": [
-          "Its wavelength and polarization state",
-          "Its distance y from the optical axis, and its angle α with respect to the axis",
-          "Its intensity and phase",
-          "Its frequency and amplitude"
+          "Its wavelength and its polarisation state at the input plane",
+          "Its local intensity and optical phase at the input plane",
+          "Its optical frequency and field amplitude at the input plane",
+          "Its distance y from the optical axis and its angle α to the axis"
         ],
-        "correctIndex": 1,
+        "correctIndex": 3,
         "explanation": "The notes define a ray at a plane by the pair (y, α).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.1_003",
         "stem": "What sign convention does this formalism use for the radius of curvature of spherical mirrors?",
         "options": [
-          "Concave mirrors have negative radius, convex mirrors have positive",
-          "Concave mirrors have positive radius of curvature, convex mirrors have negative",
-          "All mirrors are assigned a positive radius regardless of shape",
-          "Radius of curvature sign is irrelevant to the formalism"
+          "The sign depends on the propagation direction, so R flips after each reflection",
+          "Concave mirrors have positive radius of curvature, convex mirrors negative",
+          "All mirrors have positive radius, and convexity is encoded by a negative focal length",
+          "Concave mirrors have negative radius of curvature, convex mirrors positive"
         ],
         "correctIndex": 1,
         "explanation": "The notes state concave mirrors have positive radius of curvature, convex mirrors negative.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.1_004",
@@ -675,13 +1322,75 @@
         "options": [
           "[[1, L], [0, 1]]",
           "[[1, 0], [L, 1]]",
-          "[[0, L], [1, 0]]",
-          "[[L, 0], [0, L]]"
+          "[[1, −L], [0, 1]]",
+          "[[1, L], [1, 0]]"
         ],
         "correctIndex": 0,
         "explanation": "The notes give the free-space ABCD matrix as [[1, L], [0, 1]] (Eq. 3.2).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q3.1_005",
+        "stem": "Which ABCD matrix describes a thin lens of focal length f?",
+        "options": [
+          "[[1, 0], [−1/f, 1]]",
+          "[[1, −1/f], [0, 1]]",
+          "[[1, f], [0, 1]]",
+          "[[1, 0], [1/f, 1]]"
+        ],
+        "correctIndex": 0,
+        "explanation": "The lens leaves the height unchanged (y′ = y) and tilts the ray by α′ = α − y/f, so C = −1/f, B = 0 and A = D = 1.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q3.1_006",
+        "stem": "A concave spherical mirror has radius of curvature R = 0.5 m. What is the element C of its ABCD matrix [[1, 0], [C, 1]]?",
+        "options": [
+          "C = −0.25 m, since C = −R/2",
+          "C = −2 m⁻¹, since C = −1/R",
+          "C = +4 m⁻¹, since concave mirrors diverge rays",
+          "C = −4 m⁻¹, since C = −2/R"
+        ],
+        "correctIndex": 3,
+        "explanation": "A spherical mirror is a thin lens with f = R/2, so C = −1/f = −2/R = −4 m⁻¹. C < 0 means the concave mirror converges rays, and C = −R/2 would not even have units of inverse length.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q3.1_007",
+        "stem": "A ray first crosses a free-space section of length L and then a thin lens of focal length f. Which product gives the system matrix?",
+        "options": [
+          "M = M_free · (M_lens)⁻¹, since the lens acts on the returning ray",
+          "M = M_lens + M_free, since the ray displacements add up",
+          "M = M_lens · M_free, with the element met first written on the right",
+          "M = M_free · M_lens, in the order in which the ray meets the elements"
+        ],
+        "correctIndex": 2,
+        "explanation": "Matrices act on the column vector (y, α) from the left, so the element met first stands rightmost: M = M_lens M_free = [[1, L], [−1/f, 1 − L/f]]. The other order describes a different system.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q3.1_008",
+        "stem": "A ray travels 3 cm through glass with refractive index n = 1.5. Which value of B in the ABCD matrix describes this propagation?",
+        "options": [
+          "B = 3 cm, as in free space",
+          "B = 0.5 cm, since B = L(1 − n)",
+          "B = 2 cm, since B = L/n",
+          "B = 4.5 cm, since B = nL"
+        ],
+        "correctIndex": 2,
+        "explanation": "Propagation over a length L in a medium of index n has the matrix [[1, L/n], [0, 1]], so B = 3 cm/1.5 = 2 cm.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "3.2": [
@@ -689,71 +1398,126 @@
         "id": "q3.2_001",
         "stem": "What relation must hold between the amplitude reflection and transmission coefficients of a Fabry-Pérot mirror surface, from energy conservation?",
         "options": [
+          "R·T = 1",
+          "R + T = 1",
           "R² + T² = 1",
-          "R = T",
-          "R − T = 1",
-          "R·T = 1"
+          "R² − T² = 1"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "The notes give |r|² + |t|² ≡ R² + T² = 1 (Eq. 3.13).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.2_002",
         "stem": "How is the total output field of a Fabry-Pérot interferometer constructed?",
         "options": [
-          "It is a single directly-reflected wave",
-          "It is the superposition of all the multiply reflected/transmitted waves exiting the second surface",
-          "It is only the wave transmitted with zero reflections",
-          "It is the arithmetic average of input and output intensities"
+          "Only the first wave, transmitted through both surfaces without any reflection",
+          "The incoherent sum of the intensities of all the individual transmitted beams",
+          "The superposition of all multiply reflected waves that leave through the second mirror",
+          "The average of the input and output intensities of the whole interferometer"
         ],
-        "correctIndex": 1,
+        "correctIndex": 2,
         "explanation": "The notes sum an infinite series of successively reflected/transmitted waves to get the output field.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.2_003",
         "stem": "What determines the phase difference φ between consecutive transmitted waves inside a Fabry-Pérot cavity?",
         "options": [
-          "It is proportional to the optical path difference ℓ between consecutive rays, φ = kℓ",
-          "It is a fixed random phase",
-          "It always equals π",
-          "It depends only on the mirror reflectivity"
+          "It is proportional to the optical path difference ℓ of consecutive rays, φ = kℓ",
+          "It is a fixed value set by the mirror reflectivity R alone, independent of ν",
+          "It equals π at every frequency, from the phase jump on reflection at the mirrors",
+          "It is a random phase that changes from one round trip to the next in the cavity"
         ],
         "correctIndex": 0,
         "explanation": "The notes give φ = kℓ = (ω/c)ℓ, directly tied to the optical path difference.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.2_004",
         "stem": "What is the Free Spectral Range (FSR) of a Fabry-Pérot interferometer?",
         "options": [
-          "The bandwidth (FWHM) of a single transmission peak",
-          "The periodic spacing between transmission peaks, νFSR = c/(2nd cos θ)",
-          "The reflectivity of the mirrors",
-          "The finesse of the cavity"
+          "The FWHM of a single transmission peak, Δνc = νFSR(1−R)/(π√R)",
+          "The ratio of the FSR to the FWHM of a peak, π√R/(1−R)",
+          "The mirror reflectivity R = |r|², which sets the peak height",
+          "The periodic spacing between transmission peaks, νFSR = c/(2nd cosθ)"
         ],
-        "correctIndex": 1,
+        "correctIndex": 3,
         "explanation": "The notes define νFSR = c/(2nd cos θ) as the period of the transmission function.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.2_005",
         "stem": "How is the Finesse of a Fabry-Pérot interferometer defined, and what does a higher Finesse indicate?",
         "options": [
-          "The ratio of FSR to FWHM of a transmission peak; higher Finesse means the cavity stores energy better (light bounces more before attenuation)",
-          "The total number of mirrors in the cavity",
-          "The refractive index of the intracavity medium",
-          "The total transmitted optical power"
+          "FSR divided by peak FWHM, π√R/(1−R); higher finesse means more bounces before attenuation",
+          "The FSR itself, c/(2nd); a higher finesse means the peaks lie further apart in frequency",
+          "The number of mirrors in the cavity; a higher finesse means a more complex resonator",
+          "The total transmitted power; a higher finesse means the cavity transmits more light"
         ],
         "correctIndex": 0,
         "explanation": "The notes define Finesse F = νFSR/Δνc and link higher Finesse to higher mirror reflectivity and better energy storage.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q3.2_006",
+        "stem": "An air-spaced Fabry–Pérot has mirror separation d = 5 cm and is used at normal incidence (c = 3.0 × 10⁸ m/s). What is its free spectral range?",
+        "options": [
+          "About 1.5 GHz, from c/(4d)",
+          "About 3 GHz, from c/(2d)",
+          "About 6 GHz, from c/d",
+          "About 0.3 GHz, from c/(20d)"
+        ],
+        "correctIndex": 1,
+        "explanation": "Δν_FSR = c/(2nd cosθ) = 3×10⁸/(2 × 0.05) = 3 GHz.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q3.2_007",
+        "stem": "Which mirror reflectivity gives a Fabry–Pérot finesse F = π√R/(1 − R) of about 30?",
+        "options": [
+          "R ≈ 0.999",
+          "R ≈ 0.90",
+          "R ≈ 0.50",
+          "R ≈ 0.99"
+        ],
+        "correctIndex": 1,
+        "explanation": "F(0.90) ≈ 29.8, F(0.99) ≈ 313, F(0.50) ≈ 4.4 and F(0.999) ≈ 3140.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q3.2_008",
+        "stem": "When does a lossless Fabry–Pérot transmit exactly 100% of the incident light?",
+        "options": [
+          "When δφ/2 is an odd multiple of π/2, so that the beams are in quadrature",
+          "Only at normal incidence, whatever the mirror separation and reflectivity",
+          "When R = 0.5, so that the amplitude coefficients r and t are equal",
+          "When δφ/2 is a multiple of π, so that all transmitted beams add constructively"
+        ],
+        "correctIndex": 3,
+        "explanation": "T = 1/[1 + (4R/(1 − R)²)sin²(δφ/2)] equals 1 exactly when sin(δφ/2) = 0, i.e. δφ/2 = mπ; then all transmitted beams add constructively (for any R).",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "3.3": [
@@ -761,71 +1525,126 @@
         "id": "q3.3_001",
         "stem": "What is the resonance condition for an optical resonator?",
         "options": [
-          "The phase acquired after one round-trip must be a multiple of 2π",
-          "The wave must be circularly polarized",
-          "The refractive index inside the cavity must equal exactly 1",
-          "The mirrors must be perfectly flat"
+          "The mirrors must be perfectly flat and exactly parallel to each other",
+          "The wave must be circularly polarised so that it reflects without loss",
+          "The round-trip path must equal exactly one wavelength (n = 1 only)",
+          "The phase acquired after one round trip must be an integer multiple of 2π"
         ],
-        "correctIndex": 0,
+        "correctIndex": 3,
         "explanation": "The notes define resonance as constructive interference: a round-trip phase shift equal to a multiple of 2π.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.3_002",
         "stem": "What is the resonant-frequency spacing of a linear (Fabry-Pérot-type) resonator of length L, supporting standing waves?",
         "options": [
-          "ν = nc/L",
-          "ν = nc/(2L)",
           "ν = nc/(4L)",
+          "ν = nc/(2L)",
+          "ν = nc/L",
           "ν = 2nc/L"
         ],
         "correctIndex": 1,
         "explanation": "The notes derive ν = nc/(2L) for the standing-wave Fabry-Pérot resonator (Eq. 3.28).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.3_003",
         "stem": "How does the resonant-frequency spacing of a ring resonator (travelling wave) compare to a Fabry-Pérot resonator of the same length?",
         "options": [
-          "It is half as large",
-          "It is the same",
-          "It is exactly double",
-          "Ring resonators have no defined mode spacing"
+          "It is twice as large (c/L instead of c/2L)",
+          "It is undefined, since travelling waves form no resonances",
+          "It is half as large (c/4L instead of c/2L)",
+          "It is the same, since both cavities have length L"
         ],
-        "correctIndex": 2,
+        "correctIndex": 0,
         "explanation": "The notes state the ring resonator's frequency spacing is doubled compared to the Fabry-Pérot case.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.3_004",
         "stem": "What defines an \"eigenmode\" of an optical cavity?",
         "options": [
-          "Any field that decays to zero after one round-trip",
-          "A transverse field profile that reproduces itself, up to a scale factor and phase, after one round-trip",
-          "A field with zero intensity everywhere",
-          "A field polarized exactly along the cavity axis"
+          "Any field profile that decays to zero after a single round trip",
+          "A transverse profile that reproduces itself, up to a complex factor, after one round trip",
+          "A field profile that is exactly identical, including phase, after every round trip",
+          "A field profile polarised exactly along the cavity axis at every point"
         ],
         "correctIndex": 1,
         "explanation": "The notes define eigenmodes via the self-similarity condition u(x,y,2L) = γ u(x,y,0) exp(2ikL).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.3_005",
         "stem": "For fixed transverse indices {a,b}, what are the modes differing only in longitudinal index n called, and what sets their frequency spacing?",
         "options": [
-          "Transverse modes; set by the mirror curvature",
           "Longitudinal modes; their spacing is set by the cavity length",
-          "Polarization modes; set by the refractive index",
-          "Degenerate modes; set by the pump power"
+          "Degenerate modes; their spacing is set by the pump power",
+          "Polarisation modes; their spacing is set by the refractive index",
+          "Transverse modes; their spacing is set by the mirror curvature"
         ],
-        "correctIndex": 1,
+        "correctIndex": 0,
         "explanation": "The notes call these longitudinal modes, with spacing set by the cavity length L.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q3.3_006",
+        "stem": "A linear two-mirror cavity has length L = 30 cm (c = 3.0 × 10⁸ m/s). What is its free spectral range?",
+        "options": [
+          "250 MHz, from c/(4L)",
+          "2 GHz, from 2c/L",
+          "500 MHz, from c/(2L)",
+          "1 GHz, from c/L"
+        ],
+        "correctIndex": 2,
+        "explanation": "Δν_FSR = c/(2L) = 3×10⁸/0.6 = 500 MHz.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q3.3_007",
+        "stem": "Two identical spherical mirrors with R = 10 cm form a concentric resonator. What are its length and free spectral range?",
+        "options": [
+          "L = 20 cm and FSR = c/(2R) = 1.5 GHz",
+          "L = 5 cm and FSR = c/(2L) = 3 GHz",
+          "L = 10 cm and FSR = c/(2L) = 1.5 GHz",
+          "L = 20 cm and FSR = c/(4R) = 750 MHz"
+        ],
+        "correctIndex": 3,
+        "explanation": "In a concentric resonator the mirrors' centres of curvature coincide, so L = 2R = 20 cm and Δν_FSR = c/(2L) = c/(4R) = 750 MHz.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q3.3_008",
+        "stem": "Why are resonators built from two planar mirrors rarely used as laser cavities?",
+        "options": [
+          "They support only travelling waves, so no standing-wave field can form",
+          "They have no resonances, since planar mirrors cannot reflect light back onto itself",
+          "They are only marginally stable, which makes them very impractical as laser resonators",
+          "Their free spectral range is always too small, since the mirrors are far apart"
+        ],
+        "correctIndex": 2,
+        "explanation": "Two planar mirrors sit on the stability boundary (g₁ = g₂ = 1): they are only marginally stable. Stable cavities use one or two curved mirrors.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "3.4": [
@@ -833,71 +1652,126 @@
         "id": "q3.4_001",
         "stem": "What equation governs the transverse envelope of a paraxial optical beam propagating inside a resonator?",
         "options": [
-          "The full vector Maxwell equations",
-          "The paraxial wave equation, 2ik ∂u/∂z = ∇²⊥u",
-          "The non-relativistic Schrödinger equation for a free particle",
-          "The heat diffusion equation"
+          "The paraxial wave equation, 2ik ∂u/∂z = −∇⊥²u",
+          "The free-particle Schrödinger equation, iħ ∂ψ/∂t = −(ħ²/2m)∇²ψ",
+          "The heat diffusion equation, ∂T/∂t = D∇²T",
+          "The Helmholtz equation, (∇² + k²)E = 0, solved without any approximation"
         ],
-        "correctIndex": 1,
+        "correctIndex": 0,
         "explanation": "The notes derive this paraxial equation (Eq. 3.40) from the Helmholtz equation under the slowly-varying envelope assumption.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.4_002",
         "stem": "What complex parameter characterizes a Gaussian beam's evolution, combining both its wavefront curvature and its width?",
         "options": [
-          "The complex q-parameter, q(z) = z + izR",
-          "The Boltzmann factor",
-          "The mirror reflection coefficient",
-          "The Einstein B coefficient"
+          "The Strehl ratio, which compares peak intensity with a diffraction-limited beam",
+          "The Fresnel number, which combines the mirror radius and the cavity length",
+          "The complex q-parameter q(z), whose inverse combines 1/R(z) and λ/(nπw²(z))",
+          "The M² beam-quality factor, which compares the beam with an ideal Gaussian"
         ],
-        "correctIndex": 0,
-        "explanation": "The notes introduce q(z) = z + izR to describe Gaussian beam propagation.",
+        "correctIndex": 2,
+        "explanation": "The notes introduce the complex q-parameter q(z), with 1/q = 1/R(z) − iλ/(nπw²(z)), to describe Gaussian beam propagation.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.4_003",
         "stem": "What is the physical meaning of the Rayleigh range zR of a Gaussian beam?",
         "options": [
+          "The distance from the waist at which the beam radius has doubled, w = 2w0",
+          "The length of the cavity over which the Gaussian beam stays perfectly collimated",
           "The distance from the waist over which the beam radius grows by a factor of √2",
-          "The total physical length of the laser cavity",
-          "The central wavelength of the beam",
-          "The radius of curvature of the cavity mirrors"
+          "The radius of curvature of the wavefront at the beam waist"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "The notes define zR via the beam-waist evolution, marking the distance where the beam radius increases by √2.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.4_004",
         "stem": "What is the \"Gouy phase\" of a Gaussian beam?",
         "options": [
-          "ζ(z) = arctan(z/zR), an extra phase shift acquired on propagation beyond the plane-wave phase",
-          "The phase difference between the two cavity mirrors",
-          "The phase imparted by the pump laser",
-          "A phase shift that only occurs in ring resonators"
+          "ζ(z) = arctan(z/zR), an extra phase acquired on propagation beyond the plane-wave phase",
+          "ζ(z) = z/zR, a phase that grows linearly with distance from the waist",
+          "A phase jump of π that occurs only on reflection from a curved mirror",
+          "The phase difference between the two mirrors of the cavity after one round trip"
         ],
         "correctIndex": 0,
         "explanation": "The notes explicitly identify ζ(z) = arctan(z/zR) as the Gouy phase.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.4_005",
         "stem": "What condition does the paraxial approximation impose on the beam envelope u for the paraxial wave equation to be valid?",
         "options": [
-          "|∂²u/∂z²| ≪ |k ∂u/∂z| — the transverse envelope must vary slowly along z",
-          "The beam must have exactly zero divergence",
-          "The refractive index must be infinite",
-          "The wavelength must exceed the cavity length"
+          "|∂²u/∂z²| ≫ |k ∂u/∂z|: the envelope must vary rapidly along z",
+          "|∂²u/∂z²| ≪ |k ∂u/∂z|: the envelope must vary slowly along z",
+          "k ∂u/∂z must vanish, i.e. the envelope must not change along z at all",
+          "|∂u/∂x| ≪ |∂u/∂z|: the beam must have no transverse structure"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "The notes state this slowly-varying-envelope condition (Eq. 3.39) as the requirement for the paraxial approximation.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q3.4_006",
+        "stem": "A Gaussian beam has wavelength λ = 633 nm and waist w0 = 0.5 mm (n = 1). What is its Rayleigh range zR = πw0²/λ?",
+        "options": [
+          "About 0.62 m",
+          "About 12 cm",
+          "About 0.39 m",
+          "About 1.2 m"
+        ],
+        "correctIndex": 3,
+        "explanation": "z_R = π(0.5×10⁻³ m)²/(633×10⁻⁹ m) ≈ 1.24 m. Leaving out π gives 0.39 m, and πw₀²/(2λ) gives 0.62 m.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q3.4_007",
+        "stem": "At the Rayleigh range z = zR, what are the beam radius w and the wavefront curvature radius R(z)?",
+        "options": [
+          "w = 2w0 and R = 2zR",
+          "w = √2·w0 and R = 2zR",
+          "w = √2·w0 and R = ∞ (planar wavefront)",
+          "w = 2w0 and R = zR"
+        ],
+        "correctIndex": 1,
+        "explanation": "w²(z) = w₀²[1 + (z/z_R)²] gives w(z_R) = √2 w₀, and R(z) = z[1 + (z_R/z)²] gives R(z_R) = 2z_R; the wavefront is planar (R = ∞) only at the waist.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q3.4_008",
+        "stem": "What is the Gouy phase ζ(z) = arctan(z/zR) at z = zR?",
+        "options": [
+          "π, i.e. 180°",
+          "0, since ζ vanishes away from the waist",
+          "π/2, i.e. 90°",
+          "π/4, i.e. 45°"
+        ],
+        "correctIndex": 3,
+        "explanation": "arctan(1) = π/4. The Gouy phase is 0 at the waist and approaches ±π/2 far away.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "3.5": [
@@ -905,71 +1779,126 @@
         "id": "q3.5_001",
         "stem": "What determines whether a two-mirror optical resonator is stable?",
         "options": [
-          "Whether the round-trip ABCD matrix raised to the n-th power stays bounded as n → ∞",
-          "Whether the mirrors are exactly flat",
-          "Whether the gain medium is saturated",
-          "Whether the cavity length equals an integer number of wavelengths"
+          "The n-th power of the round-trip ABCD matrix stays bounded as n → ∞",
+          "The gain medium is saturated, so the gain stays constant",
+          "The cavity length equals an integer number of wavelengths, L = mλ",
+          "The mirrors are exactly flat, so no ray can leave the axis"
         ],
         "correctIndex": 0,
         "explanation": "The notes define stability via boundedness of Mⁿ as n → ∞, using Sylvester's theorem.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.5_002",
         "stem": "What is the general stability condition, expressed in terms of the round-trip transfer matrix elements A, D?",
         "options": [
-          "|Tr{M}| > 2",
+          "AD − BC = 1 exactly",
+          "B = C, so that the round-trip matrix is symmetric",
           "|(A+D)/2| < 1",
-          "A·D = 1 exactly",
-          "B must equal C"
+          "|Tr{M}| > 2"
         ],
-        "correctIndex": 1,
+        "correctIndex": 2,
         "explanation": "The notes derive |(A+D)/2| < 1 as the general stability condition (Eq. 3.60).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.5_003",
         "stem": "How are the g-parameters g1, g2 of a two-mirror resonator (mirror radii R1, R2, separation L) defined?",
         "options": [
-          "gi = 1 − L/Ri",
-          "gi = L/Ri",
-          "gi = Ri/L",
-          "gi = L·Ri"
+          "gi = 1 + L/Ri",
+          "gi = L/Ri − 1",
+          "gi = 1 − Ri/L",
+          "gi = 1 − L/Ri"
         ],
-        "correctIndex": 0,
+        "correctIndex": 3,
         "explanation": "The notes define gi = 1 − L/Ri (Eq. 3.62).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.5_004",
         "stem": "What is the stability condition for a two-mirror resonator expressed in terms of g1 and g2?",
         "options": [
-          "0 < g1g2 < 1",
           "g1g2 > 1",
-          "g1 must always equal g2",
-          "g1g2 < 0"
+          "g1g2 < 0",
+          "0 < g1 + g2 < 1",
+          "0 < g1g2 < 1"
         ],
-        "correctIndex": 0,
+        "correctIndex": 3,
         "explanation": "The notes derive 0 < g1g2 < 1 as the stability condition (Eq. 3.64).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.5_005",
         "stem": "For a symmetric resonator (g1 = g2 = g), what does the stability condition reduce to?",
         "options": [
-          "0 < g < ∞",
           "0 < g² < 1",
-          "g must equal exactly 1",
-          "g must be negative"
+          "g = 1 exactly",
+          "0 < g < ∞",
+          "g² > 1"
         ],
-        "correctIndex": 1,
+        "correctIndex": 0,
         "explanation": "Substituting g1=g2=g into 0 < g1g2 < 1 gives 0 < g² < 1.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q3.5_006",
+        "stem": "A resonator of length L = 1 m has two identical mirrors. Which radius R gives a stable resonator (0 < g² < 1)?",
+        "options": [
+          "R = ∞ (planar, g = 1)",
+          "R = 2 m (g = 0.5)",
+          "R = 0.5 m (concentric, g = −1)",
+          "R = −1 m (convex, g = 2)"
+        ],
+        "correctIndex": 1,
+        "explanation": "g = 1 − L/R: R = 2 m gives g = 0.5 and g² = 0.25, inside (0, 1). Concentric and planar mirrors sit exactly on the boundary (g² = 1), and convex mirrors with g = 2 give g² = 4 > 1.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q3.5_007",
+        "stem": "A round-trip matrix has A = 0.5 and D = 1.7, so that |(A + D)/2| = 1.1. What does this imply?",
+        "options": [
+          "The resonator is stable, since A and D are both positive",
+          "The resonator is marginally stable, since (A + D)/2 is close to 1",
+          "The resonator is unstable, since |(A + D)/2| > 1",
+          "Stability cannot be judged without the determinant AD − BC"
+        ],
+        "correctIndex": 2,
+        "explanation": "Stability requires |(A + D)/2| < 1. With 1.1 the angle θ in cosθ = (A + D)/2 is imaginary and the ray runs away from the axis. The determinant is 1 for any such system, so it carries no information.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q3.5_008",
+        "stem": "In the (g1, g2) stability diagram, what does the diagonal line g1 = g2 through the points A, B and C represent?",
+        "options": [
+          "Ring resonators, which have no g-parameters",
+          "Symmetric resonators: A concentric, B confocal, C planar",
+          "The boundary between the stable and the unstable region",
+          "Resonators with equal mirror separation but unequal radii"
+        ],
+        "correctIndex": 1,
+        "explanation": "On g₁ = g₂ the two mirror radii are equal: A is the concentric case (R = L/2), B the confocal case (R = L) and C the planar case (R = ∞).",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "3.6": [
@@ -977,71 +1906,126 @@
         "id": "q3.6_001",
         "stem": "What does the photon lifetime τc of a passive resonator physically represent?",
         "options": [
-          "The time required to create a photon via pumping",
-          "The average time a single photon spends in the cavity before leaving it",
-          "The time between successive pump pulses",
-          "The transit time of a photon across a single mirror"
+          "The time needed to build up the first photon in the cavity by pumping",
+          "The time between two successive round trips of the same photon",
+          "The average time a photon spends in the cavity before leaving it",
+          "The time a photon needs to be reflected once by a mirror"
         ],
-        "correctIndex": 1,
+        "correctIndex": 2,
         "explanation": "The notes define τc as the average residence time of a photon in the cavity before it escapes.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.6_002",
         "stem": "How does the photon number in a passive (unpumped) resonator evolve over time, in the many-round-trip limit?",
         "options": [
-          "Linearly in time",
-          "Exponentially, φ(t) = φ0 e^(−t/τc)",
-          "Quadratically in time",
-          "It remains constant"
+          "Quadratically, φ(t) = φ0 (1 − t/τc)²",
+          "It stays constant, since the mirrors conserve the photons",
+          "Linearly, φ(t) = φ0 (1 − t/τc)",
+          "Exponentially, φ(t) = φ0 e^(−t/τc)"
         ],
-        "correctIndex": 1,
+        "correctIndex": 3,
         "explanation": "The notes derive exactly this exponential decay for the photon number (Eq. 3.68).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.6_003",
         "stem": "How is the quality factor (Q-factor) of a resonator mode defined?",
         "options": [
-          "The ratio of energy stored to energy lost per unit time, scaled by the mode's angular frequency ω0",
-          "The number of longitudinal modes supported by the cavity",
-          "The reflectivity of a single mirror",
-          "The size of the beam waist"
+          "The ratio of the FSR to the FWHM of the cavity resonances",
+          "The ratio of the output power to the input power of the cavity",
+          "ω0 times the energy stored divided by the energy lost per unit time",
+          "The number of longitudinal modes supported within the gain bandwidth"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "The notes define Q = ω0 × (energy stored)/(energy lost), Eq. 3.72.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.6_004",
         "stem": "How does increasing mirror reflectivity affect the photon lifetime τc and the Q-factor?",
         "options": [
-          "It decreases both",
-          "It increases both — longer photon lifetime and higher Q-factor",
-          "It has no effect on either quantity",
-          "It increases τc but decreases Q"
+          "Both decrease, since light is trapped and cannot escape to be used",
+          "Neither changes, since both are set by the cavity length alone",
+          "τc increases but Q decreases, since Q is inversely proportional to τc",
+          "Both increase: longer photon lifetime and higher Q-factor"
         ],
-        "correctIndex": 1,
+        "correctIndex": 3,
         "explanation": "The notes state higher reflectivity means photons stay longer, raising both τc and Q.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q3.6_005",
         "stem": "Why is a high Q-factor desirable when designing a resonator intended for use as a laser cavity?",
         "options": [
-          "It reduces the required pump power to exactly zero",
-          "It keeps photons in the cavity longer, allowing more amplification by the active medium",
-          "It removes the need for any mirrors",
-          "It automatically converts the cavity into a ring resonator"
+          "It keeps photons in the cavity longer, allowing more amplification by the medium",
+          "It lowers the pump power needed to exactly zero, since photons never leave",
+          "It makes the cavity resonance broader, so that more frequencies can lase",
+          "It shortens the round-trip time, so that the gain is applied more often"
         ],
-        "correctIndex": 1,
+        "correctIndex": 0,
         "explanation": "The notes state that a high Q optimizes the interaction time between the field and the active medium.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q3.6_006",
+        "stem": "A cavity of length 30 cm has a round-trip intensity factor ρ1ρ2(1 − Li)² = 0.98 (c = 3.0 × 10⁸ m/s). What is its photon lifetime?",
+        "options": [
+          "About 50 ns, taking half the round trips before the photon leaves",
+          "About 100 ns, since τc = TRT/(−ln 0.98)",
+          "About 200 ns, counting 100 round trips as if 1% were lost per round trip",
+          "About 2 ns, the round-trip time itself"
+        ],
+        "correctIndex": 1,
+        "explanation": "T_RT = 2L/c = 2 ns and τ_c = T_RT/(−ln 0.98) ≈ 2 ns/0.0202 ≈ 99 ns: about 50 round trips fit in one photon lifetime.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q3.6_007",
+        "stem": "A cavity has photon lifetime τc = 100 ns and operates at 1064 nm (ω0 = 1.77 × 10¹⁵ s⁻¹). What is its Q-factor Q ≈ ω0τc?",
+        "options": [
+          "About 1.8 × 10⁸",
+          "About 1.8 × 10⁶",
+          "About 5.6 × 10⁻⁹",
+          "About 1.8 × 10¹⁰"
+        ],
+        "correctIndex": 0,
+        "explanation": "Q ≈ ω₀τ_c = 1.77×10¹⁵ s⁻¹ × 10⁻⁷ s ≈ 1.8×10⁸.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q3.6_008",
+        "stem": "A cavity has photon lifetime τc = 100 ns. What is its resonance linewidth Δν (FWHM in ordinary frequency)?",
+        "options": [
+          "About 63 MHz, from Δν = 2π/τc",
+          "About 1.6 MHz, from Δν = 1/(2πτc)",
+          "About 10 MHz, reading Δωc = 1/τc as a frequency in Hz",
+          "About 500 MHz, from Δν = 1/TRT"
+        ],
+        "correctIndex": 1,
+        "explanation": "Δω_c = 1/τ_c = 10⁷ s⁻¹ is an angular frequency; the ordinary linewidth is Δν = Δω_c/2π ≈ 1.6 MHz.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ]
   },
@@ -1052,56 +2036,124 @@
         "stem": "In the 4-level laser rate-equation model, what three processes are said to change the population N2 of the upper laser level?",
         "options": [
           "Pumping, stimulated emission, and spontaneous emission/nonradiative decay",
-          "Pumping, absorption, and mirror reflection",
-          "Diffraction, scattering, and pumping",
-          "Only spontaneous emission"
+          "Pumping, absorption of laser photons, and mirror reflection losses",
+          "Pumping, diffraction of the beam, and scattering from the crystal surfaces",
+          "Stimulated emission, mirror transmission, and spontaneous emission into the mode"
         ],
         "correctIndex": 0,
         "explanation": "The notes state N2's variation is caused by the pump, stimulated emission, and spontaneous/nonradiative decay.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.1_002",
         "stem": "Why can the ground-state population Ng (and hence the pumping rate Rp = WpNg) be treated as approximately constant in the 4-level model?",
         "options": [
-          "Because the lower laser level N1 is nearly always empty, so essentially all population outside N2 resides in the ground state",
-          "Because the pump is switched off once equilibrium is reached",
-          "Because Ng is exactly zero at all times",
-          "Because the cavity is assumed lossless"
+          "Because the pump is switched off as soon as the laser reaches equilibrium",
+          "Because N1 is nearly always empty, so almost all atoms outside N2 sit in the ground state",
+          "Because the ground state holds only a negligible fraction of the atoms",
+          "Because the ground state is refilled exactly as fast as the cavity loses photons"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "With N1 ≈ 0 in a 4-level system, Ng stays effectively constant, so Rp = WpNg can be treated as constant.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.1_003",
         "stem": "What two coupled quantities do the laser rate equations track as functions of time?",
         "options": [
-          "Cavity length and mirror reflectivity",
-          "The population of the upper laser level N2, and the photon number φ in the cavity",
-          "Pump wavelength and emission wavelength",
-          "Temperature and pressure of the gain medium"
+          "The gain coefficient g and the mode volume V of the resonator",
+          "The population of the lower laser level N1 and the pump power in the cavity",
+          "The population of the upper laser level N2 and the photon number φ in the cavity",
+          "The cavity length and the reflectivity of the output mirror"
         ],
-        "correctIndex": 1,
+        "correctIndex": 2,
         "explanation": "The two coupled rate equations (Eqs. 4.2–4.3) track dN2/dt and dφ/dt.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.1_004",
         "stem": "How is the proportionality constant B (linking the photon number to the stimulated-emission rate) expressed in terms of cavity/medium parameters?",
         "options": [
-          "B = c/V, where V is the mode volume of the resonator",
-          "B = τc, the cavity photon lifetime",
-          "B = Nc, the critical inversion",
-          "B = λ/2, half the wavelength"
+          "B = σV/c, growing with the mode volume",
+          "B = c/V, without any dependence on the cross-section",
+          "B = σ/(cV), decreasing with the speed of light",
+          "B = σc/V, with σ the cross-section and V the mode volume"
+        ],
+        "correctIndex": 3,
+        "explanation": "The notes derive B = σℓc/(VₐLₑ) ≡ σc/V (Eq. 4.13), where V is the mode volume and σ the cross-section.",
+        "addedAt": "2026-09-15",
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q4.1_005",
+        "stem": "In the photon-number equation dφ/dt = BVaN2φ − φ/τc, what does the term φ/τc describe?",
+        "options": [
+          "The spontaneous emission of photons into the laser mode",
+          "The absorption of photons by atoms remaining in the ground state",
+          "The loss of photons through the mirrors and internal losses",
+          "The generation of new photons by the pump radiation"
+        ],
+        "correctIndex": 2,
+        "explanation": "BV_aN₂φ is the gain from stimulated emission, while φ/τ_c is the loss of photons through output coupling and internal losses, characterised by the cavity lifetime τ_c.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q4.1_006",
+        "stem": "The upper laser level decays by spontaneous emission (τsp = 400 μs) and by non-radiative decay (τnr = 600 μs). What is the effective lifetime τ?",
+        "options": [
+          "240 μs, from 1/τ = 1/τsp + 1/τnr",
+          "1000 μs, from τ = τsp + τnr",
+          "500 μs, the mean of the two lifetimes",
+          "600 μs, the longer of the two lifetimes"
         ],
         "correctIndex": 0,
-        "explanation": "The notes derive B = ℓc/(VaLe) ≡ c/V (Eq. 4.13), where V is the mode volume.",
-        "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "explanation": "Decay rates add: 1/τ = 1/400 μs + 1/600 μs = 1/240 μs, so τ = 240 μs, shorter than either lifetime.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q4.1_007",
+        "stem": "In the derivation of the rate equations, why can e^(2(gℓ−γ)) − 1 be replaced by 2(gℓ − γ)?",
+        "options": [
+          "The cavity is assumed to operate exactly at threshold, where gℓ = γ",
+          "Both the single-pass gain gℓ and the loss γ are much smaller than 1",
+          "The photon number is small, so the exponential is close to 1",
+          "The round-trip time is much shorter than the pump duration"
+        ],
+        "correctIndex": 1,
+        "explanation": "The Taylor expansion e^x − 1 ≈ x needs |x| ≪ 1, i.e. gℓ ≪ 1 and γ ≪ 1: a low-gain, low-loss cavity.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q4.1_008",
+        "stem": "What does the effective cavity length Le = L + (n − 1)ℓ take into account?",
+        "options": [
+          "The distance travelled by photons through the output mirror coating",
+          "The diffraction spreading of the beam over the cavity length",
+          "The extra path of the pump beam as it enters the gain medium",
+          "The longer optical path of light inside a gain medium of refractive index n"
+        ],
+        "correctIndex": 3,
+        "explanation": "Light inside a medium of length ℓ and index n travels an optical path nℓ instead of ℓ, so the cavity behaves as if it were longer by (n − 1)ℓ; the round-trip time is 2L_e/c.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "4.2": [
@@ -1109,15 +2161,17 @@
         "id": "q4.2_001",
         "stem": "What is the \"critical inversion\" Nc in the context of a 4-level laser cavity?",
         "options": [
-          "The population inversion at which gain exactly compensates cavity losses, allowing the photon number to grow",
-          "The maximum physically possible population inversion",
-          "The population inversion when N1 = N2 = 0",
-          "The threshold pump wavelength"
+          "The inversion at which gain just compensates the losses, so photons start to grow",
+          "The largest inversion the pump can physically sustain in the steady state",
+          "The inversion at which stimulated emission equals spontaneous emission in the mode",
+          "The inversion at which the lower laser level N1 starts to fill, so gain vanishes"
         ],
         "correctIndex": 0,
         "explanation": "The notes define Nc as the inversion value at which BN2Va·(1/τc) balances, i.e. gain equals loss.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.2_002",
@@ -1125,55 +2179,108 @@
         "options": [
           "N2 < Nc",
           "N2 > Nc",
-          "N2 = 0",
-          "N2 = Nc exactly, and no more"
+          "N2 = Nc/2",
+          "N2 ≥ 2Nc"
         ],
         "correctIndex": 1,
         "explanation": "The notes derive N2 > Nc as the condition for dφ/dt > 0 (Eq. 4.18).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.2_003",
         "stem": "At steady state above threshold, what happens to the population inversion N2?",
         "options": [
-          "It continues growing indefinitely with the pump rate",
-          "It remains \"clamped\" at the critical inversion value Nc",
-          "It drops abruptly to zero",
-          "It oscillates periodically forever"
+          "It drops to zero because all the inversion is consumed",
+          "It stays clamped at the critical inversion Nc",
+          "It oscillates permanently around Nc with growing amplitude",
+          "It keeps growing in proportion to the pump rate Rp"
         ],
         "correctIndex": 1,
         "explanation": "The notes state explicitly that N0 \"remains clamped to its critical inversion value\" Nc above threshold.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.2_004",
         "stem": "How does the steady-state photon number φ0 depend on the pumping rate Rp once above threshold?",
         "options": [
+          "It is independent of Rp, since N2 is clamped",
+          "It decreases as Rp increases, since the gain saturates",
           "It grows linearly with (Rp − Rc)",
-          "It grows quadratically with Rp",
-          "It is completely independent of Rp",
-          "It decreases as Rp increases"
+          "It grows quadratically with (Rp − Rc)"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "The notes derive φ0 = Va τc (Rp − Rc), linear in the pump rate above the critical rate Rc.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.2_005",
         "stem": "How does the critical pumping rate Rcp change as the cavity losses decrease?",
         "options": [
-          "It increases",
-          "It decreases",
-          "It is unaffected by cavity losses",
-          "It becomes negative"
+          "It is unaffected, since Rcp depends only on the gain medium",
+          "It first decreases and then increases beyond an optimum loss",
+          "It increases, since photons stay longer and deplete N2 more",
+          "It decreases, since Rcp = γ/(σℓτ) is proportional to the loss"
         ],
-        "correctIndex": 1,
+        "correctIndex": 3,
         "explanation": "The notes state the critical pumping rate decreases for lower losses and/or larger cross-section/medium length.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q4.2_006",
+        "stem": "The critical pump rate is Rcp = γ/(σℓτ). If the single-pass loss γ is halved and the gain length ℓ is doubled, how does Rcp change?",
+        "options": [
+          "It falls to a quarter of its value",
+          "It rises fourfold",
+          "It falls to a half of its value",
+          "It stays the same, since γ and ℓ compensate"
+        ],
+        "correctIndex": 0,
+        "explanation": "R_cp ∝ γ/ℓ, so halving γ and doubling ℓ each halve the threshold pump rate: R_cp drops by a factor 2 × 2 = 4.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q4.2_007",
+        "stem": "A laser with A_bIs ≈ 900 W and γ2 = 0.01 emits 4.5 W at Pp = 2Pth. What does Pout = (γ2/2)·AbIs·(Pp/Pth − 1) give at Pp = 3Pth?",
+        "options": [
+          "About 13.5 W, tripling",
+          "About 6.8 W, scaling with Pp",
+          "About 4.5 W, since the output saturates above 2Pth",
+          "About 9 W"
+        ],
+        "correctIndex": 3,
+        "explanation": "P_out ∝ (P_p/P_th − 1): it is 1 unit at 2P_th (4.5 W) and 2 units at 3P_th, i.e. 9 W. Proportionality to P_p itself would ignore the threshold.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q4.2_008",
+        "stem": "A laser has pumping efficiency ηp = 0.9, output-coupling efficiency ηout = γ2/2γ = 0.5, quantum efficiency ηQ = 808/1064 ≈ 0.76 and transverse efficiency ηT = 1. What is its slope efficiency?",
+        "options": [
+          "About 68%, ignoring the output-coupling efficiency",
+          "About 17%, using half of the quantum efficiency",
+          "About 34%",
+          "About 76%, the quantum efficiency alone"
+        ],
+        "correctIndex": 2,
+        "explanation": "η_s = η_p η_out η_Q η_T = 0.9 × 0.5 × 0.76 × 1 ≈ 0.34 — the product of the four factors.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "4.3": [
@@ -1181,71 +2288,126 @@
         "id": "q4.3_001",
         "stem": "What defines \"single-mode\" operation of a laser, in terms of longitudinal modes?",
         "options": [
-          "The laser emits light at exactly one longitudinal mode, with an extremely narrow linewidth",
-          "The laser emits at all longitudinal modes simultaneously",
-          "The laser has only one possible transverse mode",
-          "The laser operates without any resonant cavity"
+          "The laser emits a single pulse at a time, with a fixed repetition rate",
+          "The laser operates at a single pump wavelength, with a fixed threshold",
+          "The laser emits at exactly one transverse mode, with a small beam divergence",
+          "The laser emits at exactly one longitudinal mode, with an extremely narrow linewidth"
         ],
-        "correctIndex": 0,
+        "correctIndex": 3,
         "explanation": "The slides define a single-mode laser as emitting at one longitudinal mode with a linewidth as narrow as Hz-to-kHz scale.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.3_002",
         "stem": "Why is single-mode operation generally easier to achieve with a SHORT laser cavity?",
         "options": [
-          "Short cavities have inherently lower gain",
-          "The free spectral range (FSR) is inversely proportional to cavity length, so shorter cavities have fewer longitudinal modes within the gain bandwidth",
-          "Short cavities eliminate spontaneous emission entirely",
-          "Short cavities always require 4-level gain media"
+          "A shorter cavity has lower gain, so fewer modes can reach threshold",
+          "A shorter cavity eliminates spontaneous emission, which seeds the extra modes",
+          "A shorter cavity has a higher Q-factor, which narrows every mode into a single line",
+          "The FSR grows as the cavity gets shorter, so fewer modes fit within the gain bandwidth"
         ],
-        "correctIndex": 1,
+        "correctIndex": 3,
         "explanation": "The slides state that since FSR is inversely proportional to cavity length, single-mode operation is easier with short cavities.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.3_003",
         "stem": "What is \"spectral hole burning,\" and what type of gain medium does it require?",
         "options": [
-          "A phenomenon in homogeneously broadened media where one mode saturates the entire gain uniformly",
-          "A phenomenon requiring inhomogeneously broadened gain media, where a lasing mode saturates only the atoms resonant with it, leaving other spectral regions available to support additional modes",
-          "A process that only occurs in solid-state lasers",
-          "A process where the cavity mirrors absorb pump energy"
+          "A lasing mode saturates only the atoms resonant with it, leaving other spectral regions with gain; it needs an inhomogeneously broadened medium",
+          "The cavity mirrors absorb pump light and create a spectral gap, which needs a gaseous gain medium",
+          "The intense intracavity beam drills a hole in the gain crystal, which needs a solid-state gain medium",
+          "One lasing mode saturates the gain of all atoms uniformly, leaving no gain for other modes; it needs a homogeneously broadened medium"
         ],
-        "correctIndex": 1,
+        "correctIndex": 0,
         "explanation": "The slides state spectral hole burning requires inhomogeneously broadened media, since only resonant atoms are saturated at each mode's frequency.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.3_004",
         "stem": "In a homogeneously broadened gain medium, why does gain saturation tend to favor single-mode operation?",
         "options": [
-          "Because gain \"clamps\" at the threshold value for all modes once one mode reaches threshold, preventing other modes from independently satisfying gain = losses",
-          "Because homogeneous broadening physically eliminates all other cavity modes",
-          "Because homogeneous broadening only ever occurs in single-mode lasers by definition",
-          "Because gain increases without bound as more modes appear"
+          "Homogeneous broadening physically removes all but one cavity mode from the resonator",
+          "Once one mode lases the gain clamps at threshold for all modes, so no other mode can lase",
+          "The gain grows without bound as further modes appear, which then favours the first mode",
+          "Each atom radiates only at the lasing frequency, so other frequencies are never amplified"
         ],
-        "correctIndex": 0,
+        "correctIndex": 1,
         "explanation": "The slides state that for homogeneously broadened media, saturation clamps the whole gain, so single-mode operation persists.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.3_005",
         "stem": "What is \"spatial hole burning,\" and why can it cause multimode oscillation even in a homogeneously broadened medium?",
         "options": [
-          "It happens because standing-wave (linear) cavities create intensity nodes and antinodes; adjacent modes can exploit gain left unsaturated at another mode's nodes",
-          "It only occurs in ring resonators, never in linear cavities",
-          "It is caused purely by Doppler broadening",
-          "It is caused by mirror misalignment"
+          "It is caused by Doppler broadening, which makes different atoms resonate with different cavity modes",
+          "It occurs only in ring resonators, where the travelling wave leaves unsaturated gain regions behind the output mirror",
+          "A standing wave in a linear resonator has nodes; adjacent modes use the gain left unsaturated there",
+          "It is caused by misalignment of the mirrors, which shifts the beam into unsaturated regions of the crystal"
         ],
-        "correctIndex": 0,
+        "correctIndex": 2,
         "explanation": "The slides describe standing-wave nodes/antinodes letting adjacent modes access unsaturated gain at the nodes, enabling multimode oscillation even with homogeneous broadening.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q4.3_006",
+        "stem": "Which application is served better by a multimode laser than by a single-mode laser?",
+        "options": [
+          "Interferometric gravitational sensing over kilometre baselines",
+          "Speckle-free illumination, where reduced coherence is useful",
+          "Optical clocks, where the laser is locked to an atomic transition",
+          "High-resolution spectroscopy of narrow atomic lines"
+        ],
+        "correctIndex": 1,
+        "explanation": "Multimode operation lowers coherence, which reduces speckle in illumination (and helps high-power applications); metrology, clocks and high-resolution spectroscopy need the narrow linewidth of single-mode operation.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q4.3_007",
+        "stem": "What makes a mode-locked laser produce ultrashort pulses?",
+        "options": [
+          "A fixed phase relation between hundreds or thousands of longitudinal modes",
+          "A very short cavity whose FSR exceeds the whole gain bandwidth of the medium",
+          "Oscillation of a single longitudinal mode with an extremely narrow linewidth",
+          "Independent oscillation of many longitudinal modes with random relative phases"
+        ],
+        "correctIndex": 0,
+        "explanation": "Ultrashort pulses arise when many longitudinal modes overlap temporally with a fixed phase relation; the laser is highly multimode yet temporally coherent.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q4.3_008",
+        "stem": "Why does a narrow single-mode linewidth enable precise interferometric measurements?",
+        "options": [
+          "A narrow linewidth means a high output power, so the interference signal is stronger",
+          "A narrow linewidth means a large beam diameter, so diffraction spoils the fringes less",
+          "A narrow linewidth gives a long coherence length, so interference survives large path differences",
+          "A narrow linewidth means many modes oscillate together, so their noise averages out"
+        ],
+        "correctIndex": 2,
+        "explanation": "Narrow linewidth (Hz–MHz) means long coherence (m–km), so interference fringes remain visible over large path differences.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ],
     "4.4": [
@@ -1253,71 +2415,126 @@
         "id": "q4.4_001",
         "stem": "What is one direct cavity-design approach to force single-longitudinal-mode operation?",
         "options": [
-          "Use a very long cavity to maximize the number of supported modes",
-          "Use a short cavity so that the mode spacing (FSR) exceeds the gain bandwidth, leaving room for only one mode to lase",
-          "Remove one of the two cavity mirrors",
-          "Increase the pump power without limit"
+          "Use a very long cavity so that the mode spacing shrinks and the modes merge into one line",
+          "Use a short cavity so that the FSR exceeds about half the gain bandwidth",
+          "Remove the output mirror so that photons leave after a single pass through the gain",
+          "Raise the pump power far above threshold so that the weaker modes are extinguished"
         ],
         "correctIndex": 1,
         "explanation": "The slides describe designing short cavities so only a single longitudinal mode falls within the gain bandwidth.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.4_002",
         "stem": "What is a practical alternative to using an extremely short cavity for single-mode selection?",
         "options": [
-          "Simply increasing pump power until only one mode survives",
-          "Inserting a frequency-selective filter, such as a Fabry-Pérot etalon, into the cavity",
-          "Removing the gain medium from the cavity",
-          "Making the front mirror fully reflective"
+          "Remove the gain medium from the resonator so that only one mode remains",
+          "Increase the pump power until gain saturation extinguishes all but one mode",
+          "Use a more strongly curved end mirror so that only one longitudinal mode is stable",
+          "Insert a frequency-selective filter, such as a Fabry-Pérot etalon, into the cavity"
         ],
-        "correctIndex": 1,
+        "correctIndex": 3,
         "explanation": "The slides describe inserting an intracavity Fabry-Pérot etalon as a frequency-selective loss filter.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.4_003",
         "stem": "What condition must roughly hold between the cavity's longitudinal mode spacing and the intracavity Fabry-Pérot filter's properties for effective single-mode selection?",
         "options": [
-          "The mode spacing must be much smaller than the filter's linewidth",
-          "The longitudinal mode spacing must be large enough (≥ the filter's FSR-to-linewidth ratio) that only one cavity mode falls within the filter's transmission peak",
-          "The filter's bandwidth must exceed the entire gain bandwidth",
-          "There is no required relationship between them"
+          "Δν_modes must be at least half the filter's peak FWHM, Δν_modes ≥ Δν_FP/2",
+          "The filter's peak must be broader than the entire gain bandwidth",
+          "The mode spacing must equal the filter's FSR exactly, whatever its finesse",
+          "The mode spacing must be much smaller than the filter's peak FWHM"
         ],
-        "correctIndex": 1,
-        "explanation": "The slides give a condition on Δν_modes relative to the FP filter's ΔνFP-to-FSR ratio for effective selection.",
+        "correctIndex": 0,
+        "explanation": "The slides require Δν_modes ≥ Δν_FP/2, with Δν_FP the FWHM of the filter peak, so that neighbouring cavity modes fall outside its half-width.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.4_004",
         "stem": "Besides selecting a single longitudinal mode, what other kind of mode selection is discussed for laser cavities?",
         "options": [
-          "Polarization mode selection",
+          "Polarisation mode selection, e.g. via a Brewster plate",
           "Transverse mode selection, e.g. via a spatial aperture filter",
-          "Temporal pulse-shape selection",
-          "Frequency-doubling mode selection"
+          "Frequency-doubling selection, e.g. via a nonlinear crystal",
+          "Temporal pulse-shape selection, e.g. via a saturable absorber"
         ],
         "correctIndex": 1,
         "explanation": "The slides discuss spatial (transverse) mode filtering using an intracavity aperture.",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
       },
       {
         "id": "q4.4_005",
         "stem": "How does a circular intracavity aperture act as a spatial filter that favors the fundamental transverse mode?",
         "options": [
-          "It blocks the fundamental Gaussian mode entirely, passing only higher-order modes",
-          "It introduces only small losses to the fundamental Gaussian beam (matching its cylindrical symmetry) but higher losses to higher-order Hermite-Gaussian modes, whose symmetry doesn't match the aperture",
-          "It has an identical effect on every transverse mode",
-          "It only functions in ring resonators, not linear cavities"
+          "It blocks the fundamental mode, whose intensity is highest on the axis, and passes only higher-order modes",
+          "It has an identical effect on every transverse mode, since all modes have the same size",
+          "It works only in ring resonators, where the beam passes the aperture in one direction",
+          "It causes small loss for the fundamental Gaussian mode but higher loss for higher-order Hermite-Gaussian modes"
         ],
-        "correctIndex": 1,
+        "correctIndex": 3,
         "explanation": "The slides state the circular aperture's symmetry matches the fundamental Gaussian mode (low loss) but not higher-order modes (higher loss).",
         "addedAt": "2026-09-15",
-        "source": "claude-authored"
+        "source": "claude-authored",
+        "reviewed": true,
+        "revisedAt": "2026-09-20"
+      },
+      {
+        "id": "q4.4_006",
+        "stem": "A gain medium has bandwidth Δνg = 100 GHz. Without any filter, which effective cavity length allows single-mode operation (Leff < c/Δνg)?",
+        "options": [
+          "Below about 3 mm",
+          "Below about 3 cm",
+          "Below about 18 cm",
+          "Below about 30 cm"
+        ],
+        "correctIndex": 0,
+        "explanation": "L_eff < c/Δν_g = 3×10⁸ m/s / 10¹¹ Hz = 3 mm, which is hard to realise; 18 cm is the length allowed once an etalon of finesse 30 is added.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q4.4_007",
+        "stem": "An etalon of finesse F = 30 is inserted into a laser with Δνg = 100 GHz. What effective cavity length is allowed by Le ≤ 2cF/Δνg?",
+        "options": [
+          "About 1.8 m",
+          "About 9 cm",
+          "About 18 cm",
+          "About 3 mm"
+        ],
+        "correctIndex": 2,
+        "explanation": "L_e ≤ 2 × 3×10⁸ × 30 / 10¹¹ m = 0.18 m; the filter relaxes the length limit from 3 mm to 18 cm.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
+      },
+      {
+        "id": "q4.4_008",
+        "stem": "The FSR of an intracavity etalon must be at least Δνg/2 = 50 GHz. What is the largest air-spaced etalon thickness that satisfies this at normal incidence (FSR = c/2d)?",
+        "options": [
+          "About 30 cm",
+          "About 0.3 mm",
+          "About 3 mm",
+          "About 3 cm"
+        ],
+        "correctIndex": 2,
+        "explanation": "d ≤ c/(2 × 50 GHz) = 3 mm: etalons are mm-thick components, so the FSR condition is easily met.",
+        "addedAt": "2026-09-20",
+        "source": "claude-authored",
+        "reviewed": true
       }
     ]
   }
