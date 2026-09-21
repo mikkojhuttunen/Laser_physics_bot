@@ -53,7 +53,7 @@ async function playSingle(userId, sec, pickFn) {
   const seen = [];
   for (let i = 0; i < 4; i++) {
     const m = bot.log.sent[bot.log.sent.length - 1];
-    const stem = m.t.split('\n\n')[1];
+    const stem = (m.t.match(/<\/b>\n\n([\s\S]*?)\n\n<b>A\)/) || [])[1];
     const q = sByStem.get(stem);
     const opts = [...m.t.matchAll(/<b>([A-F])\)<\/b> (.*)/g)].map((x) => x[2]);
     const cI = opts.indexOf(q.options[q.correctIndex]);
@@ -101,9 +101,10 @@ async function playMulti(userId, sec, plan) {
 
   const uA = 111;
   const { bot: botA, seen: seenA } = await playSingle(uA, '3.5', (i, opts, q, cI) => (i % 2 === 0 ? cI : (cI + 1) % 4));
-  check(botA.log.sent.some((m) => /\/privacy/.test(m.t)), 'first quiz shows the analytics notice');
-  const firstQuestionMsg = botA.log.sent.find((m) => /Question 1\/4/.test(m.t));
-  check(botA.log.sent.indexOf(firstQuestionMsg) > 0, 'notice comes before the first question');
+  const noticeMsgs = botA.log.sent.filter((m) => /\/privacy/.test(m.t));
+  check(noticeMsgs.length === 1, 'first quiz shows the analytics notice exactly once');
+  check(botA.log.sent[0] === noticeMsgs[0] && /Question 1\/4/.test(noticeMsgs[0].t) && noticeMsgs[0].o && noticeMsgs[0].o.reply_markup, 'notice and first question are ONE message with the answer keyboard (quiz starts immediately)');
+  check(noticeMsgs[0].t.indexOf('/privacy') < noticeMsgs[0].t.indexOf('Question 1/4'), 'notice comes before the first question in that message');
   let ev = readEvents();
   check(ev.length === 4, `4 events written (got ${ev.length})`);
   const pidA = analytics.pidOf(uA);
@@ -143,7 +144,11 @@ async function playMulti(userId, sec, plan) {
   }
 
   // ---------- D. multi-select events ----------
-  const { seen: seenM } = await playMulti(444, '3.5', (i, q) => (i === 0 ? q.correctIndices : i === 1 ? [...q.correctIndices, [0, 1, 2, 3, 4, 5, 6, 7].find((x) => x < q.options.length && !q.correctIndices.includes(x))] : q.correctIndices.slice(1)));
+  const { bot: botM, seen: seenM } = await playMulti(444, '3.5', (i, q) => (i === 0 ? q.correctIndices : i === 1 ? [...q.correctIndices, [0, 1, 2, 3, 4, 5, 6, 7].find((x) => x < q.options.length && !q.correctIndices.includes(x))] : q.correctIndices.slice(1)));
+  check(/\/privacy/.test(botM.log.sent[0].t) && botM.log.sent[0].o.reply_markup && /1\/3/.test(botM.log.sent[0].t), 'multi-select: notice and first question are one message with the keyboard');
+  process.env.QUIZ_ANALYTICS_RETENTION = 'on <31> & later';
+  check(analytics.noticeHtml(556).includes('&lt;31&gt; &amp; later') && !/<31>/.test(analytics.noticeHtml(557) || 'x'), 'noticeHtml escapes HTML characters');
+  delete process.env.QUIZ_ANALYTICS_RETENTION;
   const evM = readEvents().filter((e) => e.kind === 'multi');
   check(evM.length === 3, `3 multi events (got ${evM.length})`);
   if (evM.length === 3) {
@@ -181,7 +186,8 @@ async function playMulti(userId, sec, plan) {
   for (const [name, text] of [['notice', analytics.noticeText()], ['privacy text', commands.privacyReply()]]) {
     check(/pseudonymis/i.test(text), `${name} mentions pseudonymisation`);
     check(/discuss|course/i.test(text) && /grades/.test(text), `${name} states the purpose`);
-    check(/deleted after the course ends/.test(text), `${name} states the deletion time`);
+    if (name === 'privacy text') check(/a\) facilitate group discussions, b\) update materials\/quizzes/.test(text) && /and the date\. Nothing else/.test(text), 'privacy text has the agreed purpose and recorded-data wording');
+    check(/deleted after the course end, specifically on 31 Dec 2026/.test(text), `${name} states the deletion time`);
   }
   check(analytics.noticeText().length < 500, 'notice stays short');
   process.env.QUIZ_ANALYTICS_RETENTION = 'on 31 May 2027';
@@ -281,6 +287,22 @@ async function playMulti(userId, sec, plan) {
     const before = saved.items.map((s) => s.id).sort().join();
     const again = await tagger.cmdSuggest({ section: '3.5', kind: 'single', limit: '4' }, { dir, callModel, log: () => {} });
     check(again.items.length === 8 && calls === 8 && before.split(',').every((id) => again.items.some((s) => s.id === id)), 'suggest is resumable (already-suggested questions are skipped, new ones added)');
+    // fail fast: three consecutive API errors stop the run and keep progress
+    {
+      let n = 0;
+      let threw = null;
+      try { await tagger.cmdSuggest({ section: '4.4', kind: 'single' }, { dir, callModel: async () => { n++; throw new Error('401 invalid x-api-key'); }, log: () => {} }); } catch (e) { threw = e; }
+      check(threw && /3 consecutive errors/.test(threw.message) && /spend limit/.test(threw.message) && n === 3, 'suggest stops after 3 consecutive API errors with a helpful message');
+      const file = path.join(dir, 'tag_suggestions.json');
+      const all = JSON.parse(fs.readFileSync(file, 'utf8'));
+      check(all.items.filter((x) => x.section === '4.4' && x.status === 'ERROR').length === 3, 'the failed attempts are recorded as ERROR entries');
+      fs.writeFileSync(file, JSON.stringify({ ...all, items: all.items.filter((x) => x.section !== '4.4') }, null, 2));
+    }
+    const est = tagger.cmdEstimate({ section: '3.5' }, { dir, log: () => {} });
+    check(est.count > 0 && est.usd > 0 && est.inTok > 0, 'estimate reports a count and a cost');
+    const lines = [];
+    tagger.cmdPrompt({ id: 'q3.5_004' }, { dir, log: (l) => lines.push(l) });
+    check(lines.join('\n').includes('SYSTEM PROMPT') && lines.join('\n').includes('[CORRECT]'), 'prompt prints the system prompt and the marked question');
     const dry = tagger.cmdApply({ 'all-valid': true, 'dry-run': true }, { dir, log: () => {} });
     check(dry.applied.length === 7 && !fs.existsSync(path.join(dir, 'quizBank_fys501.json.bak')), 'dry-run applies nothing');
     const res = tagger.cmdApply({ 'all-valid': true }, { dir, log: () => {} });

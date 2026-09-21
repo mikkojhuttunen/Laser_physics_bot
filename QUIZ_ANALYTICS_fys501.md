@@ -58,7 +58,7 @@ One JSON object per line in `quiz_events.jsonl` (and as a `QUIZ_EVENT {...}` lin
 | `QUIZ_ANALYTICS_DIR` | Directory on a Railway **volume** (for example `/data/analytics`). Events go to `quiz_events.jsonl`, the opt-out list to `quiz_optout.json`. The same volume mounted at `/data` can also hold `QUIZ_PENDING_DIR`. Without it, events exist only as log lines. |
 | `ADMIN_USER_IDS` | Already used by `/pending`; the same ids may use `/quizstats`. |
 | `QUIZ_STATS_MIN_N` | Minimum group size, default 5. |
-| `QUIZ_ANALYTICS_RETENTION` | Optional wording for when the data is deleted, used in the student notice and `/privacy`. Default: "after the course ends". Set a concrete phrase such as "on 31 May 2027" once you know the date. |
+| `QUIZ_ANALYTICS_RETENTION` | Optional wording for when the data is deleted, used in the student notice and `/privacy`. Default: "after the course end, specifically on 31 Dec 2026" (change `DEFAULT_RETENTION` in `quizAnalytics_fys501.js` or set this variable). |
 | `LIMIT_TIMEZONE` | Already used by the limiter; also defines the date in events (default Europe/Helsinki). |
 
 ## Commands
@@ -73,7 +73,7 @@ One JSON object per line in `quiz_events.jsonl` (and as a `QUIZ_EVENT {...}` lin
 | `/quizstats export` | admin | Sends `quiz_events.jsonl` as a document |
 | `/quizstats clear confirm` | admin | Empties the events file (export first) |
 
-The first time a student starts a quiz after a deploy, the bot sends a short data collection notice before the first question. It states the purpose (finding topics to discuss in class; no effect on grades), the pseudonymisation (scrambled ID, no name, username or message text), and when the data is deleted (default: after the course ends), and points to `/privacy` and `/optout`. `/privacy` gives the same information in full.
+The first time a student starts a quiz after a deploy, the bot shows a short data collection notice at the top of the first question message (one Telegram message, so the quiz starts immediately). It states the purpose (finding topics to discuss in class; no effect on grades), the pseudonymisation (scrambled ID, no name, username or message text), and when the data is deleted (default: on 31 Dec 2026), and points to `/privacy` and `/optout`. `/privacy` gives the same information in full.
 
 ## Tagging the banks (offline, on your computer)
 
@@ -85,6 +85,8 @@ node tagQuizBank_fys501.js apply --all-valid --dry-run
 node tagQuizBank_fys501.js apply --all-valid
 node validateQuizTags_fys501.js
 ```
+
+A step-by-step walkthrough using your Claude Console account (workspace, spend limit, API key, Workbench test, usage check) is in `TAGGING_WITH_CONSOLE_fys501.md`. `node tagQuizBank_fys501.js estimate` prints the expected size and cost, and `node tagQuizBank_fys501.js prompt --id q3.5_004` prints the exact prompt to try in the Workbench. `suggest` stops by itself after 3 consecutive API errors.
 
 1. `suggest` asks Claude (model from `--model`, `TAG_MODEL`, default `claude-sonnet-5`) for tags, one question at a time, using only that section's concepts and misconceptions. It is resumable and writes `tag_suggestions.json` and `tag_review.md`. Start with one section to check quality and cost, then run the rest.
 2. Read `tag_review.md`. Each wrong option shows the misconception it was matched to, or "no tag". Edit `tag_suggestions.json` for any tag you disagree with (set it to `null` or another id), or leave that question out of `--accept`.

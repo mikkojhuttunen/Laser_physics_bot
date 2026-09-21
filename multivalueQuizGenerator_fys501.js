@@ -551,10 +551,11 @@ async function defaultAskWhichChapter(bot, chatId) {
   return null;
 }
 
-async function sendQuestion(bot, chatId, session) {
+async function sendQuestion(bot, chatId, session, prefixHtml = null) {
   session.selected = new Set(); // fresh selection for this question
   const question = session.questions[session.index];
-  const text = formatQuestionMessage(question, session.index + 1, session.questions.length);
+  const body = formatQuestionMessage(question, session.index + 1, session.questions.length);
+  const text = prefixHtml ? `${prefixHtml}\n\n${body}` : body;
   // Keep the exact text we sent so toggle taps can re-render the keyboard via
   // editMessageText without changing the message body.
   session.currentText = text;
@@ -604,12 +605,10 @@ async function startMultivalueQuiz(bot, chatId, text, askWhichChapter = defaultA
 
   const session = createSession(chatId, questions);
 
-  // One-time (per bot process) note that anonymous answer statistics are recorded; null when
-  // analytics are off or the student opted out. See QUIZ_ANALYTICS_fys501.md.
-  const analyticsNotice = analytics.noticeFor(userId);
-  if (analyticsNotice) await bot.sendMessage(chatId, analyticsNotice);
-
-  await sendQuestion(bot, chatId, session);
+  // One-time (per bot process) data collection notice, prepended to the FIRST question in the
+  // same Telegram message (a separate message could be dropped and leave the quiz unstarted).
+  // Null when analytics are off or the student opted out. See QUIZ_ANALYTICS_fys501.md.
+  await sendQuestion(bot, chatId, session, analytics.noticeHtml(userId));
 }
 
 // Partial-credit grading, floored at 0 per question (see file header).

@@ -263,10 +263,11 @@ function logMulti(userId, question, selected, score) {
 // ---------- student-facing notice, privacy text, opt-out ----------
 const _noticed = new Set();
 
-// When the stored answers are deleted. Default wording fits any course; set the Railway variable
-// QUIZ_ANALYTICS_RETENTION to a concrete phrase, e.g. "on 31 May 2027", to name a date.
+// When the stored answers are deleted. Wording used in the notice and in /privacy. Change the
+// default below, or override it with the Railway variable QUIZ_ANALYTICS_RETENTION.
+const DEFAULT_RETENTION = 'after the course end, specifically on 31 Dec 2026';
 function retentionText() {
-  return (process.env.QUIZ_ANALYTICS_RETENTION || '').trim() || 'after the course ends';
+  return (process.env.QUIZ_ANALYTICS_RETENTION || '').trim() || DEFAULT_RETENTION;
 }
 
 function noticeText() {
@@ -289,6 +290,19 @@ function noticeFor(userId) {
   }
 }
 
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/**
+ * The notice as an italic HTML block to PREPEND to the first question message (same Telegram
+ * call, so the quiz can never start without its first question). Null when not applicable.
+ */
+function noticeHtml(userId) {
+  const t = noticeFor(userId);
+  return t ? `<i>${escapeHtml(t)}</i>` : null;
+}
+
 function privacyText() {
   if (!isEnabled()) {
     return 'Quiz analytics are switched off: this bot is not recording your quiz answers.';
@@ -296,11 +310,11 @@ function privacyText() {
   return [
     'Data collection notice: quiz answers',
     '',
-    'Purpose: the instructor looks at combined results (never individuals) to see which concepts and common wrong answers to discuss in class. The data is used only for developing this course and has no effect on grades. Results for fewer than a handful of students are never shown.',
+    'Purpose: Teachers may study combined results (never individuals) to learn of repeating patterns behind common wrong answers. This data will be used to a) facilitate group discussions, b) update materials/quizzes to improve learning. The data is used only for developing online learning methodology (using teaching-assistant bots), this specific course, and naturally can have no effect on grades. Results from fewer than a handful of students are never shown.',
     '',
-    'What is recorded for each quiz answer: a scrambled ID (pseudonymisation: a keyed hash of your Telegram id, not the id itself), the question, which option(s) you chose, whether it was right, and the date. Nothing else - no name, username, message text or time of day.',
+    'What is recorded for each quiz answer: a scrambled ID (pseudonymisation: a keyed hash of your Telegram id, not the id itself), the question, your answer and the date. Nothing else - no name, username or open-type message texts.',
     '',
-    `Deletion: all of this data is deleted ${retentionText()}.`,
+    `Deletion: all collected data will be deleted ${retentionText()}.`,
     '',
     'Your choice: /optout stops the recording and deletes the answers already stored for you right away. /optin turns it back on.',
   ].join('\n');
@@ -373,7 +387,7 @@ function clearEvents() {
 module.exports = {
   isEnabled, status, persistentDir, eventsPath,
   logSingle, logMulti,
-  noticeFor, privacyText, optOut, optIn,
+  noticeFor, noticeHtml, privacyText, optOut, optIn,
   readEventsText, clearEvents, purgePid,
   bankIndex, resetCaches, pidOf,
   noticeText, retentionText,

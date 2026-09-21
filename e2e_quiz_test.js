@@ -17,7 +17,7 @@ async function playSingle(sec,chatId,strategy){
   for(;;){
     const m=bot.log.sent[bot.log.sent.length-1]; if(!m||!/Question \d+\/8/.test(m.t)){ if(m&&/Quiz complete/.test(m.t)) break; note(`${sec}: unexpected message: ${m&&m.t.slice(0,80)}`); return null; }
     if(m.t.length>4000) note(`${sec}: msg too long`);
-    const stem=m.t.split('\n\n')[1]; const q=sByStem.get(stem); if(!q){note(`${sec}: stem not in bank: ${stem.slice(0,50)}`);return null;}
+    const stem=(m.t.match(/<\/b>\n\n([\s\S]*?)\n\n<b>A\)/)||[])[1]; const q=sByStem.get(stem); if(!q){note(`${sec}: stem not in bank: ${stem.slice(0,50)}`);return null;}
     const opts=parseOpts(m.t); if(opts.length!==4) note(`${sec}: ${q.id} shows ${opts.length} options`);
     if([...opts.map(o=>o.text)].sort().join('|')!==[...q.options].sort().join('|')) note(`${sec}: ${q.id} displayed options differ from bank set`);
     const correctText=q.options[q.correctIndex]; const cI=opts.findIndex(o=>o.text===correctText);

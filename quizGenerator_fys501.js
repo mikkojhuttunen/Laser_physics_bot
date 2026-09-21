@@ -523,14 +523,15 @@ async function startQuiz(bot, chatId, text, askWhichChapter = defaultAskWhichCha
 
   const session = createSession(chatId, questions);
 
-  // One-time (per bot process) note that anonymous answer statistics are recorded; null when
-  // analytics are off or the student opted out. See QUIZ_ANALYTICS_fys501.md.
-  const analyticsNotice = analytics.noticeFor(userId);
-  if (analyticsNotice) await bot.sendMessage(chatId, analyticsNotice);
+  // One-time (per bot process) data collection notice, prepended to the FIRST question in the
+  // same Telegram message (a separate message could be dropped and leave the quiz unstarted).
+  // Null when analytics are off or the student opted out. See QUIZ_ANALYTICS_fys501.md.
+  const notice = analytics.noticeHtml(userId);
+  const firstQuestion = formatQuestionMessage(session.questions[0], 1, session.questions.length);
 
   await bot.sendMessage(
     chatId,
-    formatQuestionMessage(session.questions[0], 1, session.questions.length),
+    notice ? `${notice}\n\n${firstQuestion}` : firstQuestion,
     { parse_mode: 'HTML', reply_markup: buildQuestionKeyboard(0, session.questions[0]) }
   );
 }

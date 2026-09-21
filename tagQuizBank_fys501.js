@@ -11,6 +11,13 @@
  *        [--section 3.5] [--limit 20] [--ids q3.5_001,mv3.5_002] [--model <id>]
  *        -> writes tag_suggestions.json (resumable) and tag_review.md
  *
+ *   node tagQuizBank_fys501.js estimate [--kind ..] [--section ..]
+ *        -> prints how many questions would be tagged and a rough token/cost estimate (no API call)
+ *
+ *   node tagQuizBank_fys501.js prompt --id q3.5_004
+ *        -> prints the exact system prompt and user message for one question, to paste into the
+ *           Claude Console Workbench and try the tagging before spending on a batch
+ *
  *   node tagQuizBank_fys501.js review
  *        -> regenerates tag_review.md from tag_suggestions.json
  *
@@ -173,25 +180,72 @@ async function cmdSuggest(args, { dir = __dirname, callModel = callAnthropic, lo
   log(`${limited.length} question(s) to tag with ${model}${todo.length > limited.length ? ` (of ${todo.length} pending)` : ''}`);
 
   let n = 0;
+  let consecutiveErrors = 0;
   for (const it of limited) {
     let entry;
     try {
       const text = await callModel({ system: SYSTEM_PROMPT, user: buildUserPrompt(it, vocab), model });
       const s = sanitise(parseModelJson(text), it, vocab);
       entry = { id: it.q.id, kind: it.kind, section: it.sec, stem: it.q.stem, ...s };
+      consecutiveErrors = 0;
     } catch (e) {
       entry = { id: it.q.id, kind: it.kind, section: it.sec, stem: it.q.stem, status: 'ERROR', concepts: [], optionTags: [], proposed: [], notes: [e.message] };
+      consecutiveErrors++;
     }
     saved.items = saved.items.filter((x) => x.id !== entry.id).concat(entry);
     saved.generatedAt = new Date().toISOString();
     saved.model = model;
     writeJson(sugPath, saved); // after every question, so an interrupted run can resume
+    if (consecutiveErrors >= 3) {
+      // a wrong key, model id or exhausted spend limit fails every call: stop instead of looping
+      writeReview(dir, saved, banks, vocab);
+      throw new Error(`stopping after 3 consecutive errors (last: ${entry.notes[0]}). Check ANTHROPIC_API_KEY, the model id (--model / TAG_MODEL) and the workspace spend limit in the Claude Console. Progress so far is saved; run suggest again to resume.`);
+    }
     n++;
     if (n % 10 === 0) log(`  ${n}/${limited.length}`);
   }
   writeReview(dir, saved, banks, vocab);
   log(`Wrote ${SUGGESTIONS_FILE} and ${REVIEW_FILE}. Review, then: node tagQuizBank_fys501.js apply --all-valid  (or --accept id1,id2)`);
   return saved;
+}
+
+function cmdEstimate(args, { dir = __dirname, log = console.log } = {}) {
+  const vocab = loadVocab(dir);
+  const banks = loadBanks(dir);
+  const wantIds = args.ids ? new Set(String(args.ids).split(',').map((s) => s.trim())) : null;
+  let count = 0;
+  let inChars = 0;
+  for (const it of iterQuestions(banks)) {
+    if (args.kind && it.kind !== args.kind) continue;
+    if (args.section && it.sec !== args.section) continue;
+    if (wantIds ? !wantIds.has(it.q.id) : it.q.concepts !== undefined) continue;
+    count++;
+    inChars += SYSTEM_PROMPT.length + buildUserPrompt(it, vocab).length;
+  }
+  const inTok = Math.round(inChars / 3.2);   // conservative: symbols and Unicode math tokenise poorly
+  const outTok = count * 250;
+  const priceIn = Number(process.env.TAG_PRICE_IN_PER_M) || 3;
+  const priceOut = Number(process.env.TAG_PRICE_OUT_PER_M) || 15;
+  const usd = (inTok * priceIn + outTok * priceOut) / 1e6;
+  log(`${count} question(s) to tag. Rough size: ~${inTok.toLocaleString('en')} input tokens, ~${outTok.toLocaleString('en')} output tokens.`);
+  log(`Estimated cost: about ${usd.toFixed(2)} USD at ${priceIn}/${priceOut} USD per million input/output tokens (override with TAG_PRICE_IN_PER_M / TAG_PRICE_OUT_PER_M; check the current price list). Set the workspace spend limit comfortably above this.`);
+  return { count, inTok, outTok, usd };
+}
+
+function cmdPrompt(args, { dir = __dirname, log = console.log } = {}) {
+  if (!args.id) throw new Error('prompt needs --id <question id>, e.g. --id q3.5_004');
+  const vocab = loadVocab(dir);
+  const banks = loadBanks(dir);
+  for (const it of iterQuestions(banks)) {
+    if (it.q.id !== args.id) continue;
+    log('===== SYSTEM PROMPT (paste into the Workbench system prompt box) =====');
+    log(SYSTEM_PROMPT);
+    log('');
+    log('===== USER MESSAGE (paste as the user turn) =====');
+    log(buildUserPrompt(it, vocab));
+    return true;
+  }
+  throw new Error(`no question with id ${args.id}`);
 }
 
 function reviewMarkdown(saved, banks, vocab) {
@@ -302,8 +356,10 @@ if (require.main === module) {
       await cmdSuggest(args);
     } else if (cmd === 'review') { cmdReview(args); console.log(`Wrote ${REVIEW_FILE}`); }
     else if (cmd === 'apply') cmdApply(args);
+    else if (cmd === 'estimate') cmdEstimate(args);
+    else if (cmd === 'prompt') cmdPrompt(args);
     else { console.log(fs.readFileSync(__filename, 'utf8').split('*/')[0].replace(/^\/\*\*\n|^ \* ?/gm, '').trim()); process.exit(cmd ? 1 : 0); }
   })().catch((e) => { console.error(`ERROR: ${e.message}`); process.exit(1); });
 }
 
-module.exports = { buildUserPrompt, parseModelJson, sanitise, cmdSuggest, cmdReview, cmdApply, reviewMarkdown, SYSTEM_PROMPT };
+module.exports = { cmdEstimate, cmdPrompt, buildUserPrompt, parseModelJson, sanitise, cmdSuggest, cmdReview, cmdApply, reviewMarkdown, SYSTEM_PROMPT };
