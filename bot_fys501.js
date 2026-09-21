@@ -1,41 +1,129 @@
 /**
  * FYS.501 Laser Physics — Telegram teaching-assistant bot
+ * ============================================================================
+ * VERSION: see BOT_VERSION below. Bump it (semver: MAJOR.MINOR.PATCH) any
+ * time you ship a change here, and add a line to the CHANGELOG block —
+ * that's the whole versioning process, no build step needed. Convention
+ * (matches the FYS.240 Optics bot): MAJOR = breaking change to a command's
+ * behavior or removed a feature, MINOR = new command/feature, PATCH =
+ * bugfix/content fix with no new command. BOT_VERSION is surfaced in
+ * /healthz and the startup log line, so you can always confirm which
+ * version is actually live on Railway.
+ * ============================================================================
  *
- * Key differences from the crashing version:
- *   1. Course material is sent as CACHED TEXT in the system prompt, not as 11 PDFs
- *      re-uploaded on every single message.
- *   2. Telegram is acknowledged (HTTP 200) IMMEDIATELY, before Claude is called.
- *      This is what stopped the webhook-retry storm that was killing the container.
- *   3. Duplicate updates, long replies, rate limits and API errors are all handled.
+ * CURRENT FUNCTIONALITY (v1.4.0):
+ *   Key differences from the crashing version:
+ *     1. Course material is sent as CACHED TEXT in the system prompt, not as 11 PDFs
+ *        re-uploaded on every single message.
+ *     2. Telegram is acknowledged (HTTP 200) IMMEDIATELY, before Claude is called.
+ *        This is what stopped the webhook-retry storm that was killing the container.
+ *     3. Duplicate updates, long replies, rate limits and API errors are all handled.
  *
- * HOMEWORK-HELPER COMMANDS (added):
- *   /HW3          — overview: lists the problems in Homework 3
- *   /HW3.2        — hint on Homework 3, problem 2 (equation/section pointer + guiding question)
- *   /HW_hint3.2   — minimal nudge: one guiding question, nothing else
- *   photo message — quick "right track / wrong track" read on a work-in-progress photo;
- *                   caption it with a problem reference (e.g. "/HW3.2") for best results.
+ * HOMEWORK-HELPER COMMANDS:
+ *   /HW3          — overview: lists the problems in Homework 3 (free — served
+ *                   from homework_problems_fys501.json when available)
+ *   /HW3.2        — hint on Homework 3, problem 2 (equation/section pointer + guiding
+ *                   question; AI-backed, members only — see ACCESS CONTROL below)
+ *   /HW_hint3.2   — minimal nudge: one guiding question, nothing else (AI-backed)
+ *   photo message — quick "right track / wrong track" read on a work-in-progress photo
+ *                   (AI-backed); caption it with a problem reference (e.g. "/HW3.2")
+ *                   for best results.
  *   None of these reveal solutions — same no-solutions rule as the rest of the bot.
  *
- * QUIZ COMMANDS:
+ * QUIZ COMMANDS (AI-backed — members only, see ACCESS CONTROL below):
  *   "quiz me on chapter 2" / "/quiz 2.3" — single-answer multiple choice (quizGenerator_fys501.js)
  *   /mvquiz [chapter N | N.M] [count]    — "select all that apply" multi-answer quiz, a SEPARATE
  *                                          add-on (multivalueQuizGenerator_fys501.js) with its own
  *                                          bank, session state and callback_data namespace
  *                                          ("mv:...", "mvquizchapter:..."). Also triggered by the
  *                                          phrases "multiquiz" / "multi-select quiz" / "select all".
+ *   Grading taps (picking an answer / hitting Submit) are always free — no membership
+ *   check, no credit cost — since they don't call Claude, only score against the
+ *   question already served. Starting a NEW quiz (command, free-text trigger, or a
+ *   chapter-picker tap) is the AI-backed step and is what's gated.
  *
- * LECTURE LISTING:
+ * LECTURE LISTING (free — deterministic, no Claude call):
  *   /lectures and /topics are identical aliases (full week-by-week video listing).
+ *   /week1 ... /week6 (added v1.3.0) — a single week's videos, same data
+ *   (lecture_data_fys501.json) and formatter (lectureLinks.formatWeekMessage) that
+ *   /lectures uses for the full listing. Mirrors the FYS.240 Optics bot's /weekN.
+ *   Free-text lecture lookups ("any video on gain saturation?", "recording for
+ *   week 3?") are also free, including the Stage-2 LLM classifier call in
+ *   lectureClassifier_fys501.js — that call is billed to the shared daily backstop,
+ *   not to any student's personal credit allowance, same as it always has been.
+ *
+ * GLOSSARY (added v1.4.0 — free, deterministic, no Claude call):
+ *   /define <term> — looks the term up in terminology_fys501.json (438 terms,
+ *   auto-harvested from the lecture .tex sources) via corpusLoader_fys501.js's
+ *   findGlossaryTerms(), and replies with the term's definition-in-context, the
+ *   section it was introduced in, and a link to that lecture video. Mirrors the
+ *   FYS.240 Optics bot's /define, including its course-mismatch guard
+ *   (looksLikeWrongCourseGlossary/glossaryCourseMismatch, direction reversed —
+ *   here the risk is FYS.240 Optics content leaking into this glossary, not the
+ *   other way around). This was already wired up as far as corpusLoader_fys501.js
+ *   (its own header comment says "backs the /define command in bot_fys501.js"),
+ *   just never actually connected here until now.
  *
  * ACCESS CONTROL / COST LIMITS (membership.js, usageLimiter.js, accessGuard.js):
- *   - Only members of the private course channel (COURSE_CHANNEL_ID) may use the bot.
- *   - Every LLM-backed action costs credits from a per-student daily allowance
- *     (STUDENT_LLM_DAILY_USAGE). Bank-served quiz questions, /lectures, keyword lecture
- *     lookups, /HW overviews and other deterministic replies are free.
- *   - DAILY_BACKSTOP_EUR pauses all LLM calls for everybody once the estimated daily
- *     spend is reached. Quizzes then degrade to bank-only questions.
- *   - /usage shows the student's remaining allowance.
+ *   - Open bot (v1.2.0): commands, lecture links (including keyword lookups and
+ *     /weekN), /define (added v1.4.0), /HW overviews served from structured data, and
+ *     quiz-answer grading taps all work for EVERYONE, member or not. Only the AI-backed actions — free-text
+ *     Q&A, /HW hints, the photo work-check, and starting a quiz (command, free-text
+ *     trigger, or chapter-picker tap) — require membership of the private course
+ *     channel (COURSE_CHANNEL_ID; unset = everyone is a member).
+ *   - Every AI-backed action that DOES check membership also costs credits from a
+ *     per-student daily allowance (STUDENT_LLM_DAILY_USAGE) — except quiz starts,
+ *     which are membership-gated but not yet credit-metered; see the KNOWN GAPS note
+ *     below.
+ *   - DAILY_BACKSTOP_EUR pauses all per-student LLM calls once the estimated daily
+ *     spend is reached. The free-text lecture classifier keeps working even then —
+ *     it just falls back to local keyword matching if the backstop is active.
+ *   - /usage shows the student's remaining allowance (free, no LLM call).
+ *
+ * KNOWN GAPS (not yet implemented):
+ *   - Quiz generation has no bank-vs-live-generation credit split yet (unlike the
+ *     FYS.240 Optics bot's v2.7.0 hooks-based reserve()/refund()): a live-generated
+ *     quiz question costs the same nothing as a bank-served one, right now — only
+ *     membership is checked before a quiz starts. Retrofitting quizGenerator_fys501.js
+ *     and multivalueQuizGenerator_fys501.js with the same hooks contract as the Optics
+ *     bot's generators would close this gap; deliberately left out of v1.2.0 to keep
+ *     that change focused on the access-model split.
+ *
+ * CHANGELOG:
+ *   v1.4.0 — Added /define <term>, wiring up corpusLoader_fys501.js's
+ *            findGlossaryTerms()/glossaryLooksHealthy() against terminology_fys501.json
+ *            (438 terms) — both already existed and were already exported (that file's
+ *            own comment says "backs the /define command in bot_fys501.js"), just never
+ *            actually connected here. Also added a course-mismatch guard
+ *            (looksLikeWrongCourseGlossary/glossaryCourseMismatch) to corpusLoader_fys501.js,
+ *            mirroring the FYS.240 Optics bot's v2.4.0/v2.6.1 guard, direction reversed —
+ *            refuses to serve the glossary if it looks like FYS.240 Optics content instead
+ *            of Laser Physics. Confirmed NOT firing on the current terminology_fys501.json
+ *            (all 438 entries correctly tagged Laser Physics). Free — deterministic, no
+ *            Claude call, no membership check, same as /lectures. /healthz now reports
+ *            glossaryCourseMismatch alongside the existing health flags.
+ *   v1.3.0 — Added /week1 ... /week6, deterministic (no Claude call), reusing
+ *            lectureLinks.getWeekLectures()/formatWeekMessage() — the same data and
+ *            formatter /lectures already uses for the full listing. Mirrors the
+ *            FYS.240 Optics bot's /weekN. Free for everyone, same as /lectures.
+ *   v1.2.0 — Opened the bot up (mirrors the FYS.240 Optics bot's v2.7.0/2.7.1 access
+ *            model): removed the single blanket requireMember() check that used to run
+ *            at the top of every message before anything else. Deterministic replies
+ *            (start/help, reset, usage, lectures/topics, /HW overviews from structured
+ *            data, /pending, quiz-answer grading taps) no longer require membership.
+ *            Membership is now checked individually, right at each AI-backed call site:
+ *            free-text Q&A, /HW hints (both full and minimal), the photo work-check,
+ *            and quiz starts (the explicit /mvquiz command, the free-text "quiz me" /
+ *            "multiquiz" triggers, and the two chapter-picker callback taps). Grading
+ *            taps stay ungated since they don't call Claude. No change to what counts
+ *            as a "member" or how credits are spent — this only relocates *where* the
+ *            check happens, from "before every message" to "before every AI call."
+ *   v1.1.0 — Added BOT_VERSION + this changelog (matching the FYS.240 Optics bot's
+ *            v2.2.0 convention). No behavior change.
+ *   (earlier history predates version tracking)
  */
+
+const BOT_VERSION = "1.4.0";
 
 const fs = require("fs");
 const path = require("path");
@@ -605,6 +693,38 @@ function buildPhotoCheckDirective(caption) {
   );
 }
 
+// ------------------------------------------------------------- glossary ----
+// Formats a /define reply from corpusLoader.findGlossaryTerms(). Fully
+// deterministic — no Claude API call — same design as the FYS.240 Optics
+// bot's /define (this bot has no Finnish, so no bilingual branch needed).
+// Every terminology_fys501.json entry already carries its own url +
+// introducedInTitle from the harvest, so (unlike the Optics bot, which
+// cross-references a separate video database) this just uses those fields
+// directly — there's no "booklet-only, no video" case here either, since
+// this glossary isn't booklet-derived.
+function formatGlossaryReply(query) {
+  if (!corpusLoader.glossaryLooksHealthy()) {
+    return "The glossary isn't available right now — please check back later.";
+  }
+
+  const matches = corpusLoader.findGlossaryTerms(query, 3);
+  if (!matches.length) {
+    return (
+      `I couldn't find "${query}" in the glossary. It's auto-extracted from highlighted terms in the ` +
+      `course material, so it doesn't cover everything — try asking me directly instead.`
+    );
+  }
+
+  return matches
+    .map((g) => {
+      const revisit = g.revisitedIn && g.revisitedIn.length ? ` (also covered in ${g.revisitedIn.join(", ")})` : "";
+      const label = g.introducedInTitle || g.introducedInLecture || "Watch video";
+      const videoLine = g.url ? `\n[${label}](${g.url})` : "";
+      return `**${g.term}** — introduced in section ${g.introducedIn}${revisit}\n${g.context}${videoLine}`;
+    })
+    .join("\n\n");
+}
+
 function stripMention(text) {
   return text
     .replace(new RegExp(`@${BOT_USERNAME}`, "ig"), "")
@@ -630,19 +750,23 @@ const HELP_TEXT =
   "- add a number for how many questions, e.g. \"quiz me on chapter 2, 10 questions\"\n" +
   "- /mvquiz chapter 2 (or /mvquiz 2.3) — a \"select all that apply\" quiz: tap every letter that is correct, then Submit. Partial credit is given.\n\n" +
   "Usage:\n" +
-  "- /usage — how many AI answers you have left today (bank quizzes and lecture links are free)\n\n" +
+  "- /usage — how many AI answers you have left today (quizzes, lecture links and commands are free)\n\n" +
   "Lecture videos:\n" +
   "- /lectures (or /topics) — full listing, week by week\n" +
+  "- /week1 ... /week6 — just that week's videos\n" +
   "- \"is there a video on gain saturation?\" or \"recording for week 3?\" — I'll find the right one(s)\n\n" +
+  "Glossary:\n" +
+  "- /define <term> — e.g. \"/define population inversion\"\n\n" +
   "I'll give you hints and point you to the right section, but I won't hand you " +
   "finished homework solutions.\n\n" +
   "/reset clears our conversation history.";
 
 // ------------------------------------------------------------- webhook ------
-app.get("/", (_req, res) => res.send("Laser Physics bot is running"));
+app.get("/", (_req, res) => res.send(`Laser Physics bot v${BOT_VERSION} is running`));
 app.get("/healthz", (_req, res) =>
   res.json({
     ok: true,
+    version: BOT_VERSION,
     corpusChars: COURSE_CORPUS.length,
     corpusLooksHealthy: corpusLoader.corpusLooksHealthy(),
     homeworkProblemsLoaded: Object.values(HOMEWORK_PROBLEMS).reduce((n, hw) => n + Object.keys(hw).length, 0),
@@ -654,6 +778,9 @@ app.get("/healthz", (_req, res) =>
       persistentDir: !!process.env.QUIZ_PENDING_DIR,
     },
     lectureDataLooksHealthy: lectureLinks.lectureDataLooksHealthy(),
+    glossaryLooksHealthy: corpusLoader.glossaryLooksHealthy(),
+    glossaryCourseMismatch: corpusLoader.glossaryCourseMismatch(),
+    membershipGate: !!process.env.COURSE_CHANNEL_ID,
     usage: limiter.status(),
   })
 );
@@ -692,17 +819,21 @@ async function handleUpdate(update) {
 
   if (!shouldAnswer(message)) return;
 
-  // ---- access control: course-channel members only (cached getChatMember).
-  // In group chats non-members are ignored silently, so a stray photo or command
-  // from an outsider doesn't make the bot post notices to the whole group.
+  // ---- access control (v1.2.0): OPEN bot — no blanket membership check here.
+  // Deterministic replies below (commands, lecture links, /HW overviews from
+  // structured data, /pending) work for everyone. Membership is checked
+  // individually, right at each AI-backed call site instead — see the
+  // CHANGELOG v1.2.0 note in the header comment for the full list of those
+  // sites. `isPrivate` is still computed here since several of those
+  // call-site checks need it (silent denial in group chats).
   const isPrivate = message.chat.type === "private";
-  if (!(await requireMember(quizBot, chatId, userId, { silent: !isPrivate }))) return;
 
   // /usage is free (no LLM call).
   if (/^\/usage\b/i.test(text)) return sendMessage(chatId, usageText(userId), message.message_id);
 
   // /pending (ADMIN_USER_IDS only): export / clear the live-generated quiz questions awaiting
-  // review. Silently ignored for everyone else. See PENDING_QUESTIONS_fys501.md.
+  // review. Silently ignored for everyone else — admin-gated internally by
+  // pendingAdmin_fys501.js, so no membership check is needed here. See PENDING_QUESTIONS_fys501.md.
   const pendingMatch = text.match(/^\/pending(@\S+)?\b\s*(.*)$/i);
   if (pendingMatch) {
     return pendingAdmin
@@ -716,7 +847,7 @@ async function handleUpdate(update) {
       .catch((e) => console.error("/pending crashed:", e.message));
   }
 
-  // ---- photo submission: quick direction check, handled before anything else
+  // ---- photo submission: quick direction check (AI-backed — members only)
   if (message.photo && message.photo.length) {
     if (!shouldAnswer(message)) return;
 
@@ -727,6 +858,7 @@ async function handleUpdate(update) {
     const caption = (message.caption || "").trim();
     console.log(`[${message.chat.type}:${chatId}] photo submitted, caption="${caption.slice(0, 80)}"`);
 
+    if (!(await requireMember(quizBot, chatId, userId, { silent: !isPrivate }))) return;
     const photoBudget = await requireLLMBudget(quizBot, chatId, userId, "photo");
     if (!photoBudget.ok) return;
 
@@ -759,15 +891,39 @@ async function handleUpdate(update) {
     return sendMessage(chatId, "Conversation history cleared. Ask me anything.");
   }
   // /topics is an alias of /lectures (same handler, same output) for students
-  // who are more familiar with that wording.
+  // who are more familiar with that wording. Free — deterministic, no Claude call.
   if (/^\/(lectures|topics)/i.test(text)) {
     return sendMessage(chatId, lectureLinks.formatFullListing(), message.message_id, "HTML");
+  }
+  // /week1 ... /week6 (added v1.3.0) — a single week's videos, reusing the
+  // same lookup + formatter /lectures uses for the full listing. Free —
+  // deterministic, no Claude call. Mirrors the FYS.240 Optics bot's /weekN.
+  const weekMatch = text.match(/^\/week(\d+)/i);
+  if (weekMatch) {
+    const weekNum = parseInt(weekMatch[1], 10);
+    const week = lectureLinks.getWeekLectures(weekNum);
+    const reply = week
+      ? lectureLinks.formatWeekMessage(week)
+      : `I don't have a Week ${weekNum} — this course has ${lectureLinks.getAllWeeks().length} weeks of lecture videos. Try /lectures for the full listing.`;
+    return sendMessage(chatId, reply, message.message_id, "HTML");
+  }
+
+  // ---- /define <term> (added v1.4.0) — deterministic glossary lookup, no
+  // Claude call. Mirrors the FYS.240 Optics bot's /define. Free — same
+  // treatment as /lectures/topics/week above.
+  if (/^\/define/i.test(text)) {
+    const term = text.replace(/^\/define(@\S+)?\s*/i, "").trim();
+    if (!term) {
+      return sendMessage(chatId, 'Usage: /define <term> — e.g. "/define population inversion"', message.message_id);
+    }
+    return sendMessage(chatId, formatGlossaryReply(term), message.message_id);
   }
 
   // ---- /mvquiz — explicit command for the multivalue ("select all that
   // apply") quiz add-on. "/mvquiz", "/mvquiz chapter 2", "/mvquiz 2.3",
   // "/mvquiz 2.3 8" (chapter/section + optional question count, same
   // hint-parsing as the free-text trigger further down) are all accepted.
+  // AI-backed (a quiz start may need live generation) — members only.
   const mvQuizMatch = text.match(/^\/mvquiz(@\S+)?\b\s*(.*)$/i);
   if (mvQuizMatch) {
     const rest = (mvQuizMatch[2] || "").trim();
@@ -778,6 +934,8 @@ async function handleUpdate(update) {
     lastCall.set(userId, nowMv);
 
     console.log(`[${message.chat.type}:${chatId}] /mvquiz command: ${text.slice(0, 60)}`);
+
+    if (!(await requireMember(quizBot, chatId, userId, { silent: !isPrivate }))) return;
 
     return mvQuizGenerator
       .startMultivalueQuiz(quizBot, chatId, mvQuizText, askWhichChapterMv, userId)
@@ -810,6 +968,7 @@ async function handleUpdate(update) {
       ? buildHwMinimalHintDirective(hwNum, problemNum)
       : buildHwHintDirective(hwNum, problemNum);
 
+    if (!(await requireMember(quizBot, chatId, userId, { silent: !isPrivate }))) return;
     const hwBudget = await requireLLMBudget(quizBot, chatId, userId, "chat");
     if (!hwBudget.ok) return;
 
@@ -845,20 +1004,26 @@ async function handleUpdate(update) {
   // multi-answer quiz add-on. MUST be checked BEFORE the single-select
   // trigger below: phrases like "multi-select quiz" also contain a standalone
   // word "quiz", so the single-select regex would otherwise claim them.
+  // AI-backed (a quiz start may need live generation) — members only.
   if (mvQuizGenerator.isMultivalueQuizRequest(question)) {
+    if (!(await requireMember(quizBot, chatId, userId, { silent: !isPrivate }))) return;
     return mvQuizGenerator
       .startMultivalueQuiz(quizBot, chatId, question, askWhichChapterMv, userId)
       .catch((e) => console.error("mvQuizGenerator.startMultivalueQuiz crashed:", e.message));
   }
 
   // ---- "quiz me" / "quiz me on chapter 2" / "quiz me on section 2.3" ----
+  // AI-backed (a quiz start may need live generation) — members only.
   if (quizGenerator.isQuizRequest(question)) {
+    if (!(await requireMember(quizBot, chatId, userId, { silent: !isPrivate }))) return;
     return quizGenerator
       .startQuiz(quizBot, chatId, question, askWhichChapter, userId)
       .catch((e) => console.error("quizGenerator.startQuiz crashed:", e.message));
   }
 
   // ---- "any lecture video about X?" / "where's the recording for week 3?"
+  // Free — deterministic keyword match, or the Stage-2 classifier call (billed
+  // to the shared daily backstop, not to this student's personal allowance).
   if (lectureLinks.STAGE1_TRIGGER.test(question)) {
     try {
       const reply = await lectureLinks.handleLectureQuery(question);
@@ -870,6 +1035,8 @@ async function handleUpdate(update) {
     return;
   }
 
+  // ---- free-text Q&A (AI-backed — members only)
+  if (!(await requireMember(quizBot, chatId, userId, { silent: !isPrivate }))) return;
   const chatBudget = await requireLLMBudget(quizBot, chatId, userId, "chat");
   if (!chatBudget.ok) return;
 
@@ -899,45 +1066,53 @@ async function handleUpdate(update) {
 async function handleCallbackQuery(cq) {
   const data = cq.data || "";
 
-  // Same membership gate as for messages (membership may have been revoked mid-quiz).
-  // Free: answered from the 5-minute cache in the normal case.
-  const cqChatId = cq.message?.chat?.id;
-  if (!(await requireMember(quizBot, cqChatId, cq.from?.id, { silent: true }))) {
-    await quizBot.answerCallbackQuery(cq.id, { text: MSG.notMember }).catch(() => {});
-    return;
-  }
-
   // ---- multivalue ("select all that apply") quiz add-on — its own
   // callback_data namespace, kept separate from "quiz:"/"quizchapter:" ----
+  // Grading taps are free — no membership check, no credit cost — since
+  // this only scores an already-served question, no Claude call involved.
   if (data.startsWith("mv:")) {
     return mvQuizGenerator
       .handleMultivalueQuizAnswer(quizBot, cq)
       .catch((e) => console.error("mvQuizGenerator.handleMultivalueQuizAnswer crashed:", e.message));
   }
 
+  // Chapter-picker taps START a new quiz (same AI-backed step as /mvquiz or
+  // the free-text "multiquiz" trigger) — members only.
   if (data.startsWith("mvquizchapter:")) {
     const chapter = data.split(":")[1];
     const chatId = cq.message?.chat?.id;
+    const cbUserId = cq.from?.id;
+    if (!(await requireMember(quizBot, chatId, cbUserId, { silent: true }))) {
+      await quizBot.answerCallbackQuery(cq.id, { text: MSG.notMember }).catch(() => {});
+      return;
+    }
     await quizBot.answerCallbackQuery(cq.id);
     if (!chatId) return;
     return mvQuizGenerator
-      .startMultivalueQuiz(quizBot, chatId, `multiquiz chapter ${chapter}`, askWhichChapterMv, cq.from?.id)
+      .startMultivalueQuiz(quizBot, chatId, `multiquiz chapter ${chapter}`, askWhichChapterMv, cbUserId)
       .catch((e) => console.error("mvQuizGenerator.startMultivalueQuiz (chapter pick) crashed:", e.message));
   }
 
+  // Grading tap — same free treatment as "mv:" above.
   if (data.startsWith("quiz:")) {
     return quizGenerator
       .handleQuizAnswer(quizBot, cq)
       .catch((e) => console.error("quizGenerator.handleQuizAnswer crashed:", e.message));
   }
 
+  // Chapter-picker tap — same AI-backed treatment as "mvquizchapter:" above.
   if (data.startsWith("quizchapter:")) {
     const chapter = data.split(":")[1];
     const chatId = cq.message?.chat?.id;
+    const cbUserId = cq.from?.id;
+    if (!(await requireMember(quizBot, chatId, cbUserId, { silent: true }))) {
+      await quizBot.answerCallbackQuery(cq.id, { text: MSG.notMember }).catch(() => {});
+      return;
+    }
     await quizBot.answerCallbackQuery(cq.id);
     if (!chatId) return;
     return quizGenerator
-      .startQuiz(quizBot, chatId, `quiz me on chapter ${chapter}`, askWhichChapter, cq.from?.id)
+      .startQuiz(quizBot, chatId, `quiz me on chapter ${chapter}`, askWhichChapter, cbUserId)
       .catch((e) => console.error("quizGenerator.startQuiz (chapter pick) crashed:", e.message));
   }
 
@@ -951,4 +1126,10 @@ if (!TELEGRAM_TOKEN) console.error("WARNING: TELEGRAM_TOKEN is not set");
 if (!ANTHROPIC_API_KEY) console.error("WARNING: ANTHROPIC_API_KEY is not set");
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Bot listening on port ${PORT} | model=${MODEL} | cache=${CACHE_TTL}`));
+app.listen(PORT, () => {
+  const glossaryStatus = corpusLoader.glossaryCourseMismatch() ? "⚠ COURSE MISMATCH" : "✓";
+  console.log(
+    `FYS.501 Laser bot v${BOT_VERSION} listening on port ${PORT} | model=${MODEL} | cache=${CACHE_TTL} | ` +
+    `Glossary=${glossaryStatus}`
+  );
+});

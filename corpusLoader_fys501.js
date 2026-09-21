@@ -286,13 +286,46 @@ function truncateBalanced(parts, maxChars) {
 // ---------- glossary (terminology_fys501.json) ----------
 
 let _glossary = null;
+let _glossaryCourseMismatch = false;
+
+// Sanity-check against the repo's recurring failure mode: this project is
+// forked between a FYS.240 Optics bot and this FYS.501 Laser Physics bot,
+// and data files have repeatedly turned out to be the WRONG course's
+// content (see the FYS.240 bot's CHANGELOG and README for homework_problems.json
+// and terminology.json incidents). Mirrors corpusLoader.js's
+// looksLikeWrongCourseGlossary() in the Optics bot, direction reversed:
+// there, the risk was Laser content leaking into the Optics glossary; here,
+// it's Optics content leaking into this one. Rather than risk silently
+// handing a student the wrong course's glossary through /define, this scans
+// the loaded array and refuses to serve it if it looks like the wrong course.
+function looksLikeWrongCourseGlossary(glossary) {
+  if (!Array.isArray(glossary) || glossary.length < 20) return false;
+  // Matches the actual FYS.240 course name/code, not just the generic word
+  // "optics" — this bot's own entries can legitimately mention "optics" as a
+  // topic (e.g. "geometrical optics") without being the FYS.240 course itself.
+  const opticsTagged = glossary.filter((e) => /FYS\.?\s?240|Optiikka/i.test(e.introducedInLecture || '')).length;
+  const laserTagged = glossary.filter((e) => /laser physics/i.test(e.introducedInLecture || '')).length;
+  return opticsTagged >= 20 && opticsTagged > laserTagged * 3;
+}
 
 function loadGlossary({ forceReload = false } = {}) {
   if (_glossary !== null && !forceReload) return _glossary;
   try {
     const raw = fs.readFileSync(TERMINOLOGY_PATH, 'utf8');
     const parsed = JSON.parse(raw);
-    _glossary = Array.isArray(parsed) ? parsed : [];
+    const arr = Array.isArray(parsed) ? parsed : [];
+    if (looksLikeWrongCourseGlossary(arr)) {
+      _glossaryCourseMismatch = true;
+      console.error(
+        `corpusLoader: terminology_fys501.json looks like the WRONG COURSE's glossary ` +
+        `(reads like FYS.240 Optics, not Laser Physics) — REFUSING to serve it. ` +
+        `/define will report "not available" until the correct FYS.501 glossary is supplied.`
+      );
+      _glossary = [];
+    } else {
+      _glossaryCourseMismatch = false;
+      _glossary = arr;
+    }
   } catch (e) {
     console.error(`corpusLoader: could not read/parse ${TERMINOLOGY_PATH}: ${e.message}`);
     _glossary = [];
@@ -303,6 +336,15 @@ function loadGlossary({ forceReload = false } = {}) {
 function glossaryLooksHealthy() {
   const g = loadGlossary();
   return Array.isArray(g) && g.length > 50;
+}
+
+// Exposed separately from glossaryLooksHealthy() (which would also read
+// false for e.g. a merely-small or missing glossary) so callers like
+// /healthz can distinguish "wrong course, refusing to serve" from other
+// kinds of unhealthy. Mirrors the Optics bot's corpusLoader.glossaryCourseMismatch().
+function glossaryCourseMismatch() {
+  loadGlossary();
+  return _glossaryCourseMismatch;
 }
 
 function normalizeTerm(s) {
@@ -484,6 +526,7 @@ module.exports = {
   SECTION_INDEX,
   // glossary / /define command
   glossaryLooksHealthy,
+  glossaryCourseMismatch,
   findGlossaryTerms,
   // exposed mainly for tests / buildQuizBank.js diagnostics
   _loadCorpus: loadCorpus,

@@ -1,6 +1,6 @@
 {
   "name": "fys501-laser-bot",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "private": true,
   "main": "bot_fys501.js",
   "scripts": {
