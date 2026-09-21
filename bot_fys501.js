@@ -85,6 +85,19 @@
  *     it just falls back to local keyword matching if the backstop is active.
  *   - /usage shows the student's remaining allowance (free, no LLM call).
  *
+ * QUIZ ANALYTICS (added v1.6.0 — free, deterministic, no Claude call; OFF unless configured):
+ *   Each graded quiz answer is recorded as one pseudonymous event (keyed hash of the Telegram id,
+ *   question, chosen option(s), correct or not, date) so the instructor can see which sections,
+ *   concepts and misconceptions are hard and focus on-site discussion sessions on them.
+ *   /privacy, /optout, /optin — for everyone: what is recorded; stop recording + delete own events.
+ *   /quizstats [sections|concepts|misconceptions|questions] [live] | export | clear confirm —
+ *   ADMIN_USER_IDS only (silently ignored for everyone else, not listed in /help).
+ *   Needs ANALYTICS_HASH_SECRET (16+ chars) to switch on; QUIZ_ANALYTICS_DIR (a Railway volume)
+ *   to keep events across redeploys. Modules: quizAnalytics_fys501.js (logging),
+ *   quizStats_fys501.js (analysis + CLI), quizAnalyticsCommands_fys501.js (the commands above),
+ *   validateQuizTags_fys501.js / tagQuizBank_fys501.js (concept + misconception tags on banks).
+ *   Full description: QUIZ_ANALYTICS_fys501.md.
+ *
  * DEV INTROSPECTION (added v1.5.0 — free, deterministic, no Claude call):
  *   /source_materials, /source_HW, /source_quizzes — plain-text diagnostic reports on
  *   which data the running bot actually loaded (file sizes, mod-times, health checks,
@@ -106,6 +119,13 @@
  *     wrong-course file the way /source_materials can for the corpus and glossary.
  *
  * CHANGELOG:
+ *   v1.6.0 — Quiz analytics: records one pseudonymous event per graded answer (single- and
+ *            multi-select), with /privacy, /optout, /optin for students and admin-only
+ *            /quizstats (briefing, export, clear). Optional per-question `concepts`, per-option
+ *            `optionTags` (misconception ids) and `version` fields in the quiz banks, checked by
+ *            validateQuizTags_fys501.js and added with tagQuizBank_fys501.js; untagged questions
+ *            keep working. Off unless ANALYTICS_HASH_SECRET is set. /healthz reports
+ *            quizAnalytics, /source_quizzes reports tag coverage.
  *   v1.5.0 — Added /source_materials, /source_HW, /source_quizzes (ported from the
  *            FYS.240 Optics bot's v2.6.1 commands, adapted for this bot's data files —
  *            no bilingual dimension, no separate homework_solutions.json to report on).
@@ -149,7 +169,7 @@
  *   (earlier history predates version tracking)
  */
 
-const BOT_VERSION = "1.5.0";
+const BOT_VERSION = "1.6.0";
 
 const fs = require("fs");
 const path = require("path");
@@ -161,6 +181,9 @@ const pendingAdmin = require("./pendingAdmin_fys501");
 const corpusLoader = require("./corpusLoader_fys501");
 const lectureLinks = require("./lectureLinks_fys501");
 const limiter = require("./usageLimiter");
+const quizAnalytics = require("./quizAnalytics_fys501");
+const quizAnalyticsCommands = require("./quizAnalyticsCommands_fys501");
+const { coverageSummary: quizTagCoverage } = require("./validateQuizTags_fys501");
 const { requireMember, requireLLMBudget, maybeWarnLow, refundLLM, usageText, MSG } = require("./accessGuard");
 
 const app = express();
@@ -933,6 +956,14 @@ function buildSourceQuizzesReport() {
   lines.push("");
   lines.push(`Live generation model (used for any chapter not in the bank): ${MODEL}`);
   lines.push("");
+  const cov = quizTagCoverage();
+  lines.push("Analytics tags (concepts / misconception tags, see QUIZ_ANALYTICS_fys501.md)");
+  for (const [k, c] of Object.entries(cov)) {
+    lines.push(`- ${k === "single" ? "Single-select" : "Multi-select"}: ${c.withConcepts}/${c.questions} questions with concepts, ${c.taggedDistractors}/${c.distractors} wrong options tagged`);
+  }
+  const qa = quizAnalytics.status();
+  lines.push(`- Answer logging: ${qa.enabled ? "ON" : "OFF (set ANALYTICS_HASH_SECRET)"}; stored events file: ${qa.persistentDir ? "on the QUIZ_ANALYTICS_DIR volume" : "none (log lines only)"}`);
+  lines.push("");
   lines.push("---");
   lines.push("");
   lines.push('multivalueQuizBank_fys501.json ("select all that apply" add-on, separate from the above)');
@@ -1011,6 +1042,8 @@ const HELP_TEXT =
   "- /mvquiz chapter 2 (or /mvquiz 2.3) — a \"select all that apply\" quiz: tap every letter that is correct, then Submit. Partial credit is given.\n\n" +
   "Usage:\n" +
   "- /usage — how many AI answers you have left today (quizzes, lecture links and commands are free)\n\n" +
+  "Privacy:\n" +
+  "- /privacy — what quiz data is recorded (anonymously) and why; /optout stops it and deletes your data\n\n" +
   "Lecture videos:\n" +
   "- /lectures (or /topics) — full listing, week by week\n" +
   "- /week1 ... /week6 — just that week's videos\n" +
@@ -1041,6 +1074,7 @@ app.get("/healthz", (_req, res) =>
     glossaryLooksHealthy: corpusLoader.glossaryLooksHealthy(),
     glossaryCourseMismatch: corpusLoader.glossaryCourseMismatch(),
     membershipGate: !!process.env.COURSE_CHANNEL_ID,
+    quizAnalytics: quizAnalytics.status(),
     usage: limiter.status(),
   })
 );
@@ -1090,6 +1124,24 @@ async function handleUpdate(update) {
 
   // /usage is free (no LLM call).
   if (/^\/usage\b/i.test(text)) return sendMessage(chatId, usageText(userId), message.message_id);
+
+  // Quiz analytics (v1.6.0) — free, deterministic, no Claude call, no membership check.
+  if (/^\/privacy(@\S+)?\b/i.test(text)) return sendMessage(chatId, quizAnalyticsCommands.privacyReply(), message.message_id);
+  if (/^\/optout(@\S+)?\b/i.test(text)) return sendMessage(chatId, quizAnalyticsCommands.optOutReply(userId), message.message_id);
+  if (/^\/optin(@\S+)?\b/i.test(text)) return sendMessage(chatId, quizAnalyticsCommands.optInReply(userId), message.message_id);
+  // /quizstats (ADMIN_USER_IDS only): admin-gated internally, silently ignored for everyone else.
+  const quizStatsMatch = text.match(/^\/quizstats(@\S+)?\b\s*(.*)$/i);
+  if (quizStatsMatch) {
+    return quizAnalyticsCommands
+      .handleQuizStatsCommand({
+        chatId,
+        userId,
+        arg: quizStatsMatch[2],
+        sendText: (c, t) => sendMessage(c, t, message.message_id),
+        sendDocument: tgSendDocument,
+      })
+      .catch((e) => console.error("/quizstats crashed:", e.message));
+  }
 
   // ---- dev-only data-source introspection (v1.5.0) — not in /help/start,
   // but not access-restricted either — same as every other command here.
@@ -1429,6 +1481,6 @@ app.listen(PORT, () => {
   const glossaryStatus = corpusLoader.glossaryCourseMismatch() ? "⚠ COURSE MISMATCH" : "✓";
   console.log(
     `FYS.501 Laser bot v${BOT_VERSION} listening on port ${PORT} | model=${MODEL} | cache=${CACHE_TTL} | ` +
-    `Glossary=${glossaryStatus}`
+    `Glossary=${glossaryStatus} | QuizAnalytics=${quizAnalytics.isEnabled() ? "on" : "off"}`
   );
 });

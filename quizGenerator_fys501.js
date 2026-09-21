@@ -33,6 +33,7 @@ const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const corpusLoader = require('./corpusLoader_fys501');
 const limiter = require('./usageLimiter');
+const analytics = require('./quizAnalytics_fys501');
 const { getCorpusSection } = corpusLoader;
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -522,6 +523,11 @@ async function startQuiz(bot, chatId, text, askWhichChapter = defaultAskWhichCha
 
   const session = createSession(chatId, questions);
 
+  // One-time (per bot process) note that anonymous answer statistics are recorded; null when
+  // analytics are off or the student opted out. See QUIZ_ANALYTICS_fys501.md.
+  const analyticsNotice = analytics.noticeFor(userId);
+  if (analyticsNotice) await bot.sendMessage(chatId, analyticsNotice);
+
   await bot.sendMessage(
     chatId,
     formatQuestionMessage(session.questions[0], 1, session.questions.length),
@@ -545,6 +551,10 @@ async function handleQuizAnswer(bot, callbackQuery) {
   const question = session.questions[qIndex];
   const correct = answerIndex === question.correctIndex;
   if (correct) session.score += 1;
+
+  // Analytics (no-op unless enabled; never throws). Logged before any Telegram call so a failed
+  // edit cannot lose the answer. `answerIndex` is the tapped position in the SERVED (shuffled) order.
+  analytics.logSingle(callbackQuery.from && callbackQuery.from.id, question, answerIndex);
 
   const feedback = correct
     ? `✅ Correct!\n${question.explanation}`

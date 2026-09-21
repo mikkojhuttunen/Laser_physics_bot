@@ -37,3 +37,9 @@ pending_review*.md
 pending_inbox/
 *.bak
 *.corrupt-*
+
+# Quiz analytics (see QUIZ_ANALYTICS_fys501.md): exported events, briefings and tagging work files
+quiz_events*.jsonl
+quiz_briefing*.md
+tag_suggestions.json
+tag_review.md

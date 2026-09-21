@@ -84,6 +84,7 @@ const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 const corpusLoader = require('./corpusLoader_fys501');
 const limiter = require('./usageLimiter');
+const analytics = require('./quizAnalytics_fys501');
 const { getCorpusSection } = corpusLoader;
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -602,6 +603,12 @@ async function startMultivalueQuiz(bot, chatId, text, askWhichChapter = defaultA
   }
 
   const session = createSession(chatId, questions);
+
+  // One-time (per bot process) note that anonymous answer statistics are recorded; null when
+  // analytics are off or the student opted out. See QUIZ_ANALYTICS_fys501.md.
+  const analyticsNotice = analytics.noticeFor(userId);
+  if (analyticsNotice) await bot.sendMessage(chatId, analyticsNotice);
+
   await sendQuestion(bot, chatId, session);
 }
 
@@ -683,6 +690,9 @@ async function handleMultivalueQuizAnswer(bot, callbackQuery) {
 
     const score = gradeSelection(session.selected, question.correctIndices, question.options.length);
     const answeredText = session.currentText;
+
+    // Analytics (no-op unless enabled; never throws). Synchronous, before the state advances.
+    analytics.logMulti(callbackQuery.from && callbackQuery.from.id, question, session.selected, score);
 
     // Advance state SYNCHRONOUSLY, before any await, so a second rapid tap on
     // Submit fails the qIndex check above instead of double-counting.
