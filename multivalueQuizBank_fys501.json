@@ -22,7 +22,20 @@
         "ref": "Lecture notes 1.1; Textbook 1.1",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "rad.spontaneous_nonradiative",
+          "rad.stimulated_emission",
+          "rad.absorption"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-NR-01",
+          null,
+          "M-ABS-01",
+          null
+        ]
       },
       {
         "id": "mv1.1_002",
@@ -43,7 +56,17 @@
         "ref": "Lecture notes 1.1 (Spontaneous Emission); Textbook 1.1.1",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "rad.spontaneous_nonradiative"
+        ],
+        "optionTags": [
+          "M-SP-02",
+          null,
+          null,
+          null,
+          "M-SPON-01"
+        ]
       },
       {
         "id": "mv1.1_003",
@@ -62,7 +85,16 @@
         "ref": "Lecture notes 1.1; Textbook 1.1.2",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "rad.spontaneous_nonradiative"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          "M-NR-01"
+        ]
       },
       {
         "id": "mv1.1_004",
@@ -85,7 +117,20 @@
         "ref": "Lecture notes 1.1 (Stimulated Emission, Absorption); Textbook 1.1.3–1.1.5",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "rad.stimulated_emission",
+          "rad.absorption",
+          "rad.spontaneous_nonradiative"
+        ],
+        "optionTags": [
+          null,
+          "M-SPON-01",
+          "M-ABS-01",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.1_005",
@@ -108,7 +153,18 @@
         "ref": "Lecture notes 1.1 (introduction)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "rad.spontaneous_nonradiative"
+        ],
+        "optionTags": [
+          null,
+          "M-SPON-01",
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.1_006",
@@ -131,7 +187,20 @@
         "ref": "Lecture notes 1.1 (Spontaneous Emission, Stimulated Emission, Absorption)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "rad.stimulated_emission",
+          "rad.absorption",
+          "rad.spontaneous_nonradiative"
+        ],
+        "optionTags": [
+          null,
+          "M-ABS-01",
+          null,
+          "M-SPON-01",
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.1_007",
@@ -152,7 +221,19 @@
         "ref": "Lecture notes 1.1 (Stimulated Emission, Absorption)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "rad.absorption",
+          "rad.stimulated_emission",
+          "rad.spontaneous_nonradiative"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-SPON-01",
+          "M-XS-01",
+          null
+        ]
       },
       {
         "id": "mv1.1_008",
@@ -175,7 +256,18 @@
         "ref": "Lecture notes 1.1 (Spontaneous Emission)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "rad.spontaneous_nonradiative"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null,
+          "M-SP-02",
+          null
+        ]
       }
     ],
     "1.2": [
@@ -198,7 +290,18 @@
         "ref": "Lecture notes 1.2; Textbook 1.2",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "laser.threshold_critical",
+          "laser.inversion_condition"
+        ],
+        "optionTags": [
+          null,
+          "M-ELEM-01",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.2_002",
@@ -219,7 +322,17 @@
         "ref": "Lecture notes 1.2 (Light Amplification); Textbook 1.2.1",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "laser.inversion_condition"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.2_003",
@@ -242,7 +355,18 @@
         "ref": "Lecture notes 1.2 (Light Amplification, Nd:YAG example); Textbook 1.2.1",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "laser.inversion_condition"
+        ],
+        "optionTags": [
+          "M-INV-02",
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.2_004",
@@ -263,7 +387,18 @@
         "ref": "Lecture notes 1.2 (The Laser Condition, Logarithmic Losses); Textbook 1.2.2–1.2.3",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "laser.threshold_critical",
+          "laser.log_losses"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          "M-THR-01",
+          null
+        ]
       },
       {
         "id": "mv1.2_005",
@@ -284,7 +419,18 @@
         "ref": "Lecture notes 1.2 (The Laser Condition)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "laser.threshold_critical",
+          "laser.log_losses"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.2_006",
@@ -303,7 +449,17 @@
         "ref": "Lecture notes 1.2 (Logarithmic Losses)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "laser.threshold_critical",
+          "laser.log_losses"
+        ],
+        "optionTags": [
+          "M-LOSS-01",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.2_007",
@@ -326,7 +482,18 @@
         "ref": "Lecture notes 1.2 (Light Amplification)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "laser.inversion_condition"
+        ],
+        "optionTags": [
+          null,
+          "M-INV-01",
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.2_008",
@@ -345,7 +512,16 @@
         "ref": "Lecture notes 1.2 (The Laser Condition)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "laser.threshold_critical"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          "M-THR-01"
+        ]
       }
     ],
     "1.3": [
@@ -368,7 +544,17 @@
         "ref": "Lecture notes 1.3 (2-Level System); Textbook 1.3",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-PUMP-02",
+          "M-PUMP-01",
+          null
+        ]
       },
       {
         "id": "mv1.3_002",
@@ -391,7 +577,18 @@
         "ref": "Lecture notes 1.3 (3-Level Systems); Textbook 1.3.1",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          "M-LVL-01",
+          null,
+          null,
+          null,
+          null,
+          "M-LVL-03"
+        ]
       },
       {
         "id": "mv1.3_003",
@@ -410,7 +607,16 @@
         "ref": "Lecture notes 1.3 (4-Level Systems); Textbook 1.3.2",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          "M-LVL-02",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.3_004",
@@ -431,7 +637,17 @@
         "ref": "Lecture notes 1.3 (3-Level Systems: quantum defect)",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.3_005",
@@ -452,7 +668,17 @@
         "ref": "Lecture notes 1.3 (3-Level Systems: quantum defect)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          "M-QD-01",
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.3_006",
@@ -473,7 +699,18 @@
         "ref": "Lecture notes 1.3 (Population inversion, 3-Level and 4-Level Systems)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "pump.schemes",
+          "laser.inversion_condition"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-LVL-02",
+          "M-LVL-01",
+          null
+        ]
       },
       {
         "id": "mv1.3_007",
@@ -494,7 +731,17 @@
         "ref": "Lecture notes 1.3 (3-Level and 4-Level Systems)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-LVL-05",
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.3_008",
@@ -515,7 +762,17 @@
         "ref": "Lecture notes 1.3",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          "M-PUMP-01",
+          null,
+          "M-LVL-03",
+          null,
+          null
+        ]
       }
     ],
     "1.4": [
@@ -538,7 +795,17 @@
         "ref": "Lecture notes 1.4 (Monochromaticity); Textbook 1.4.1",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "beam.coherence"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          "M-COH-01",
+          null
+        ]
       },
       {
         "id": "mv1.4_002",
@@ -561,7 +828,18 @@
         "ref": "Lecture notes 1.4 (Coherence); Textbook 1.4.2",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "beam.coherence"
+        ],
+        "optionTags": [
+          "M-COH-03",
+          null,
+          null,
+          "M-COH-02",
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.4_003",
@@ -582,7 +860,18 @@
         "ref": "Lecture notes 1.4 (Directionality); Textbook 1.4.3",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "beam.directionality",
+          "beam.coherence"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.4_004",
@@ -605,7 +894,18 @@
         "ref": "Lecture notes 1.4 (Brightness); Textbook 1.4.4",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "beam.directionality"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          "M-BRT-01"
+        ]
       },
       {
         "id": "mv1.4_005",
@@ -626,7 +926,17 @@
         "ref": "Lecture notes 1.4 (Temporal Coherence)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "beam.coherence"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          "M-COH-03",
+          null
+        ]
       },
       {
         "id": "mv1.4_006",
@@ -647,7 +957,17 @@
         "ref": "Lecture notes 1.4 (Directionality)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "beam.directionality"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-DIV-01",
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.4_007",
@@ -670,7 +990,18 @@
         "ref": "Lecture notes 1.4 (Brightness)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "beam.directionality"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-BRT-01",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv1.4_008",
@@ -691,7 +1022,18 @@
         "ref": "Lecture notes 1.4 (Properties of Laser Beams)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "beam.coherence",
+          "beam.directionality"
+        ],
+        "optionTags": [
+          "M-COH-01",
+          null,
+          null,
+          null,
+          null
+        ]
       }
     ]
   },
@@ -716,7 +1058,17 @@
         "ref": "Lecture notes 2.1 (Full/Atomic Hamiltonian); Textbook 2.1.1",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv2.1_002",
@@ -739,7 +1091,18 @@
         "ref": "Lecture notes 2.1 (Selection Rules); Textbook 2.1.1",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          null,
+          "M-PAR-01",
+          null,
+          null,
+          null,
+          "M-DIP-01"
+        ]
       },
       {
         "id": "mv2.1_003",
@@ -760,7 +1123,18 @@
         "ref": "Lecture notes 2.1 (Power-series Expansion, First-order Solution); Textbook 2.1.1",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "semi.rwa",
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          null,
+          "M-RWA-02",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv2.1_004",
@@ -783,7 +1157,18 @@
         "ref": "Lecture notes 2.1 (Rabi Frequency, Power-series Expansion); Textbook 2.1.1",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv2.1_005",
@@ -802,7 +1187,16 @@
         "ref": "Lecture notes 2.1 (Rabi Frequency)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv2.1_006",
@@ -823,7 +1217,17 @@
         "ref": "Lecture notes 2.1 (Selection Rules)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          "M-DIP-01",
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "mv2.1_007",
@@ -842,7 +1246,16 @@
         "ref": "Lecture notes 2.1 (Power-series Expansion)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-PERT-01",
+          null
+        ]
       },
       {
         "id": "mv2.1_008",
@@ -861,7 +1274,17 @@
         "ref": "Lecture notes 2.1 (First-order Solution)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "semi.rwa",
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       }
     ],
     "2.2": [

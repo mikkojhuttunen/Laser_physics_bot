@@ -15,7 +15,18 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "rad.absorption",
+          "rad.stimulated_emission",
+          "rad.spontaneous_nonradiative"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.1_002",
@@ -31,7 +42,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "rad.stimulated_emission"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-STIM-01",
+          null
+        ]
       },
       {
         "id": "q1.1_003",
@@ -47,7 +67,17 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "rad.spontaneous_nonradiative",
+          "rad.stimulated_emission"
+        ],
+        "optionTags": [
+          null,
+          "M-SPON-01",
+          null,
+          null
+        ]
       },
       {
         "id": "q1.1_004",
@@ -63,7 +93,17 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "rad.absorption",
+          "rad.stimulated_emission"
+        ],
+        "optionTags": [
+          "M-XS-01",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.1_005",
@@ -79,7 +119,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "rad.spontaneous_nonradiative"
+        ],
+        "optionTags": [
+          "M-NR-01",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.1_006",
@@ -94,7 +143,16 @@
         "explanation": "N2(t) = N2(0)e^(−t/τsp); at t = 40 ns = 2τsp this is e⁻² ≈ 0.135. Exactly a factor 1/e (not 1/2) is lost per lifetime, and the population never reaches zero at a finite time.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "rad.spontaneous_nonradiative"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-SP-02",
+          null
+        ]
       },
       {
         "id": "q1.1_007",
@@ -109,7 +167,16 @@
         "explanation": "ν0 = (E2 − E1)/h, so λ = hc/ΔE ≈ 1240 eV·nm / 1.165 eV ≈ 1064 nm — the Nd:YAG laser wavelength.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "rad.spontaneous_nonradiative"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.1_008",
@@ -124,7 +191,17 @@
         "explanation": "F counts photons per unit area per unit time. Energy per unit area and time would be the intensity I = ħωF, and photons per unit volume or per second are different quantities.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "rad.stimulated_emission",
+          "rad.absorption"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       }
     ],
     "1.2": [
@@ -142,7 +219,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "laser.inversion_condition"
+        ],
+        "optionTags": [
+          "M-INV-01",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.2_002",
@@ -158,7 +244,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "laser.inversion_condition"
+        ],
+        "optionTags": [
+          "M-INV-02",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.2_003",
@@ -174,7 +269,17 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "laser.inversion_condition",
+          "laser.threshold_critical"
+        ],
+        "optionTags": [
+          null,
+          "M-ELEM-01",
+          null,
+          null
+        ]
       },
       {
         "id": "q1.2_004",
@@ -190,7 +295,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "laser.threshold_critical"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.2_005",
@@ -206,7 +320,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "laser.log_losses"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.2_006",
@@ -221,7 +344,16 @@
         "explanation": "Amplification needs N2 > (g2/g1)N1 = 2N1. With N2 = 1.5N1 absorption dominates even though N2 > N1; transparency would need exactly N2 = 2N1.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "laser.inversion_condition"
+        ],
+        "optionTags": [
+          null,
+          "M-INV-01",
+          null,
+          null
+        ]
       },
       {
         "id": "q1.2_007",
@@ -236,7 +368,17 @@
         "explanation": "γ = γ1 + γ2 + 2γi = 0 + 0.0202 + 2(0.0050) ≈ 0.0302, so ΔNc = 0.0302/(2 × 2.8×10⁻¹⁹ × 7.5) ≈ 7.2×10¹⁵ cm⁻³. Dropping the factor 2 gives 1.4×10¹⁶, counting the internal loss once gives 6.0×10¹⁵, and γ/(4σL) gives 3.6×10¹⁵.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "laser.threshold_critical",
+          "laser.log_losses"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          "M-LOSS-01"
+        ]
       },
       {
         "id": "q1.2_008",
@@ -251,7 +393,16 @@
         "explanation": "When ΔN ≥ ΔNc the round-trip gain compensates the losses, so oscillation can grow from one spontaneously emitted photon; stimulated emission always needs a photon to stimulate it.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "laser.threshold_critical"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       }
     ],
     "1.3": [
@@ -269,7 +420,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-PUMP-02",
+          null
+        ]
       },
       {
         "id": "q1.3_002",
@@ -285,7 +445,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.3_003",
@@ -301,7 +470,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.3_004",
@@ -317,7 +495,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-LVL-04",
+          null
+        ]
       },
       {
         "id": "q1.3_005",
@@ -332,7 +519,16 @@
         "explanation": "q = hνp − hν0, so q/hνp = 1 − λp/λ0 = 1 − 808/1064 ≈ 0.24. The 32% is the defect relative to the laser photon, 76% is the maximum efficiency, and the non-radiative step is exactly where photon energy is not conserved.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          "M-QD-01"
+        ]
       },
       {
         "id": "q1.3_006",
@@ -347,7 +543,17 @@
         "explanation": "The lower laser level is the ground state, so inversion (Ne > Ng) requires more than half of all atoms in |e⟩. This is why the pump must be intense.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "pump.schemes",
+          "laser.inversion_condition"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-LVL-01",
+          null
+        ]
       },
       {
         "id": "q1.3_007",
@@ -362,7 +568,16 @@
         "explanation": "In a four-level scheme the lower laser level |1⟩ decays rapidly to the ground state, so N1 ≈ 0 and ΔN > 0 is easily satisfied without depleting the ground state.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          null,
+          "M-LVL-04",
+          null,
+          null
+        ]
       },
       {
         "id": "q1.3_008",
@@ -377,7 +592,16 @@
         "explanation": "Population can accumulate in |e⟩ only if |a⟩ empties into it quickly compared with the lifetime of |e⟩, i.e. τ32 is short compared with τ2.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "pump.schemes"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          "M-LVL-05"
+        ]
       }
     ],
     "1.4": [
@@ -395,7 +619,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "beam.coherence"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.4_002",
@@ -411,7 +644,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "beam.coherence"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-COH-02",
+          null
+        ]
       },
       {
         "id": "q1.4_003",
@@ -427,7 +669,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "beam.directionality"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.4_004",
@@ -443,7 +694,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "beam.directionality"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.4_005",
@@ -459,7 +719,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "beam.directionality"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.4_006",
@@ -474,7 +743,16 @@
         "explanation": "L = cτc = 3×10⁸ m/s × 10⁻³ s = 3×10⁵ m = 300 km. Values of 30 cm and 3×10⁵ km belong to Δν ~ 1 GHz and Δν ~ 1 Hz.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "beam.coherence"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.4_007",
@@ -489,7 +767,16 @@
         "explanation": "θ = 633×10⁻⁹ m / (π × 5×10⁻⁴ m) ≈ 4.0×10⁻⁴ rad ≈ 0.4 mrad. Forgetting the factor π gives 1.3 mrad.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "beam.directionality"
+        ],
+        "optionTags": [
+          "M-DIV-01",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q1.4_008",
@@ -504,7 +791,16 @@
         "explanation": "B = P/(πSθ²) with S = πw0² and θ = λ/(πw0): the larger area is exactly compensated by the smaller divergence, so B = P/λ² whatever the beam size.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "beam.directionality"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-BRT-01",
+          null
+        ]
       }
     ]
   },
@@ -524,7 +820,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q2.1_002",
@@ -540,7 +845,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-DIP-01",
+          null
+        ]
       },
       {
         "id": "q2.1_003",
@@ -556,7 +870,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-PAR-01",
+          null
+        ]
       },
       {
         "id": "q2.1_004",
@@ -572,7 +895,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q2.1_005",
@@ -588,7 +920,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "semi.rwa"
+        ],
+        "optionTags": [
+          "M-RWA-02",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q2.1_006",
@@ -603,7 +944,16 @@
         "explanation": "k·a_B = (2π/500 nm) × 10⁻¹¹ m ≈ 1.3×10⁻⁴ ≪ 1, so the atom sees a locally constant field — the basis of the dipole approximation.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          null,
+          "M-DIP-01",
+          null,
+          null
+        ]
       },
       {
         "id": "q2.1_007",
@@ -618,7 +968,16 @@
         "explanation": "Diagonal elements involve an odd integrand (even·odd·even or odd·odd·odd) and vanish; the off-diagonal element ⟨e|H|g⟩ has an even integrand and drives the transition.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          "M-PAR-01",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q2.1_008",
@@ -633,7 +992,16 @@
         "explanation": "At first order the ground-state amplitude does not change (C_g^(1) = 0); C_g contains only even and C_e only odd powers of Ω.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "semi.dipole_perturbation"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          "M-PERT-01"
+        ]
       }
     ],
     "2.2": [
