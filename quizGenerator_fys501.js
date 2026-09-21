@@ -21,7 +21,7 @@
  *    stdout, so a log-based capture pipeline works too if the deployment's
  *    filesystem doesn't persist across restarts — see section 5a of the
  *    guide). They are never written into quizBank_fys501.json directly; that only
- *    happens via a reviewed `buildQuizBank.js --merge-pending` run.
+ *    happens via a reviewed `node mergePending_fys501.js merge` run.
  *
  * Wiring into bot_fys501.js (see INTEGRATION notes at bottom) mirrors how
  * lectureLinks.js and checkhw-image-handler.js were integrated:
@@ -38,7 +38,10 @@ const { getCorpusSection } = corpusLoader;
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const QUIZ_BANK_PATH = path.join(__dirname, 'quizBank_fys501.json');
-const QUIZ_BANK_PENDING_PATH = path.join(__dirname, 'quizBankPending_fys501.json');
+// Pending (unreviewed, live-generated) questions. QUIZ_PENDING_DIR lets a Railway volume hold them.
+const PENDING_DIR = process.env.QUIZ_PENDING_DIR || __dirname;
+const QUIZ_BANK_PENDING_PATH = path.join(PENDING_DIR, 'quizBankPending_fys501.json');
+const PENDING_MAX = Math.max(1, parseInt(process.env.QUIZ_PENDING_MAX || '500', 10) || 500);
 
 // ---------- Stage 1: local trigger gate (no API call) ----------
 
@@ -223,35 +226,95 @@ function sampleFromBank(chapter, section, count, excludeIds = []) {
   };
 }
 
-// ---------- quizBankPending_fys501.json — self-expansion capture ----------
+// ---------- pending file — self-expansion capture ----------
+//
+// Live-generated (fallback) questions are captured here for HUMAN REVIEW and a later
+// `node mergePending_fys501.js` run (see PENDING_QUESTIONS_fys501.md). They are never
+// served from this file and never written into the quiz bank automatically.
+//
+// Location: QUIZ_PENDING_DIR (env) if set — point it at a mounted Railway volume (e.g.
+// /data) so the file survives redeploys — otherwise the repo directory (ephemeral on
+// Railway). Either way every question is also logged to stdout (QUIZ_PENDING_QUESTION lines),
+// and the admin-only /pending command can export the file from the running container.
+
+function writeJsonAtomic(p, data) {
+  const tmp = `${p}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
+  fs.renameSync(tmp, p);
+}
+
+/** Reads the pending file. A missing file is normal (empty); an unreadable one is flagged. */
+function readPending() {
+  let raw;
+  try {
+    raw = fs.readFileSync(QUIZ_BANK_PENDING_PATH, 'utf8');
+  } catch (e) {
+    return { entries: [], corrupt: false };
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return { entries: parsed, corrupt: false };
+  } catch (e) { /* fall through */ }
+  return { entries: [], corrupt: true };
+}
+
+/** Moves an unreadable pending file aside (never silently overwrite captured questions). */
+function quarantineCorruptPending() {
+  const backup = `${QUIZ_BANK_PENDING_PATH}.corrupt-${Date.now()}`;
+  fs.renameSync(QUIZ_BANK_PENDING_PATH, backup);
+  console.warn(`quizGenerator: pending file was unreadable — moved aside to ${backup}`);
+}
 
 function appendPendingQuestions(chapter, section, questions) {
   const generatedAt = new Date().toISOString();
   const entries = questions.map((q) => ({ chapter: String(chapter), section: section || null, question: q, generatedAt }));
 
-  // Best-effort file append. On deploy environments with an ephemeral
-  // filesystem (e.g. Railway without an attached volume), this file may not
-  // survive a restart — that's fine, the stdout log line below is the
-  // durable fallback capture path (see setup guide section 5a).
   try {
-    let existing = [];
-    try {
-      existing = JSON.parse(fs.readFileSync(QUIZ_BANK_PENDING_PATH, 'utf8'));
-      if (!Array.isArray(existing)) existing = [];
-    } catch (e) {
-      existing = []; // file doesn't exist yet or is corrupt — start fresh
+    fs.mkdirSync(PENDING_DIR, { recursive: true });
+    const { entries: existing, corrupt } = readPending();
+    if (corrupt) quarantineCorruptPending();
+    if (existing.length + entries.length > PENDING_MAX) {
+      console.warn(`quizGenerator: pending file is full (${existing.length}/${PENDING_MAX}) — not persisting ${entries.length} new question(s) to the file; the log lines below still capture them`);
+    } else {
+      writeJsonAtomic(QUIZ_BANK_PENDING_PATH, existing.concat(entries));
     }
-    fs.writeFileSync(QUIZ_BANK_PENDING_PATH, JSON.stringify(existing.concat(entries), null, 2), 'utf8');
   } catch (e) {
-    console.warn(`quizGenerator: could not persist quizBankPending_fys501.json (${e.message}) — relying on stdout log capture instead`);
+    console.warn(`quizGenerator: could not persist ${QUIZ_BANK_PENDING_PATH} (${e.message}) — relying on stdout log capture instead`);
   }
 
-  // Structured log line, independent of the file write above, so a
-  // log-based capture pipeline (Railway log export → offline merge) works
-  // even if the filesystem doesn't persist.
+  // Structured log line, independent of the file write above, so a log-based capture
+  // pipeline (Railway log export -> `node mergePending_fys501.js extract`) works even
+  // if the filesystem doesn't persist.
   for (const entry of entries) {
     console.log(`QUIZ_PENDING_QUESTION ${JSON.stringify(entry)}`);
   }
+}
+
+/** Counts of captured-but-unreviewed questions, for /healthz and the admin /pending command. */
+function pendingSummary() {
+  const { entries, corrupt } = readPending();
+  const bySection = {};
+  for (const e of entries) {
+    const k = e && e.section ? e.section : `ch${e && e.chapter}`;
+    bySection[k] = (bySection[k] || 0) + 1;
+  }
+  return {
+    total: entries.length,
+    bySection,
+    corrupt,
+    path: QUIZ_BANK_PENDING_PATH,
+    persistentDir: !!process.env.QUIZ_PENDING_DIR,
+    max: PENDING_MAX,
+  };
+}
+
+/** Empties the pending file (admin /pending clear). Returns how many entries were removed. */
+function clearPending() {
+  fs.mkdirSync(PENDING_DIR, { recursive: true });
+  const { entries, corrupt } = readPending();
+  if (corrupt) quarantineCorruptPending();
+  writeJsonAtomic(QUIZ_BANK_PENDING_PATH, []);
+  return entries.length;
 }
 
 // ---------- Stage 2: generation (one LLM call, structured JSON out) ----------
@@ -275,6 +338,17 @@ course, grounded STRICTLY in the provided corpus excerpt. Rules:
  * corpus excerpt can't be found or the model's output can't be parsed —
  * callers should catch and degrade gracefully (see startQuiz).
  */
+/** Structural validity of one single-select question; returns a cleaned copy or null. */
+function normaliseQuestion(q) {
+  if (!q || typeof q !== 'object') return null;
+  if (typeof q.stem !== 'string' || !q.stem.trim()) return null;
+  if (!Array.isArray(q.options) || q.options.length !== 4) return null;
+  if (!q.options.every((o) => typeof o === 'string' && o.trim())) return null;
+  if (new Set(q.options.map((o) => o.trim().toLowerCase())).size !== 4) return null;
+  if (!Number.isInteger(q.correctIndex) || q.correctIndex < 0 || q.correctIndex > 3) return null;
+  return { ...q, explanation: typeof q.explanation === 'string' ? q.explanation : '' };
+}
+
 async function generateQuiz(chapter, section, count = 5) {
   const corpusExcerpt = getCorpusSection(chapter, section || undefined);
 
@@ -308,7 +382,15 @@ async function generateQuiz(chapter, section, count = 5) {
     throw new Error('Quiz generation returned no questions');
   }
 
-  return parsed.questions;
+  // Defensive sanity check: a live LLM call can still produce a malformed question
+  // (wrong option count, out-of-range correctIndex, duplicate options). Drop those so
+  // they are neither served to the student nor written to the pending file.
+  const sane = parsed.questions.map(normaliseQuestion).filter(Boolean);
+  if (!sane.length) {
+    throw new Error('Quiz generation returned no valid questions');
+  }
+
+  return sane;
 }
 
 /**
@@ -492,10 +574,14 @@ module.exports = {
   isQuizRequest,
   startQuiz,
   handleQuizAnswer,
-  // exported for buildQuizBank.js and tests
+  // exported for mergePending_fys501.js, /pending and tests
   generateQuiz,
   sampleFromBank,
   randomizeOptions,
+  normaliseQuestion,
+  pendingSummary,
+  clearPending,
+  readPending,
   getQuizQuestions,
   loadQuizBank,
   quizBankLooksHealthy,

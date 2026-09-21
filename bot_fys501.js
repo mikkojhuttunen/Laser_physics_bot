@@ -43,6 +43,7 @@ const express = require("express");
 const axios = require("axios");
 const quizGenerator = require("./quizGenerator_fys501");
 const mvQuizGenerator = require("./multivalueQuizGenerator_fys501");
+const pendingAdmin = require("./pendingAdmin_fys501");
 const corpusLoader = require("./corpusLoader_fys501");
 const lectureLinks = require("./lectureLinks_fys501");
 const limiter = require("./usageLimiter");
@@ -200,6 +201,17 @@ function remember(chatId, role, content) {
 // ------------------------------------------------------------- telegram -----
 async function tg(method, payload) {
   return axios.post(`${TELEGRAM_API}/${method}`, payload, { timeout: 15000 });
+}
+
+// Sends a local file as a Telegram document (multipart upload; Node >= 18 provides
+// fetch / FormData / Blob globally). Used by the admin-only /pending export.
+async function tgSendDocument(chatId, filePath, filename, caption) {
+  const form = new FormData();
+  form.append("chat_id", String(chatId));
+  if (caption) form.append("caption", caption);
+  form.append("document", new Blob([fs.readFileSync(filePath)], { type: "application/json" }), filename);
+  const res = await fetch(`${TELEGRAM_API}/sendDocument`, { method: "POST", body: form });
+  if (!res.ok) throw new Error(`Telegram sendDocument failed: HTTP ${res.status}`);
 }
 
 // Converts one run of Unicode Mathematical Alphanumeric characters for a
@@ -636,6 +648,11 @@ app.get("/healthz", (_req, res) =>
     homeworkProblemsLoaded: Object.values(HOMEWORK_PROBLEMS).reduce((n, hw) => n + Object.keys(hw).length, 0),
     quizBankLooksHealthy: quizGenerator.quizBankLooksHealthy(),
     multivalueQuizBankLooksHealthy: mvQuizGenerator.quizBankLooksHealthy(),
+    pendingQuestions: {
+      single: quizGenerator.pendingSummary().total,
+      multi: mvQuizGenerator.pendingSummary().total,
+      persistentDir: !!process.env.QUIZ_PENDING_DIR,
+    },
     lectureDataLooksHealthy: lectureLinks.lectureDataLooksHealthy(),
     usage: limiter.status(),
   })
@@ -683,6 +700,21 @@ async function handleUpdate(update) {
 
   // /usage is free (no LLM call).
   if (/^\/usage\b/i.test(text)) return sendMessage(chatId, usageText(userId), message.message_id);
+
+  // /pending (ADMIN_USER_IDS only): export / clear the live-generated quiz questions awaiting
+  // review. Silently ignored for everyone else. See PENDING_QUESTIONS_fys501.md.
+  const pendingMatch = text.match(/^\/pending(@\S+)?\b\s*(.*)$/i);
+  if (pendingMatch) {
+    return pendingAdmin
+      .handlePendingCommand({
+        chatId,
+        userId,
+        arg: pendingMatch[2],
+        sendText: (c, t) => sendMessage(c, t, message.message_id),
+        sendDocument: tgSendDocument,
+      })
+      .catch((e) => console.error("/pending crashed:", e.message));
+  }
 
   // ---- photo submission: quick direction check, handled before anything else
   if (message.photo && message.photo.length) {

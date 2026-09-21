@@ -89,7 +89,10 @@ const { getCorpusSection } = corpusLoader;
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const QUIZ_BANK_PATH = path.join(__dirname, 'multivalueQuizBank_fys501.json');
-const QUIZ_BANK_PENDING_PATH = path.join(__dirname, 'multivalueQuizBankPending_fys501.json');
+// Pending (unreviewed, live-generated) questions. QUIZ_PENDING_DIR lets a Railway volume hold them.
+const PENDING_DIR = process.env.QUIZ_PENDING_DIR || __dirname;
+const QUIZ_BANK_PENDING_PATH = path.join(PENDING_DIR, 'multivalueQuizBankPending_fys501.json');
+const PENDING_MAX = Math.max(1, parseInt(process.env.QUIZ_PENDING_MAX || '500', 10) || 500);
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 const MIN_OPTIONS = 4;
@@ -304,29 +307,95 @@ function sampleFromBank(chapter, section, count, excludeIds = []) {
   };
 }
 
-// ---------- self-expansion capture ----------
+// ---------- pending file — self-expansion capture ----------
+//
+// Live-generated (fallback) questions are captured here for HUMAN REVIEW and a later
+// `node mergePending_fys501.js` run (see PENDING_QUESTIONS_fys501.md). They are never
+// served from this file and never written into the quiz bank automatically.
+//
+// Location: QUIZ_PENDING_DIR (env) if set — point it at a mounted Railway volume (e.g.
+// /data) so the file survives redeploys — otherwise the repo directory (ephemeral on
+// Railway). Either way every question is also logged to stdout (MVQUIZ_PENDING_QUESTION lines),
+// and the admin-only /pending command can export the file from the running container.
+
+function writeJsonAtomic(p, data) {
+  const tmp = `${p}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf8');
+  fs.renameSync(tmp, p);
+}
+
+/** Reads the pending file. A missing file is normal (empty); an unreadable one is flagged. */
+function readPending() {
+  let raw;
+  try {
+    raw = fs.readFileSync(QUIZ_BANK_PENDING_PATH, 'utf8');
+  } catch (e) {
+    return { entries: [], corrupt: false };
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return { entries: parsed, corrupt: false };
+  } catch (e) { /* fall through */ }
+  return { entries: [], corrupt: true };
+}
+
+/** Moves an unreadable pending file aside (never silently overwrite captured questions). */
+function quarantineCorruptPending() {
+  const backup = `${QUIZ_BANK_PENDING_PATH}.corrupt-${Date.now()}`;
+  fs.renameSync(QUIZ_BANK_PENDING_PATH, backup);
+  console.warn(`multivalueQuizGenerator_fys501: pending file was unreadable — moved aside to ${backup}`);
+}
+
 function appendPendingQuestions(chapter, section, questions) {
   const generatedAt = new Date().toISOString();
   const entries = questions.map((q) => ({ chapter: String(chapter), section: section || null, question: q, generatedAt }));
 
-  // Best-effort file append; on an ephemeral filesystem (Railway without a
-  // volume) the stdout log line below is the durable fallback capture path.
   try {
-    let existing = [];
-    try {
-      existing = JSON.parse(fs.readFileSync(QUIZ_BANK_PENDING_PATH, 'utf8'));
-      if (!Array.isArray(existing)) existing = [];
-    } catch (e) {
-      existing = [];
+    fs.mkdirSync(PENDING_DIR, { recursive: true });
+    const { entries: existing, corrupt } = readPending();
+    if (corrupt) quarantineCorruptPending();
+    if (existing.length + entries.length > PENDING_MAX) {
+      console.warn(`multivalueQuizGenerator_fys501: pending file is full (${existing.length}/${PENDING_MAX}) — not persisting ${entries.length} new question(s) to the file; the log lines below still capture them`);
+    } else {
+      writeJsonAtomic(QUIZ_BANK_PENDING_PATH, existing.concat(entries));
     }
-    fs.writeFileSync(QUIZ_BANK_PENDING_PATH, JSON.stringify(existing.concat(entries), null, 2), 'utf8');
   } catch (e) {
-    console.warn(`multivalueQuizGenerator_fys501: could not persist multivalueQuizBankPending_fys501.json (${e.message}) — relying on stdout log capture instead`);
+    console.warn(`multivalueQuizGenerator_fys501: could not persist ${QUIZ_BANK_PENDING_PATH} (${e.message}) — relying on stdout log capture instead`);
   }
 
+  // Structured log line, independent of the file write above, so a log-based capture
+  // pipeline (Railway log export -> `node mergePending_fys501.js extract`) works even
+  // if the filesystem doesn't persist.
   for (const entry of entries) {
     console.log(`MVQUIZ_PENDING_QUESTION ${JSON.stringify(entry)}`);
   }
+}
+
+/** Counts of captured-but-unreviewed questions, for /healthz and the admin /pending command. */
+function pendingSummary() {
+  const { entries, corrupt } = readPending();
+  const bySection = {};
+  for (const e of entries) {
+    const k = e && e.section ? e.section : `ch${e && e.chapter}`;
+    bySection[k] = (bySection[k] || 0) + 1;
+  }
+  return {
+    total: entries.length,
+    bySection,
+    corrupt,
+    path: QUIZ_BANK_PENDING_PATH,
+    persistentDir: !!process.env.QUIZ_PENDING_DIR,
+    max: PENDING_MAX,
+  };
+}
+
+/** Empties the pending file (admin /pending clear). Returns how many entries were removed. */
+function clearPending() {
+  fs.mkdirSync(PENDING_DIR, { recursive: true });
+  const { entries, corrupt } = readPending();
+  if (corrupt) quarantineCorruptPending();
+  writeJsonAtomic(QUIZ_BANK_PENDING_PATH, []);
+  return entries.length;
 }
 
 // ---------- Stage 2: generation (one LLM call, structured JSON out) ----------
@@ -654,7 +723,7 @@ module.exports = {
   isMultivalueQuizRequest,
   startMultivalueQuiz,
   handleMultivalueQuizAnswer,
-  // exported for a future buildMultivalueQuizBank.js and tests
+  // exported for mergePending_fys501.js, /pending and tests
   generateQuiz,
   sampleFromBank,
   getQuizQuestions,
@@ -665,6 +734,9 @@ module.exports = {
   extractRawCountHint,
   gradeSelection,
   normaliseQuestion,
+  pendingSummary,
+  clearPending,
+  readPending,
 };
 
 /* INTEGRATION NOTES — see MULTIVALUE_QUIZ_INTEGRATION_fys501.md for the full

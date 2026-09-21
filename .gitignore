@@ -31,3 +31,9 @@ Thumbs.db
 # Build artifacts
 dist/
 build/
+
+# Pending-question review workflow (see PENDING_QUESTIONS_fys501.md)
+pending_review*.md
+pending_inbox/
+*.bak
+*.corrupt-*

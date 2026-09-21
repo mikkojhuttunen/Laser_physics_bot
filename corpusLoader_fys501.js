@@ -19,7 +19,7 @@
  * guide), this loader takes the "fallback" approach: it recognises headings
  * in *either* numbering convention directly via regex character classes, and
  * exposes a `getCorpusSection(chapter, section)` that works against the
- * existing course_corpus_fys501.txt unmodified. If build_corpus.js is ever updated
+ * existing corpus file (see CORPUS_CANDIDATES) unmodified. If build_corpus.js is ever updated
  * to emit explicit `### 2.3 ... ###` delimiters, this loader can be
  * simplified, but nothing else needs to change (same exported function
  * signatures).
@@ -34,7 +34,18 @@
 const fs = require('fs');
 const path = require('path');
 
-const CORPUS_PATH = path.join(__dirname, 'course_corpus_fys501.txt');
+// Corpus used for chapter/section access (quiz generation). The first existing file wins:
+//   1. QUIZ_CORPUS_FILE env var (absolute, or relative to the repo folder)
+//   2. course_corpus_fys501_v2.txt  — lecture notes + textbook chapters + homework sheets
+//   3. course_corpus_fys501.txt     — (older, homework-sheets-only builds have NO chapter
+//                                     content and cannot be used for quiz generation)
+// This only affects quiz generation and /healthz; bot_fys501.js loads its own Q&A corpus.
+const CORPUS_CANDIDATES = [
+  process.env.QUIZ_CORPUS_FILE ? path.resolve(__dirname, process.env.QUIZ_CORPUS_FILE) : null,
+  path.join(__dirname, 'course_corpus_fys501_v2.txt'),
+  path.join(__dirname, 'course_corpus_fys501.txt'),
+].filter(Boolean);
+const CORPUS_PATH = CORPUS_CANDIDATES.find((p) => fs.existsSync(p)) || CORPUS_CANDIDATES[CORPUS_CANDIDATES.length - 1];
 
 // terminology_fys501.json is built offline by terminology.js (harvested from the
 // \CDAlert/\Alert-marked lecture .tex sources) and committed alongside the
@@ -151,7 +162,8 @@ function loadCorpus({ forceReload = false } = {}) {
 function corpusLooksHealthy() {
   try {
     const text = loadCorpus();
-    return typeof text === 'string' && text.length > 1000;
+    // Must contain actual chapter content (lecture notes / textbook), not just homework sheets.
+    return typeof text === 'string' && text.length > 1000 && /===== BEGIN (?:LECTURE NOTES|TEXTBOOK CHAPTER)/.test(text);
   } catch (e) {
     return false;
   }
@@ -327,6 +339,36 @@ function findGlossaryTerms(query, limit = 3) {
 
 // ---------- public API ----------
 
+// ---------- lecture-notes blocks (v2 corpus format) ----------
+//
+// The v2 corpus stores the lecture slides as one block per chapter:
+//   ===== BEGIN LECTURE NOTES — Chapter 3: Passive Optical Resonators [...] =====
+//   ### 3.4 ... ###   ...
+//   ===== END LECTURE NOTES — Chapter 3: ... =====
+// Sections are matched by heading NUMBER (1.1-1.4, 2.1-2.6, 3.1-3.6, 4.1-4.4), which agrees with
+// SECTION_INDEX and the quiz banks. Do NOT match by title: in the source notes the headings of
+// 3.4 ("Stability Condition") and 3.5 ("Eigenmodes ...") are swapped relative to their bodies —
+// the body under 3.4 is eigenmodes/Gaussian beams and under 3.5 is stability, exactly as in the banks.
+
+function getLectureNotesBlock(chapter, corpusText) {
+  const cd = digitClass(chapter);
+  const m = corpusText.match(new RegExp(
+    `===== BEGIN LECTURE NOTES — Chapter ${cd}[^\\n]*=====\\n([\\s\\S]*?)===== END LECTURE NOTES — Chapter ${cd}[^\\n]*=====`, 'u'));
+  return m ? m[1] : '';
+}
+
+function extractNotesSection(notesBlock, chapter, section) {
+  const wanted = `${chapter}.${section.split('.')[1]}`;
+  const heads = [...notesBlock.matchAll(/^#{2,4}[ \t]*(\d+\.\d+)[ \t]+.+$/gmu)]
+    .map((m) => ({ number: m[1], start: m.index, bodyStart: m.index + m[0].length }));
+  const i = heads.findIndex((h) => h.number === wanted);
+  if (i < 0) return null;
+  const end = i + 1 < heads.length ? heads[i + 1].start : notesBlock.length;
+  const text = notesBlock.slice(heads[i].bodyStart, end).trim();
+  return text || null;
+}
+
+
 /**
  * Returns a text excerpt for a chapter (optionally narrowed to one section),
  * combining the textbook chapter prose and the matching lecture-slide
@@ -361,8 +403,17 @@ function getCorpusSection(chapter, section, opts = {}) {
 
   const textbookBlock = getTextbookChapterBlock(chapterNum, corpusText);
   const slidesFull = getSlidesBlock(corpusText);
+  const notesBlock = getLectureNotesBlock(chapterNum, corpusText);
 
-  if (!textbookBlock && !slidesFull) {
+  // v2 corpus: the per-chapter lecture notes are the authoritative source for section
+  // excerpts (the textbook numbers its sections differently, e.g. textbook 2.2 is
+  // "Multi-Atom Systems", not the slides' 2.2 "Einstein A and B Coefficients").
+  if (section && notesBlock) {
+    const fromNotes = extractNotesSection(notesBlock, chapterNum, section);
+    if (fromNotes) return truncateBalanced([fromNotes], opts.maxChars || DEFAULT_MAX_CHARS);
+  }
+
+  if (!textbookBlock && !slidesFull && !notesBlock) {
     throw new Error(
       `corpusLoader: could not locate chapter ${chapterNum} content in course_corpus_fys501.txt ` +
       `(corpus may be stale or malformed — try re-running build_corpus.js)`
@@ -375,7 +426,7 @@ function getCorpusSection(chapter, section, opts = {}) {
     // source gets a fair share of the char budget (see truncateBalanced)
     // rather than the textbook block silently eating the whole cap.
     const slideParts = listSections(chapterNum)
-      .map((sec) => extractSection(slidesFull, chapterNum, sec))
+      .map((sec) => (notesBlock ? extractNotesSection(notesBlock, chapterNum, sec) : extractSection(slidesFull, chapterNum, sec)))
       .filter(Boolean);
     const maxChars = opts.maxChars || DEFAULT_MAX_CHARS_CHAPTER;
     return truncateBalanced([textbookBlock, ...slideParts], maxChars);

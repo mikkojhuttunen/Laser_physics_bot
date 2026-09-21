@@ -45,7 +45,7 @@ Section keys follow `corpusLoader_fys501.js` (3.4 = Eigenmodes, 3.5 = Stability)
 
 ## Known prerequisite: corpus file
 
-Live generation calls `corpusLoader.getCorpusSection()`, which reads `course_corpus_fys501.txt`. At the time of this port, that committed file contains only the homework sheets (~23 KB) and the loader throws *"could not locate chapter N content"* — so live generation (here **and** in the single-select fallback) can't work until the loader/bot point at a corpus containing chapter content (e.g. `course_corpus_fys501_v2.txt`, ~334 KB). Verified in a scratch copy: with the v2 file in place, all four chapters resolve and live generation works.
+Live generation calls `corpusLoader.getCorpusSection()`. *(Updated 2026-09-20: the loader now prefers `course_corpus_fys501_v2.txt` and reads its per-chapter lecture-notes blocks by section number, so all 20 sections resolve; earlier it could only see the homework-only `course_corpus_fys501.txt` and live generation failed. See `PENDING_QUESTIONS_fys501.md`.)*
 
 ---
 
