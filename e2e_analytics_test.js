@@ -277,15 +277,15 @@ async function playMulti(userId, sec, plan) {
       const tagsOut = opts.map((o, k) => (o.correct ? null : (k === 0 || (opts[0].correct && k === 1) ? 'M-STAB-02' : (k === 2 ? 'M-NOPE-99' : null))));
       return '```json\n' + JSON.stringify({ concepts: ['res.stability', 'made.up'], optionTags: tagsOut, proposed: [{ index: opts.findIndex((o) => !o.correct), text: 'Students think a longer cavity is always more stable.' }] }) + '\n```';
     };
-    const saved = await tagger.cmdSuggest({ section: '3.5', kind: 'single', limit: '4' }, { dir, callModel, log: () => {} });
+    const saved = await tagger.cmdSuggest({ section: '3.6', kind: 'single', limit: '4' }, { dir, callModel, log: () => {} });
     check(saved.items.length === 4 && calls === 4, 'suggest processes the requested questions');
     check(saved.items.filter((s) => s.status === 'ERROR').length === 1, 'unparseable model output becomes an ERROR entry, not a crash');
     const okItem = saved.items.find((s) => s.status === 'OK');
     check(okItem.concepts.length === 1 && okItem.concepts[0] === 'res.stability', 'unknown concept ids are dropped');
-    check(okItem.notes.some((n) => /unknown misconception/.test(n)) && okItem.optionTags.every((t) => t === null || t === 'M-STAB-02'), 'unknown misconception ids are dropped');
+    check(saved.items.some((x) => x.notes.some((n) => /unknown misconception/.test(n))) && saved.items.every((x) => x.optionTags.every((t) => t === null || t === 'M-STAB-02')), 'unknown misconception ids are dropped');
     check(fs.existsSync(path.join(dir, 'tag_review.md')) && /Proposed new misconceptions/.test(fs.readFileSync(path.join(dir, 'tag_review.md'), 'utf8')), 'review markdown written with proposals');
     const before = saved.items.map((s) => s.id).sort().join();
-    const again = await tagger.cmdSuggest({ section: '3.5', kind: 'single', limit: '4' }, { dir, callModel, log: () => {} });
+    const again = await tagger.cmdSuggest({ section: '3.6', kind: 'single', limit: '4' }, { dir, callModel, log: () => {} });
     check(again.items.length === 8 && calls === 8 && before.split(',').every((id) => again.items.some((s) => s.id === id)), 'suggest is resumable (already-suggested questions are skipped, new ones added)');
     // fail fast: three consecutive API errors stop the run and keep progress
     {
@@ -298,7 +298,7 @@ async function playMulti(userId, sec, plan) {
       check(all.items.filter((x) => x.section === '4.4' && x.status === 'ERROR').length === 3, 'the failed attempts are recorded as ERROR entries');
       fs.writeFileSync(file, JSON.stringify({ ...all, items: all.items.filter((x) => x.section !== '4.4') }, null, 2));
     }
-    const est = tagger.cmdEstimate({ section: '3.5' }, { dir, log: () => {} });
+    const est = tagger.cmdEstimate({ section: '3.6' }, { dir, log: () => {} });
     check(est.count > 0 && est.usd > 0 && est.inTok > 0, 'estimate reports a count and a cost');
     const lines = [];
     tagger.cmdPrompt({ id: 'q3.5_004' }, { dir, log: (l) => lines.push(l) });
@@ -308,10 +308,10 @@ async function playMulti(userId, sec, plan) {
     const res = tagger.cmdApply({ 'all-valid': true }, { dir, log: () => {} });
     check(res.applied.length === 7 && fs.existsSync(path.join(dir, 'quizBank_fys501.json.bak')), 'apply writes tags and a backup');
     const banked = JSON.parse(fs.readFileSync(path.join(dir, 'quizBank_fys501.json'), 'utf8'));
-    const tagged = banked['3']['3.5'].filter((q) => q.concepts);
+    const tagged = banked['3']['3.6'].filter((q) => q.concepts);
     check(tagged.length === 7 && tagged.every((q) => q.optionTags.length === 4), 'banks now hold concepts + optionTags');
     check(tags.validateBank(banked, 'single', tags.loadVocab(dir)).errors.length === 0, 'the tagged bank still validates');
-    check(banked['3']['3.5'].every((q) => q.id && q.stem && q.correctIndex !== undefined), 'existing fields untouched');
+    check(banked['3']['3.6'].every((q) => q.id && q.stem && q.correctIndex !== undefined), 'existing fields untouched');
   }
 
   console.log(`CHECKS: ${checks}`);

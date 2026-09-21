@@ -1,5 +1,8 @@
 # Tagging the quiz banks with your Claude Console account
 
+> **Alternative without an API key:** the tags can also be decided in a Claude chat (claude.ai, for example a chat in the FYS.501 project). Claude reads a section's questions, writes a compact spec, and `tagFromSpec_fys501.js` turns it into `tag_suggestions.json`, after which the same review and `apply` steps below are used:
+> `node tagFromSpec_fys501.js spec_3.5.json`, then `node tagQuizBank_fys501.js apply --all-valid --dry-run` and `apply --all-valid`. The rest of this guide describes the API route.
+
 The Claude Console (platform.claude.com) is where you manage the account side: workspaces, API keys, spend limits, usage reports and the Workbench for trying prompts. The tagging itself runs in your terminal (`tagQuizBank_fys501.js`) and calls the API with a key you create in the Console. The bot on Railway keeps using its own key and is not affected.
 
 Menu names below follow Anthropic's current documentation on workspaces; if a label differs in your Console, look for the same word (Workspaces, Spend limits or Limits, API keys, Usage or Cost).

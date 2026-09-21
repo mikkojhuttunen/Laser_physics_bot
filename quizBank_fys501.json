@@ -1789,7 +1789,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q3.5_002",
@@ -1805,7 +1814,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          "M-STAB-06",
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q3.5_003",
@@ -1821,7 +1839,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          "M-STAB-03",
+          "M-STAB-03",
+          "M-STAB-03",
+          null
+        ]
       },
       {
         "id": "q3.5_004",
@@ -1837,7 +1864,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-STAB-04",
+          null
+        ]
       },
       {
         "id": "q3.5_005",
@@ -1853,7 +1889,16 @@
         "addedAt": "2026-09-15",
         "source": "claude-authored",
         "reviewed": true,
-        "revisedAt": "2026-09-20"
+        "revisedAt": "2026-09-20",
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          null
+        ]
       },
       {
         "id": "q3.5_006",
@@ -1868,7 +1913,16 @@
         "explanation": "g = 1 − L/R: R = 2 m gives g = 0.5 and g² = 0.25, inside (0, 1). Concentric and planar mirrors sit exactly on the boundary (g² = 1), and convex mirrors with g = 2 give g² = 4 > 1.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          "M-STAB-05",
+          null,
+          "M-STAB-05",
+          null
+        ]
       },
       {
         "id": "q3.5_007",
@@ -1883,7 +1937,16 @@
         "explanation": "Stability requires |(A + D)/2| < 1. With 1.1 the angle θ in cosθ = (A + D)/2 is imaginary and the ray runs away from the axis. The determinant is 1 for any such system, so it carries no information.",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          "M-STAB-06"
+        ]
       },
       {
         "id": "q3.5_008",
@@ -1898,7 +1961,16 @@
         "explanation": "On g₁ = g₂ the two mirror radii are equal: A is the concentric case (R = L/2), B the confocal case (R = L) and C the planar case (R = ∞).",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-STAB-07",
+          null
+        ]
       }
     ],
     "3.6": [

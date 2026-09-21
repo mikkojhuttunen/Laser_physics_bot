@@ -86,7 +86,7 @@ node tagQuizBank_fys501.js apply --all-valid
 node validateQuizTags_fys501.js
 ```
 
-A step-by-step walkthrough using your Claude Console account (workspace, spend limit, API key, Workbench test, usage check) is in `TAGGING_WITH_CONSOLE_fys501.md`. `node tagQuizBank_fys501.js estimate` prints the expected size and cost, and `node tagQuizBank_fys501.js prompt --id q3.5_004` prints the exact prompt to try in the Workbench. `suggest` stops by itself after 3 consecutive API errors.
+Tags can also be decided in a Claude chat instead of through the API: `node tagFromSpec_fys501.js <spec.json>` turns a compact hand-written spec into `tag_suggestions.json`, and the review and `apply` steps are the same. A step-by-step walkthrough using your Claude Console account (workspace, spend limit, API key, Workbench test, usage check) is in `TAGGING_WITH_CONSOLE_fys501.md`. `node tagQuizBank_fys501.js estimate` prints the expected size and cost, and `node tagQuizBank_fys501.js prompt --id q3.5_004` prints the exact prompt to try in the Workbench. `suggest` stops by itself after 3 consecutive API errors.
 
 1. `suggest` asks Claude (model from `--model`, `TAG_MODEL`, default `claude-sonnet-5`) for tags, one question at a time, using only that section's concepts and misconceptions. It is resumable and writes `tag_suggestions.json` and `tag_review.md`. Start with one section to check quality and cost, then run the rest.
 2. Read `tag_review.md`. Each wrong option shows the misconception it was matched to, or "no tag". Edit `tag_suggestions.json` for any tag you disagree with (set it to `null` or another id), or leave that question out of `--accept`.

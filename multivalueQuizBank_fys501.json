@@ -2456,7 +2456,17 @@
         "ref": "Lecture notes 3.5; Textbook 3.5",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          "M-STAB-08",
+          null,
+          null,
+          null,
+          "M-STAB-08"
+        ]
       },
       {
         "id": "mv3.5_002",
@@ -2479,7 +2489,18 @@
         "ref": "Lecture notes 3.5 (Cavity g-parameters); Textbook 3.5",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          null,
+          null,
+          null,
+          "M-STAB-03",
+          null,
+          "M-STAB-04"
+        ]
       },
       {
         "id": "mv3.5_003",
@@ -2500,7 +2521,17 @@
         "ref": "Lecture notes 3.5; Textbook 3.5",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-STAB-05",
+          null,
+          null
+        ]
       },
       {
         "id": "mv3.5_004",
@@ -2521,7 +2552,17 @@
         "ref": "Lecture notes 3.5; Textbook 3.5",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          null,
+          "M-STAB-05",
+          "M-STAB-05",
+          null,
+          null
+        ]
       },
       {
         "id": "mv3.5_005",
@@ -2542,7 +2583,17 @@
         "ref": "Lecture notes 3.5; Textbook 3.5",
         "addedAt": "2026-09-19",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          null,
+          null,
+          "M-STAB-05",
+          null,
+          "M-STAB-06"
+        ]
       },
       {
         "id": "mv3.5_006",
@@ -2563,7 +2614,17 @@
         "ref": "Lecture notes 3.5 (Sylvester's theorem)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          "M-STAB-08",
+          null,
+          "M-STAB-08",
+          null,
+          null
+        ]
       },
       {
         "id": "mv3.5_007",
@@ -2586,7 +2647,18 @@
         "ref": "Lecture notes 3.5 (Cavity g-parameters)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          "M-STAB-04",
+          null,
+          null,
+          "M-STAB-05",
+          null,
+          null
+        ]
       },
       {
         "id": "mv3.5_008",
@@ -2609,7 +2681,18 @@
         "ref": "Lecture notes 3.5 (stability diagram)",
         "addedAt": "2026-09-20",
         "source": "claude-authored",
-        "reviewed": true
+        "reviewed": true,
+        "concepts": [
+          "res.stability"
+        ],
+        "optionTags": [
+          null,
+          "M-STAB-07",
+          "M-STAB-02",
+          null,
+          null,
+          null
+        ]
       }
     ],
     "3.6": [
