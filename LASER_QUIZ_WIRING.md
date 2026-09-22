@@ -72,11 +72,24 @@ Flag behaviour:
 - Alias pool: 20 women and 20 men, disjoint from the ladder. Aliases are assigned to keep the class balanced: the next new student gets a name from whichever gender has been assigned fewer, so classes of up to 40 are exactly 50/50. Beyond 40 students, names get a numeral (`Ada Lovelace II`).
 - Ladder: 15 levels, 7 women and 8 men (an odd number of levels cannot split evenly). Level bands are 50 XP wide from 0 to 350, so a first round already unlocks a level or two, and 100 XP wide from 400 up to the top level at 1000.
 
+## Upper-state lifetime step
+
+Each laser can carry a `lifetime: { bucket }` field, where `bucket` is one of the five order-of-magnitude labels in the top-level `lifetimeBuckets` array (ns → µs → 100s of µs → ms → 10s of ms). If present, a single-choice "what is the approximate upper-state lifetime?" step is inserted right after the level-scheme step, with 3 other buckets drawn as distractors. The explanation note (`notes.lifetime`) is where the "why it matters" payload lives — e.g. tying Ti:Sapph's ~3.2 µs lifetime to why it can't be flashlamp-pumped, or Nd:YAG's ~230 µs to why Q-switching works.
+
+Lasers where a single clean lifetime number doesn't really exist (currently the two gas lasers, HeNe and CO₂) simply omit the `lifetime` field, and the step is skipped — the same pattern already used for `pumpWavelength` on electrically pumped lasers.
+
+## Lasers without a level scheme
+
+`level` is nullable. A gain medium whose physics doesn't map onto the 3-level/quasi-3-level/4-level framework at all can omit `level` (or set it to `null`) and the "level scheme" step is skipped entirely, the same way `pumpWavelength` is skipped for gas lasers.
+
+The diode laser entry takes a different approach: rather than skipping the question, `levelSchemes` has a 4th option, `"N/A – semiconductor (no discrete atomic levels)"`, and diode's `level` points at it. That 4th option is also a legitimate wrong answer for every other laser's level-scheme question — a useful "trick" distractor that reminds students the atomic framework has limits.
+
 ## Before students see it
 
 1. Every laser has `"reviewed": false`. Check each number and note in `laser_types.json`, then set it to `true` (and optionally set `LASER_QUIZ_REQUIRE_REVIEW=true`).
-2. Startup validation throws with a list of problems if a laser is malformed (missing note, too few distractors, unknown pump key, and so on).
+2. Startup validation throws with a list of problems if a laser is malformed (missing note, too few distractors, unknown pump key, lifetime bucket not in `lifetimeBuckets`, and so on).
 3. Adding a laser: append an object to `lasers` following an existing entry. You need at least 4 lasers, because the "which transition" distractors come from other lasers.
+4. This patch adds four new lasers, all `"reviewed": false`: **Ruby** (fills the one real gap in the level-scheme coverage — it's the only pure 3-level laser in the set), **Er:YAG** (2940 nm, self-terminating transition — read `notes.level` and `notes.lifetime` carefully, this one doesn't fit the simple framework cleanly), **Thulium/Tm:YAG** (~2010 nm, eye-safe, cross-relaxation), and **Diode** (the electrically-pumped semiconductor that pumps most of the other lasers in this set — no pump-wavelength step, and its own level-scheme answer is "N/A").
 
 ## Tuning notes
 

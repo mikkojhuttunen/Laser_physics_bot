@@ -1,0 +1,825 @@
+{
+  "pumpTypes": {
+    "A": "Optical: laser diode(s)",
+    "B": "Optical: another laser (e.g. frequency-doubled)",
+    "C": "Optical: flashlamp",
+    "D": "Electrical: gas discharge (DC or RF)",
+    "E": "Electrical: current injection (p–n junction)",
+    "F": "Chemical reaction"
+  },
+  "levelSchemes": [
+    "3-level",
+    "Quasi-3-level",
+    "4-level",
+    "N/A – semiconductor (no discrete atomic levels)"
+  ],
+  "lasers": [
+    {
+      "id": "ti-sapph",
+      "reviewed": false,
+      "name": "Ti:Sapph",
+      "gain": "titanium-doped sapphire (Ti:Sapph)",
+      "pump": {
+        "ok": [
+          "A",
+          "B"
+        ],
+        "no": [
+          "D",
+          "E",
+          "F"
+        ]
+      },
+      "level": 2,
+      "pumpWavelength": {
+        "ok": "Blue–green, ~450–530 nm (e.g. 532 nm)",
+        "no": [
+          "~808 nm",
+          "~980 nm",
+          "~1064 nm"
+        ]
+      },
+      "lasing": {
+        "ok": "Tunable, ~650–1100 nm (peak near 800 nm)",
+        "no": [
+          "Fixed line at 1064 nm",
+          "Fixed line at 632.8 nm",
+          "Tunable, 9–11 µm"
+        ]
+      },
+      "transition": "Ti³⁺: ²E → ²T₂ (vibronic)",
+      "modes": [
+        {
+          "t": "Continuous-wave, tunable",
+          "ok": true
+        },
+        {
+          "t": "Mode-locked ultrafast (fs)",
+          "ok": true
+        },
+        {
+          "t": "Flashlamp-pumped ms pulses",
+          "ok": false
+        }
+      ],
+      "power": {
+        "ok": "Oscillators ~0.1–5 W; amplified pulses mJ–J",
+        "no": [
+          "Below 1 mW",
+          "Multi-kW continuous",
+          "Fixed ~5 mW, cannot scale"
+        ]
+      },
+      "apps": {
+        "ok": [
+          "Ultrafast spectroscopy",
+          "Multiphoton microscopy",
+          "Optical frequency combs",
+          "High-field physics (CPA systems)"
+        ],
+        "no": [
+          "Barcode scanning",
+          "Cutting thick steel plate"
+        ]
+      },
+      "notes": {
+        "pump": "Absorption peaks near 490 nm, so green lasers (532 nm) or direct blue/green diodes work. The ~3 µs upper-state lifetime makes flashlamps impractical.",
+        "level": "Vibronic 4-level: fast phonon relaxation empties the lower level, giving a very broad gain band.",
+        "pumpWavelength": "The absorption band spans ~400–600 nm; 532 nm from frequency-doubled Nd or Yb lasers is the classic pump.",
+        "lasing": "Gain spans ~650–1100 nm, among the broadest of any solid-state gain medium.",
+        "transition": "Ti³⁺ has a single 3d electron. ²E is the upper state; the lower ²T₂ is vibrationally broadened.",
+        "modes": "The huge bandwidth supports sub-10 fs pulses through Kerr-lens mode locking.",
+        "power": "Oscillators are pump-limited; chirped-pulse amplifiers reach mJ–J pulses (TW–PW peak power).",
+        "apps": "Ultrashort pulses plus tunability drive spectroscopy, microscopy, combs and high-field physics.",
+        "lifetime": "~3.2 µs upper-state lifetime — short enough that a flashlamp pulse can't build inversion faster than the state decays, which is exactly why Ti:Sapph needs a CW or pulsed-laser pump instead."
+      },
+      "lifetime": {
+        "bucket": "~µs (microseconds)"
+      }
+    },
+    {
+      "id": "nd-yag",
+      "reviewed": false,
+      "name": "Nd:YAG",
+      "gain": "neodymium-doped yttrium aluminum garnet (Nd:YAG)",
+      "pump": {
+        "ok": [
+          "A",
+          "C"
+        ],
+        "no": [
+          "D",
+          "E",
+          "F"
+        ]
+      },
+      "level": 2,
+      "pumpWavelength": {
+        "ok": "~808 nm (also ~885 nm for direct pumping)",
+        "no": [
+          "~940 nm",
+          "~1064 nm",
+          "~1550 nm"
+        ]
+      },
+      "lasing": {
+        "ok": "1064 nm (weaker lines at 946 and 1319 nm)",
+        "no": [
+          "1030 nm",
+          "532 nm",
+          "10.6 µm"
+        ]
+      },
+      "transition": "Nd³⁺: ⁴F₃/₂ → ⁴I₁₁/₂",
+      "modes": [
+        {
+          "t": "Continuous-wave",
+          "ok": true
+        },
+        {
+          "t": "Q-switched ns pulses",
+          "ok": true
+        },
+        {
+          "t": "Mode-locked ps pulses",
+          "ok": true
+        },
+        {
+          "t": "Sub-10 fs pulses from the oscillator",
+          "ok": false
+        }
+      ],
+      "power": {
+        "ok": "W to kW average; Q-switched pulses of mJ–J",
+        "no": [
+          "Below 1 mW",
+          "~5 mW fixed",
+          "Only sub-µJ pulses"
+        ]
+      },
+      "apps": {
+        "ok": [
+          "Materials processing (marking, welding)",
+          "Range-finding and LIDAR",
+          "Pumping other lasers (via 532 nm)",
+          "Ophthalmology (capsulotomy)"
+        ],
+        "no": [
+          "Barcode scanning",
+          "Telecom transmitters"
+        ]
+      },
+      "notes": {
+        "pump": "Flashlamps were the classic pump; diodes near 808 nm are now the workhorse.",
+        "level": "4-level at 1064 nm: the lower ⁴I₁₁/₂ level empties fast. The 946 nm line is quasi-3-level.",
+        "pumpWavelength": "Nd:YAG absorbs strongly near 808 nm; 885 nm gives a lower quantum defect.",
+        "lasing": "1064 nm is the strongest line, with weaker lines at 946 and 1319 nm.",
+        "transition": "The upper ⁴F₃/₂ level lives ~230 µs, ideal for energy storage.",
+        "modes": "Long upper-state lifetime makes Q-switching easy; the narrow gain (~0.6 nm) limits mode locking to ~ps.",
+        "power": "Scales from watts to kW; Q-switching gives ~10 ns pulses of mJ–J.",
+        "apps": "Robust and versatile: industry, medicine, ranging, and pumping via frequency doubling.",
+        "lifetime": "~230 µs upper-state (⁴F₃/₂) lifetime. Long enough to store pump energy between flashlamp/diode pulses, which is what makes Q-switching to ns, mJ–J pulses straightforward."
+      },
+      "lifetime": {
+        "bucket": "~100s of µs"
+      }
+    },
+    {
+      "id": "yb-yag",
+      "reviewed": false,
+      "name": "Yb:YAG",
+      "gain": "ytterbium-doped YAG (Yb:YAG)",
+      "pump": {
+        "ok": [
+          "A"
+        ],
+        "no": [
+          "C",
+          "D",
+          "E"
+        ]
+      },
+      "level": 1,
+      "pumpWavelength": {
+        "ok": "~940 nm (or 969 nm zero-phonon line)",
+        "no": [
+          "~808 nm",
+          "~532 nm",
+          "~1064 nm"
+        ]
+      },
+      "lasing": {
+        "ok": "1030 nm (also ~1049 nm)",
+        "no": [
+          "1064 nm",
+          "808 nm",
+          "1550 nm"
+        ]
+      },
+      "transition": "Yb³⁺: ²F₅/₂ → ²F₇/₂",
+      "modes": [
+        {
+          "t": "Continuous-wave",
+          "ok": true
+        },
+        {
+          "t": "Q-switched ns pulses",
+          "ok": true
+        },
+        {
+          "t": "Mode-locked (100s of fs)",
+          "ok": true
+        },
+        {
+          "t": "Sub-10 fs pulses from the oscillator",
+          "ok": false
+        }
+      ],
+      "power": {
+        "ok": "Tens of W to multi-kW (thin-disk, rod)",
+        "no": [
+          "Below 1 mW",
+          "Under 100 mW at most",
+          "Only nJ pulses at low power"
+        ]
+      },
+      "apps": {
+        "ok": [
+          "Ultrafast micromachining",
+          "Industrial cutting and welding",
+          "Pumping OPCPA and amplifiers",
+          "High-average-power science (XUV sources)"
+        ],
+        "no": [
+          "Alignment of optical benches",
+          "Tattoo removal"
+        ]
+      },
+      "notes": {
+        "pump": "Its narrow absorption line near 940 nm wastes most lamp light, so diode pumping is used in practice.",
+        "level": "Only two manifolds. The lower level sits in ²F₇/₂ and is thermally populated at room temperature, so it is quasi-3-level.",
+        "pumpWavelength": "940 nm is broad and easy; the 969 nm zero-phonon line lowers the heat load.",
+        "lasing": "1030 nm has a tiny quantum defect (~9%), so heating is low.",
+        "transition": "Yb³⁺ has just two manifolds: ²F₅/₂ → ²F₇/₂.",
+        "modes": "The ~9 nm bandwidth supports a few hundred fs, not sub-10 fs.",
+        "power": "Low heat load enables thin-disk lasers with multi-kW output.",
+        "apps": "High average power plus fs–ps capability make it the industrial ultrafast workhorse.",
+        "lifetime": "~950 µs–1 ms upper-state lifetime — roughly 4× longer than Nd:YAG's. That extra storage capacity is a big part of why Yb:YAG scales so well in high-energy Q-switched and amplified systems."
+      },
+      "lifetime": {
+        "bucket": "~ms (milliseconds)"
+      }
+    },
+    {
+      "id": "hene",
+      "reviewed": false,
+      "name": "HeNe",
+      "gain": "a helium–neon gas mixture (HeNe)",
+      "pump": {
+        "ok": [
+          "D"
+        ],
+        "no": [
+          "A",
+          "C",
+          "E"
+        ]
+      },
+      "level": 2,
+      "pumpWavelength": null,
+      "lasing": {
+        "ok": "632.8 nm (red); weaker lines at 543, 594, 1152, 3391 nm",
+        "no": [
+          "488 nm",
+          "780 nm",
+          "1064 nm"
+        ]
+      },
+      "transition": "Ne: 3s₂ → 2p₄",
+      "modes": [
+        {
+          "t": "Continuous-wave",
+          "ok": true
+        },
+        {
+          "t": "Q-switched ns pulses",
+          "ok": false
+        },
+        {
+          "t": "Mode-locked fs pulses",
+          "ok": false
+        }
+      ],
+      "power": {
+        "ok": "~0.5–10 mW typical",
+        "no": [
+          "~50 W",
+          "Several kW",
+          "~1 J pulses"
+        ]
+      },
+      "apps": {
+        "ok": [
+          "Alignment and leveling",
+          "Interferometry and metrology",
+          "Holography and teaching demos"
+        ],
+        "no": [
+          "Cutting steel",
+          "Tattoo removal"
+        ]
+      },
+      "notes": {
+        "pump": "A DC discharge excites He, which transfers energy to Ne by resonant collisions.",
+        "level": "The lower neon level (2p₄) empties quickly: a 4-level scheme.",
+        "lasing": "632.8 nm dominates; other lines need different mirrors.",
+        "transition": "Both lasing states are excited neon levels (Paschen notation 3s₂ and 2p₄).",
+        "modes": "Low gain and little stored energy: HeNe lasers run CW with a very narrow linewidth.",
+        "power": "Low gain limits output to a few mW, but beam quality and coherence are excellent.",
+        "apps": "Superb coherence and beam quality suit alignment, metrology and interferometry."
+      }
+    },
+    {
+      "id": "co2",
+      "reviewed": false,
+      "name": "CO₂",
+      "gain": "carbon dioxide gas (CO₂)",
+      "pump": {
+        "ok": [
+          "D"
+        ],
+        "no": [
+          "A",
+          "E",
+          "F"
+        ]
+      },
+      "level": 2,
+      "pumpWavelength": null,
+      "lasing": {
+        "ok": "~10.6 µm (also ~9.4 µm band)",
+        "no": [
+          "~1.06 µm",
+          "~2.94 µm",
+          "~3.39 µm"
+        ]
+      },
+      "transition": "CO₂ vibrational: (00°1) → (10°0)",
+      "modes": [
+        {
+          "t": "Continuous-wave",
+          "ok": true
+        },
+        {
+          "t": "Pulsed: TEA or Q-switched",
+          "ok": true
+        },
+        {
+          "t": "Sub-10 fs pulses from the oscillator",
+          "ok": false
+        }
+      ],
+      "power": {
+        "ok": "~10 W to tens of kW (cutting: 1–6 kW)",
+        "no": [
+          "~1 mW",
+          "Under 100 mW at most",
+          "Only nJ pulses"
+        ]
+      },
+      "apps": {
+        "ok": [
+          "Cutting and engraving",
+          "Soft-tissue surgery",
+          "Driving EUV lithography sources"
+        ],
+        "no": [
+          "Pumping Ti:Sapph",
+          "Barcode scanning"
+        ]
+      },
+      "notes": {
+        "pump": "Discharge electrons excite N₂, which transfers energy to CO₂ by resonant collisions.",
+        "level": "The lower (10°0) vibrational level relaxes quickly, so it behaves as a 4-level laser.",
+        "lasing": "The vibrational-rotational bands sit at ~10.6 and ~9.4 µm.",
+        "transition": "From the asymmetric-stretch (00°1) to the symmetric-stretch (10°0) mode.",
+        "modes": "Narrow gain lines rule out fs pulses, but CW and TEA or Q-switched pulses are common.",
+        "power": "Efficiency of ~10–20% allows very high powers, up to tens of kW.",
+        "apps": "Mid-IR light is absorbed by many non-metals and tissue; pulsed CO₂ drives the Sn plasma for EUV."
+      }
+    },
+    {
+      "id": "alexandrite",
+      "reviewed": false,
+      "name": "Alexandrite",
+      "gain": "chromium-doped chrysoberyl (Alexandrite, Cr:BeAl₂O₄)",
+      "pump": {
+        "ok": [
+          "C",
+          "A"
+        ],
+        "no": [
+          "D",
+          "E",
+          "F"
+        ]
+      },
+      "level": 2,
+      "pumpWavelength": {
+        "ok": "Visible, ~380–680 nm (lamps; red diodes)",
+        "no": [
+          "~808 nm",
+          "~980 nm",
+          "~1550 nm"
+        ]
+      },
+      "lasing": {
+        "ok": "Tunable ~700–820 nm (typically 755 nm)",
+        "no": [
+          "Fixed 1064 nm",
+          "Fixed 10.6 µm",
+          "Tunable 400–450 nm"
+        ]
+      },
+      "transition": "Cr³⁺: ⁴T₂ → ⁴A₂ (vibronic)",
+      "modes": [
+        {
+          "t": "Long free-running ms pulses",
+          "ok": true
+        },
+        {
+          "t": "Q-switched ns pulses",
+          "ok": true
+        },
+        {
+          "t": "Sub-10 fs pulses from the oscillator",
+          "ok": false
+        }
+      ],
+      "power": {
+        "ok": "Pulses of ~0.1 J to several J at a few Hz",
+        "no": [
+          "Multi-kW continuous",
+          "~1 mW CW",
+          "nJ pulses at GHz rates"
+        ]
+      },
+      "apps": {
+        "ok": [
+          "Hair removal",
+          "Tattoo and pigmented lesion removal",
+          "Atmospheric LIDAR and ranging"
+        ],
+        "no": [
+          "Barcode scanning",
+          "EUV lithography"
+        ]
+      },
+      "notes": {
+        "pump": "Flashlamps are the classic pump; red laser diodes now allow diode pumping too.",
+        "level": "At room temperature it is a vibronic 4-level laser, like Ti:Sapph. The 680 nm R-line behaves as 3-level.",
+        "pumpWavelength": "Broad absorption in the yellow-green and red covers lamp output and red diodes.",
+        "lasing": "Tunable ~700–820 nm; 755 nm is the medical standard.",
+        "transition": "The vibronic ⁴T₂ band lases down to the ⁴A₂ ground state.",
+        "modes": "The upper-state lifetime (~260 µs) suits long pulses and Q-switching.",
+        "power": "Medical systems deliver about 0.1 J to several J per pulse at a few Hz.",
+        "apps": "755 nm light is absorbed by melanin, hence hair and pigment treatments.",
+        "lifetime": "~260 µs upper-state lifetime, similar in scale to Nd:YAG. Long enough to support both long free-running pulses and Q-switching."
+      },
+      "lifetime": {
+        "bucket": "~100s of µs"
+      }
+    },
+    {
+      "id": "ruby",
+      "reviewed": false,
+      "name": "Ruby",
+      "gain": "chromium-doped sapphire (ruby, Cr³⁺:Al₂O₃)",
+      "pump": {
+        "ok": [
+          "C"
+        ],
+        "no": [
+          "A",
+          "D",
+          "E",
+          "F"
+        ]
+      },
+      "level": 0,
+      "pumpWavelength": {
+        "ok": "Blue-green, two bands near ~405 nm and ~530–550 nm",
+        "no": [
+          "~808 nm",
+          "~940 nm",
+          "~1064 nm"
+        ]
+      },
+      "lasing": {
+        "ok": "694.3 nm (R1 line; a weaker R2 line sits at 692.9 nm)",
+        "no": [
+          "632.8 nm",
+          "1064 nm",
+          "10.6 µm"
+        ]
+      },
+      "transition": "Cr³⁺: ²E (R-line) → ⁴A₂ (ground state)",
+      "modes": [
+        {
+          "t": "Long pulsed, flashlamp-driven (µs–ms)",
+          "ok": true
+        },
+        {
+          "t": "Q-switched ns pulses",
+          "ok": true
+        },
+        {
+          "t": "Continuous-wave",
+          "ok": false
+        }
+      ],
+      "power": {
+        "ok": "Pulses of ~1 J to several J at low repetition rates (~1 shot/min to a few Hz)",
+        "no": [
+          "~1 mW CW",
+          "Multi-kW continuous",
+          "Only nJ pulses at GHz rates"
+        ]
+      },
+      "apps": {
+        "ok": [
+          "Holography (portraits, non-destructive testing)",
+          "Pulsed plasma diagnostics (Thomson scattering)",
+          "Hair and pigment removal (older dermatology systems)"
+        ],
+        "no": [
+          "Telecom amplification",
+          "Photolithography"
+        ]
+      },
+      "lifetime": {
+        "bucket": "~ms (milliseconds)"
+      },
+      "notes": {
+        "pump": "Two broad absorption bands (~405 nm and ~530–550 nm) overlap well with a xenon flashlamp's output; ruby is essentially always flashlamp-pumped.",
+        "level": "Ruby is the textbook pure 3-level laser: the lower laser level IS the ground state, so more than half the Cr³⁺ ions must be excited before any gain exists at all — unlike every quasi-3-level or 4-level laser elsewhere in this quiz.",
+        "pumpWavelength": "The two absorption bands sit in the blue and green-yellow, which is why ruby looks pink/red (it absorbs the complementary colors).",
+        "lasing": "694.3 nm (R1) has higher gain and dominates; the weaker R2 line at 692.9 nm is rarely used.",
+        "transition": "Both the upper (²E) and lower (⁴A₂, ground state) levels are Cr³⁺ states in the sapphire crystal field — the same ion pair that gives alexandrite its R-line, but here it's the *only* lasing transition, not a side effect.",
+        "modes": "The long (~ms) upper-state lifetime lets ruby store energy for a flashlamp pulse, and early Q-switched ruby lasers were historically important, but the huge pump threshold of a 3-level system rules out practical CW operation.",
+        "power": "Modern ruby systems are mostly small (~1 J at low rep rate); historic large-aperture ruby amplifier chains reached much higher energies.",
+        "apps": "Ruby lasers have been largely displaced by better media, but its narrow, highly coherent pulsed red output is still used for holography and pulsed diagnostics.",
+        "lifetime": "~3 ms metastable ²E lifetime — long for a solid-state laser, and part of why a single flashlamp pulse can invert enough population, but the true 3-level structure still demands very high pump energy."
+      }
+    },
+    {
+      "id": "er-yag",
+      "reviewed": false,
+      "name": "Er:YAG",
+      "gain": "erbium-doped yttrium aluminum garnet (Er:YAG)",
+      "pump": {
+        "ok": [
+          "C",
+          "A"
+        ],
+        "no": [
+          "D",
+          "E",
+          "F"
+        ]
+      },
+      "level": 2,
+      "pumpWavelength": {
+        "ok": "~750–800 nm (Xe flashlamp bands; ~790 nm for diode/Ti:sapphire pumping)",
+        "no": [
+          "~532 nm",
+          "~940 nm",
+          "~1064 nm"
+        ]
+      },
+      "lasing": {
+        "ok": "2940 nm (mid-IR)",
+        "no": [
+          "1064 nm",
+          "10.6 µm",
+          "1940 nm"
+        ]
+      },
+      "transition": "Er³⁺: ⁴I₁₁/₂ → ⁴I₁₃/₂",
+      "modes": [
+        {
+          "t": "Pulsed (flashlamp or quasi-CW diode-pumped)",
+          "ok": true
+        },
+        {
+          "t": "Continuous-wave (via Er³⁺–Er³⁺ cross-relaxation)",
+          "ok": true
+        },
+        {
+          "t": "Direct sub-10 fs pulses from the oscillator",
+          "ok": false
+        }
+      ],
+      "power": {
+        "ok": "Pulses of ~mJ to a few hundred mJ (research systems reach J-level)",
+        "no": [
+          "Multi-kW continuous",
+          "~1 mW CW",
+          "Only nJ pulses at GHz rates"
+        ]
+      },
+      "apps": {
+        "ok": [
+          "Dental and dermatological procedures (skin resurfacing, ablation)",
+          "Hard- and soft-tissue surgery (water-absorption-driven cutting)",
+          "Pumping mid-IR Fe:ZnSe lasers"
+        ],
+        "no": [
+          "Telecom amplification",
+          "Photolithography"
+        ]
+      },
+      "lifetime": {
+        "bucket": "~100s of µs"
+      },
+      "notes": {
+        "pump": "A xenon flashlamp's output overlaps Er:YAG's absorption bands around 500, 650 and 750–800 nm; diode or Ti:sapphire pumping near 790 nm is also used.",
+        "level": "Structurally the upper (⁴I₁₁/₂) and lower (⁴I₁₃/₂) laser levels are distinct from the ⁴I₁₅/₂ ground state, so it's labeled 4-level here — but see the lifetime note: this transition is unusually self-terminating, which the simple 3/4-level picture doesn't capture.",
+        "pumpWavelength": "The absorption bands are broad enough to tolerate either flashlamp or diode/Ti:sapphire pumping without precise wavelength matching.",
+        "lasing": "2940 nm falls right in a strong water-absorption peak, which is exactly why it's so effective for tissue ablation.",
+        "transition": "Both levels belong to the ⁴I manifold family of Er³⁺, one level closer to the ground state than the ⁴I9/2 or ⁴S3/2 levels the flashlamp directly excites.",
+        "modes": "Continuous-wave operation is possible but requires high Er³⁺ doping so that ion-ion cross-relaxation keeps recycling the lower level fast enough.",
+        "power": "Energy per pulse is modest compared to Nd:YAG because of the self-terminating bottleneck; scaling further usually means higher doping and cross-relaxation, not just more pump power.",
+        "apps": "2940 nm is the strongest water absorption band of any common laser line, which drives essentially all of its medical uses.",
+        "lifetime": "In heavily-doped crystals the upper level (⁴I₁₁/₂) lifetime is ~0.23 ms — but the lower level (⁴I₁₃/₂) lives even longer, so the 2.94 µm transition is inherently self-terminating. High Er³⁺ doping and cross-relaxation/up-conversion between neighboring ions are what rescue continuous or high-rep-rate operation — a genuinely different failure mode than the simple 3-level/4-level framework used elsewhere in this quiz."
+      }
+    },
+    {
+      "id": "thulium",
+      "reviewed": false,
+      "name": "Thulium",
+      "gain": "thulium-doped yttrium aluminum garnet (Tm:YAG)",
+      "pump": {
+        "ok": [
+          "A",
+          "B"
+        ],
+        "no": [
+          "C",
+          "D",
+          "E",
+          "F"
+        ]
+      },
+      "level": 1,
+      "pumpWavelength": {
+        "ok": "~785–786 nm",
+        "no": [
+          "~808 nm",
+          "~940 nm",
+          "~1550 nm"
+        ]
+      },
+      "lasing": {
+        "ok": "~2010 nm (tunable ~1.87–2.1 µm across Tm-doped hosts)",
+        "no": [
+          "1064 nm",
+          "1940 nm",
+          "10.6 µm"
+        ]
+      },
+      "transition": "Tm³⁺: ³F₄ → ³H₆",
+      "modes": [
+        {
+          "t": "Continuous-wave",
+          "ok": true
+        },
+        {
+          "t": "Q-switched pulses",
+          "ok": true
+        },
+        {
+          "t": "Direct sub-10 fs pulses from the oscillator",
+          "ok": false
+        }
+      ],
+      "power": {
+        "ok": "Tens of W CW (rod/fiber); Q-switched pulses of mJ-level energy",
+        "no": [
+          "Multi-kW continuous",
+          "~1 mW CW",
+          "Only nJ pulses at GHz rates"
+        ]
+      },
+      "apps": {
+        "ok": [
+          "Eye-safe LIDAR and range-finding",
+          "Urology and soft-tissue surgery (fiber-delivered)",
+          "Pumping holmium- and Cr:ZnSe-based lasers"
+        ],
+        "no": [
+          "Telecom amplification",
+          "Photolithography"
+        ]
+      },
+      "lifetime": {
+        "bucket": "~10s of ms"
+      },
+      "notes": {
+        "pump": "The ~785 nm absorption band (³H₆→³H₄) is reachable with the same AlGaAs diode technology used to pump Nd- and Ti:sapph-class lasers, or with a Ti:Sapphire laser in research setups.",
+        "level": "The terminal level (³F₄) sits close enough to the ground manifold (³H₆) to be thermally populated at room temperature, making this a quasi-3-level transition, the same category as Yb:YAG.",
+        "pumpWavelength": "785–786 nm is host-dependent but close enough across Tm-doped crystals that the same diode designs are widely reused.",
+        "lasing": "The ~2 µm band is strongly absorbed by water and is considered eye-safe at typical operating energies, unlike 1064 nm or 1550 nm.",
+        "transition": "Both levels are excited-state manifolds of Tm³⁺; ³H₆ is also the ground manifold, which is why the lower level is thermally populated.",
+        "modes": "The very long upper-state lifetime supports efficient Q-switched energy storage even at modest diode pump power.",
+        "power": "Efficient cross-relaxation keeps thermal loading low relative to the stored energy, which is part of why Tm systems scale well in fiber and thin-rod geometries.",
+        "apps": "Eye-safety at 2 µm makes it attractive for LIDAR and outdoor ranging; strong water absorption suits soft-tissue surgery similarly to Er:YAG, just at a different wavelength and with fiber delivery more common.",
+        "lifetime": "~15 ms radiative lifetime of the upper level in YAG — about 15× longer than Yb:YAG's. Combined with the two-for-one cross-relaxation process (one absorbed 785 nm pump photon excites two Tm³⁺ ions to the upper laser level), this gives a very low pump-power threshold for a given stored energy, and only a ~20% quantum defect despite the large wavelength gap between pump and laser photons."
+      }
+    },
+    {
+      "id": "diode",
+      "reviewed": false,
+      "name": "Diode",
+      "gain": "a direct-bandgap III-V semiconductor (e.g. GaAs/AlGaAs, as used in 808 nm pump-diode modules)",
+      "pump": {
+        "ok": [
+          "E"
+        ],
+        "no": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "F"
+        ]
+      },
+      "level": 3,
+      "pumpWavelength": null,
+      "lasing": {
+        "ok": "~808 nm (a common high-power pump-diode line; diode lasers overall span roughly 630–1600+ nm depending on composition)",
+        "no": [
+          "632.8 nm",
+          "1064 nm",
+          "10.6 µm"
+        ]
+      },
+      "transition": "Direct band-to-band recombination across the semiconductor bandgap",
+      "modes": [
+        {
+          "t": "Continuous-wave",
+          "ok": true
+        },
+        {
+          "t": "Directly modulated at GHz rates via the drive current",
+          "ok": true
+        },
+        {
+          "t": "Q-switched via long-term energy storage in the gain medium",
+          "ok": false
+        }
+      ],
+      "power": {
+        "ok": "mW (pointers, telecom) to tens of W per emitter; kW-class from diode bars/stacks",
+        "no": [
+          "Only µW, cannot scale",
+          "Fixed ~1 mW, cannot scale",
+          "Only J-level pulses at low repetition rate"
+        ]
+      },
+      "apps": {
+        "ok": [
+          "Pump sources for other solid-state lasers (e.g. 808/940 nm modules)",
+          "Telecom transmitters (1310/1550 nm)",
+          "Barcode scanners and laser pointers",
+          "Optical storage (CD/DVD/Blu-ray)"
+        ],
+        "no": [
+          "EUV lithography",
+          "Atmospheric water-vapor DIAL"
+        ]
+      },
+      "lifetime": {
+        "bucket": "~ns (nanoseconds)"
+      },
+      "notes": {
+        "pump": "Electrons and holes are injected directly across a forward-biased p–n (or heterostructure) junction — there is no separate optical or discharge pump step at all.",
+        "level": "Semiconductor gain doesn't come from discrete atomic energy levels: population inversion forms between the conduction and valence bands (or their quasi-Fermi levels) across the direct bandgap, so the atomic-style 3-level/4-level picture used for every other laser in this quiz simply doesn't apply.",
+        "pumpWavelength": "Not applicable: the excitation is electrical current, not light of any particular wavelength.",
+        "lasing": "The emission wavelength is set by the semiconductor's bandgap and alloy composition, not by a fixed atomic transition — 808 nm (GaAs/AlGaAs) is singled out here because it's the pump wavelength used throughout the rest of this quiz.",
+        "transition": "Gain comes from stimulated recombination of electrons and holes across the bandgap, not a transition between two discrete atomic energy levels like every other laser in this set.",
+        "modes": "The ns-scale carrier lifetime is too short to store meaningful energy for Q-switching, but it's exactly what allows the output to be turned on and off (modulated) at gigahertz rates by modulating the drive current.",
+        "power": "A single small emitter tops out around tens of W; today's highest-power diode systems stack many emitters into bars and arrays to reach kW-class output for pumping and industrial use.",
+        "apps": "Nearly every other laser in this quiz that's diode-pumped is ultimately powered by exactly this kind of device.",
+        "lifetime": "Carrier (spontaneous-emission) lifetime is typically ~1–3 ns — by far the shortest of any laser in this quiz. It rules out Q-switching or the µs–ms energy storage used by ion-doped crystals, but it's exactly why diode lasers can be modulated directly at GHz rates by modulating the drive current — the basis of fiber-optic data transmission."
+      }
+    }
+  ],
+  "lifetimeBuckets": [
+    "~ns (nanoseconds)",
+    "~µs (microseconds)",
+    "~100s of µs",
+    "~ms (milliseconds)",
+    "~10s of ms"
+  ]
+}
