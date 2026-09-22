@@ -4,19 +4,36 @@
  *
  * - Zero LLM calls: questions come from laser_types.json, grading is done in code.
  * - Button-only UI (inline keyboards); one message is edited in place per laser.
- * - Optional weekly XP, goal, hidden level ladder and anonymous leaderboard, all env-controlled.
+ * - Optional permanent mastery scoring (per-laser personal best, summed across all lasers)
+ *   plus a hidden level ladder and an all-time anonymous leaderboard, all env-controlled.
+ *
+ * Mastery model: for each laser, only your BEST-ever round score counts, never the sum of
+ * every attempt. Total mastery = sum of your best score per laser, across every laser you've
+ * played. There is no weekly reset. This means reaching the top of the level ladder genuinely
+ * requires close to 100% on every laser at least once — replaying a laser you've already
+ * aced doesn't add anything, only improving on a laser you did worse on does. The streak
+ * bonus (below) is deliberately excluded from what counts toward mastery — it's live,
+ * in-quiz flavor only, so a lucky streak carried over from an earlier laser in the same
+ * session can never inflate a laser's permanent personal best.
  *
  * Env vars (all optional):
- *   WEEKLY_XP_ENABLED          collect weekly XP (needs QUIZ_SALT)              default off
- *   LEADERBOARD_VISIBLE        show weekly top 10 (needs WEEKLY_XP_ENABLED)     default off
- *   WEEKLY_XP_TARGET           weekly XP goal                                   default 300
- *   LASER_QUIZ_DAILY_XP_CAP    max XP counted per day, 0 = no cap               default 300
+ *   WEEKLY_XP_ENABLED          collect mastery scores (needs QUIZ_SALT)         default off
+ *   LEADERBOARD_VISIBLE        show the all-time top 10 (needs WEEKLY_XP_ENABLED) default off
+ *   LASER_QUIZ_DAILY_XP_CAP    max mastery XP a student can GAIN per day, 0 = no cap  default 300
+ *   LASER_QUIZ_POINTS_PER_QUESTION  XP for a fully-correct answer (before streak bonus)  default 6
+ *   LASER_QUIZ_STREAK_MIN      perfect answers in a row before the streak bonus kicks in  default 3
+ *   LASER_QUIZ_STREAK_BONUS    live-quiz bonus XP per perfect answer once streak >= STREAK_MIN;
+ *                              flavor only, does NOT count toward permanent mastery    default 3
  *   QUIZ_SALT                  secret for hashing Telegram IDs (keep stable!)
  *   QUIZ_DATA_DIR              persistent dir (Railway volume)                  default ./data
- *   QUIZ_TZ                    time zone for day/week boundaries                default Europe/Helsinki
+ *   QUIZ_TZ                    time zone for day boundaries (daily mastery-gain cap)  default Europe/Helsinki
  *   LASER_QUIZ_SESSION_TTL_MIN session timeout in minutes                       default 30
  *   LASER_QUIZ_LOG             append anonymized answer log (jsonl)             default on
  *   LASER_QUIZ_REQUIRE_REVIEW  only use lasers with "reviewed": true           default off
+ *
+ * Env var names kept as WEEKLY_XP_ENABLED / LEADERBOARD_VISIBLE for backward compatibility
+ * with existing Railway config, even though the "weekly" framing they originally described
+ * no longer applies — see the mastery model above.
  */
 
 const fs = require('fs');
@@ -68,8 +85,16 @@ function readConfig(env = process.env) {
   const c = {
     weeklyXp: truthy(env.WEEKLY_XP_ENABLED),
     leaderboard: truthy(env.LEADERBOARD_VISIBLE),
-    target: intEnv(env.WEEKLY_XP_TARGET, 300) || 300,
     dailyCap: intEnv(env.LASER_QUIZ_DAILY_XP_CAP, 300),
+    // Default 6, not the raw grade()'s 0-10 scale: a full single-sitting 100% cycle
+    // through all current lasers (112 questions as of the 13-laser set) lands right
+    // around the top of the LEVELS ladder (1000 XP) at points=6/streakBonus=3, instead
+    // of blowing well past it at the old points=10/streakBonus=5 (~1670). Recompute this
+    // pairing whenever the laser count changes meaningfully. Streak bonus doesn't factor
+    // into this arithmetic at all now — it's excluded from mastery, see the header comment.
+    pointsPerQuestion: intEnv(env.LASER_QUIZ_POINTS_PER_QUESTION, 6) || 6,
+    streakMin: intEnv(env.LASER_QUIZ_STREAK_MIN, 3),
+    streakBonus: intEnv(env.LASER_QUIZ_STREAK_BONUS, 3),
     tz: env.QUIZ_TZ || 'Europe/Helsinki',
     salt: env.QUIZ_SALT || '',
     dataDir: env.QUIZ_DATA_DIR || path.join(__dirname, 'data'),
@@ -79,7 +104,7 @@ function readConfig(env = process.env) {
     warnings: [],
   };
   if (c.weeklyXp && !c.salt) {
-    c.warnings.push('WEEKLY_XP_ENABLED is on but QUIZ_SALT is missing: weekly XP disabled.');
+    c.warnings.push('WEEKLY_XP_ENABLED is on but QUIZ_SALT is missing: mastery tracking disabled.');
     c.weeklyXp = false;
   }
   if (c.leaderboard && !c.weeklyXp) {
@@ -298,7 +323,7 @@ function createLaserQuiz(bot, opts = {}) {
   // ----- users, XP, aliases -----
 
   const userKey = (id) => crypto.createHmac('sha256', cfg.salt).update(String(id)).digest('hex').slice(0, 16);
-  const period = () => { const day = localDay(cfg.tz); return { day, week: isoWeekOf(day) }; };
+  const today = () => localDay(cfg.tz);
   const baseName = (n) => n.replace(/ (?:[IVX]+|\d+)$/, '');
   const suffix = (k) => ROMAN[k] || String(k);
 
@@ -317,34 +342,51 @@ function createLaserQuiz(bot, opts = {}) {
     return `${b} ${suffix(k)}`;
   }
 
+  // Per user: alias, bestByLaser (laser id -> best-ever round XP for that laser — the
+  // permanent mastery record), and day/dayGain for the daily mastery-GAIN cap below.
+  // No week/weekly-reset fields: mastery never resets.
   function touchUser(key) {
-    const { day, week } = period();
+    const day = today();
     let u = store.data.users[key];
     if (!u) {
-      u = { alias: pickAlias(key), week, xp: 0, day, dayXp: 0 };
+      u = { alias: pickAlias(key), bestByLaser: {}, day, dayGain: 0 };
       store.data.users[key] = u;
       store.dirty = true;
     }
-    if (u.week !== week) { u.week = week; u.xp = 0; store.dirty = true; }
-    if (u.day !== day) { u.day = day; u.dayXp = 0; store.dirty = true; }
+    if (!u.bestByLaser) u.bestByLaser = {}; // defensive: pre-mastery-model records
+    if (u.day !== day) { u.day = day; u.dayGain = 0; store.dirty = true; }
     return u;
   }
 
-  function award(key, xp) {
+  const masteryOf = (u) => Object.values(u.bestByLaser).reduce((a, b) => a + b, 0);
+
+  // Only ever updates bestByLaser[laserId] to a STRICTLY HIGHER value, and only ever does so
+  // in full — never a partial/synthetic amount — so a stored "personal best" always reflects
+  // an actual round the student played, never a number invented to fit under the daily cap.
+  // If the improvement would exceed today's remaining room, nothing is stored this round;
+  // the student can bank it by replaying the same laser again once the cap resets.
+  function awardMastery(key, laserId, candidateXp) {
     const u = touchUser(key);
-    const room = cfg.dailyCap > 0 ? Math.max(0, cfg.dailyCap - u.dayXp) : Infinity;
-    const applied = Math.min(xp, room);
-    u.xp += applied;
-    u.dayXp += applied;
+    const prevBest = u.bestByLaser[laserId] || 0;
+    const masteryBefore = masteryOf(u);
+    if (candidateXp <= prevBest) {
+      return { isNewBest: false, delta: 0, capped: false, prevBest, masteryBefore, masteryAfter: masteryBefore };
+    }
+    const delta = candidateXp - prevBest;
+    const room = cfg.dailyCap > 0 ? Math.max(0, cfg.dailyCap - u.dayGain) : Infinity;
+    if (delta > room) {
+      return { isNewBest: false, delta: 0, capped: true, prevBest, wouldBe: candidateXp, masteryBefore, masteryAfter: masteryBefore };
+    }
+    u.bestByLaser[laserId] = candidateXp;
+    u.dayGain += delta;
     store.dirty = true;
-    return { applied, capped: applied < xp };
+    return { isNewBest: true, delta, capped: false, prevBest, masteryBefore, masteryAfter: masteryOf(u) };
   }
 
   function board(key) {
-    const { week } = period();
     const rows = Object.entries(store.data.users)
-      .filter(([, u]) => u.week === week && u.xp > 0)
-      .map(([k, u]) => ({ k, alias: u.alias, xp: u.xp }))
+      .map(([k, u]) => ({ k, alias: u.alias, xp: masteryOf(u) }))
+      .filter((r) => r.xp > 0)
       .sort((a, b) => b.xp - a.xp || a.alias.localeCompare(b.alias));
     return { rows, top: rows.slice(0, 10), mi: rows.findIndex((r) => r.k === key) };
   }
@@ -355,38 +397,39 @@ function createLaserQuiz(bot, opts = {}) {
     fs.appendFile(logFile, JSON.stringify(rec) + '\n', (e) => { if (e) logErr(e); });
   }
 
-  // One event per completed laser (all steps answered), distinct from the
-  // per-step events above. Needed to count "rounds played" and total applied
-  // XP cleanly — laser_xp.json's xp field resets every ISO week (it's for
-  // leveling, not lifetime totals), so it can't answer "how much XP has been
-  // earned in total" on its own. See laserStats_fys501.js / /laserstats.
-  function logRound(s) {
+  // One event per completed laser (all steps answered), distinct from the per-step events
+  // above. isNewBest/masteryDelta reflect the actual mastery-model outcome (see
+  // awardMastery above): xp here is the round's raw candidate score, which may be HIGHER
+  // than masteryDelta if it wasn't actually a new best (or was capped) — laserStats_fys501.js
+  // should sum masteryDelta, not xp, for an accurate "total mastery gained" figure, since xp
+  // alone would double-count replays of an already-mastered laser.
+  function logRound(s, rawTotal, rawMax, masteryCandidate, roundResult) {
     if (!wantLog || !s.key) return;
-    const pts = s.pts.reduce((a, b) => a + b, 0);
     const rec = {
       ts: new Date().toISOString(), u: s.key, kind: 'round', laser: s.laser.id,
-      steps: s.steps.length, pts, max: s.steps.length * 10, perfect: s.pts.filter((p) => p === 10).length, xp: s.xpQuiz,
+      steps: s.steps.length, pts: rawTotal, max: rawMax, perfect: s.pts.filter((p) => p === 10).length,
+      xp: masteryCandidate, isNewBest: !!(roundResult && roundResult.isNewBest), masteryDelta: roundResult ? roundResult.delta : 0,
     };
     fs.appendFile(logFile, JSON.stringify(rec) + '\n', (e) => { if (e) logErr(e); });
   }
 
-  const weeklyOn = (s) => !!(store && s.key);
-  const weekly = (s) => touchUser(s.key).xp;
+  const masteryOn = (s) => !!(store && s.key);
+  const mastery = (s) => masteryOf(touchUser(s.key));
 
   // ----- rendering -----
 
   function boardText(key) {
     const { rows, top, mi } = board(key);
-    if (!rows.length) return '🏆 <b>Weekly top 10</b>\nNo scores yet. Be the first!\n';
+    if (!rows.length) return '🏆 <b>Mastery leaderboard</b>\nNo scores yet. Be the first!\n';
     const fmt = (i, r) => `${String(i + 1).padStart(2)}. ${trunc(r.alias, 21).padEnd(21)} ${String(r.xp).padStart(4)}${r.k === key ? ' ←' : ''}`;
     const lines = top.map((r, i) => fmt(i, r));
     if (mi >= 10) { lines.push('   …'); lines.push(fmt(mi, rows[mi])); }
-    return `🏆 <b>Weekly top 10</b>\n<pre>${esc(lines.join('\n'))}</pre>\nAnonymous names · resets every Monday\n`;
+    return `🏆 <b>Mastery leaderboard</b>\n<pre>${esc(lines.join('\n'))}</pre>\nAnonymous names · all-time, best score per laser\n`;
   }
 
   function introText(s) {
     let t = `🔬 <b>Laser types quiz</b>\n`;
-    if (weeklyOn(s)) t += `Weekly XP: ${weekly(s)} / ${cfg.target}\n`;
+    if (masteryOn(s)) t += `Mastery: ${mastery(s)}\n`;
     t += `\nConsider lasers with <b>${esc(s.laser.gain)}</b> as gain.\n\n${s.steps.length} questions.`;
     return t;
   }
@@ -394,7 +437,7 @@ function createLaserQuiz(bot, opts = {}) {
   function questionText(s) {
     const st = s.steps[s.si];
     let t = `🔬 <b>${esc(s.laser.name)}</b> · question ${s.si + 1}/${s.steps.length}`;
-    if (weeklyOn(s)) t += ` · weekly XP ${weekly(s)}/${cfg.target}`;
+    if (masteryOn(s)) t += ` · mastery ${mastery(s)}`;
     t += `\n<i>${esc(st.title || STEP_TITLES[st.id])}</i>\n\n${esc(st.q)}\n\n`;
     st.options.forEach((o, i) => {
       let mark = '';
@@ -410,8 +453,7 @@ function createLaserQuiz(bot, opts = {}) {
       const r = s.lastResult;
       const head = r.perfect ? '✅ Correct' : r.pts > 0 ? '🟡 Partly right' : '❌ Not quite';
       t += `\n<b>${head}</b> · +${r.applied} XP`;
-      if (r.bonus) t += ` · 🔥 streak bonus +${r.bonus}`;
-      if (r.capped) t += `\n⏳ Daily XP cap reached: more XP counts again tomorrow.`;
+      if (r.bonus) t += ` · 🔥 streak bonus +${r.bonus} (flavor only — doesn't count toward mastery)`;
       t += `\n\n💡 ${esc(st.note)}`;
     }
     return t;
@@ -436,40 +478,33 @@ function createLaserQuiz(bot, opts = {}) {
   function summaryText(s) {
     const sum = s.pts.reduce((a, b) => a + b, 0);
     const max = s.steps.length * 10;
-    let t = `🏁 <b>${esc(s.laser.name)} complete</b>\n${sum}/${max} points · +${s.xpQuiz} XP this quiz\n`;
-    if (!weeklyOn(s)) return t + `${s.sessionXp} XP this session\n`;
-    const wk = weekly(s);
-    const tgt = cfg.target;
-    const hit = wk >= tgt;
-    const was = s.xp0 >= tgt;
-    const li = levelIndex(wk);
-    const lb = levelIndex(s.xp0);
+    let t = `🏁 <b>${esc(s.laser.name)} complete</b>\n${sum}/${max} points\n`;
+    if (!masteryOn(s)) return t + `${s.sessionXp} XP this session (mastery tracking is off)\n`;
+
+    const r = s.roundResult || { isNewBest: false, capped: false, candidate: 0, prevBest: 0, masteryBefore: mastery(s), masteryAfter: mastery(s) };
+
+    if (r.isNewBest) {
+      t += r.prevBest > 0
+        ? `\n🎉 New personal best for <b>${esc(s.laser.name)}</b>: ${r.candidate} XP (previous best: ${r.prevBest})\n`
+        : `\n✨ First mastery score banked for <b>${esc(s.laser.name)}</b>: ${r.candidate} XP\n`;
+    } else if (r.capped) {
+      t += `\n⏳ This round scored ${r.candidate} XP — better than your current best of ${r.prevBest} for <b>${esc(s.laser.name)}</b> — but today's mastery-gain cap is reached. Play it again tomorrow to bank the improvement.\n`;
+    } else {
+      t += `\nYour best for <b>${esc(s.laser.name)}</b> is still ${r.prevBest} XP (this round: ${r.candidate}).\n`;
+    }
+
+    const total = r.masteryAfter;
+    const li = levelIndex(total);
+    const lb = levelIndex(r.masteryBefore);
     const L = LEVELS[li];
     const nextMin = li > 0 ? LEVELS[li - 1].min : null;
-    t += `\n<b>Weekly XP: ${wk}</b>\n`;
-    if (!hit) {
-      // Before the weekly goal: bar tracks progress toward it, as before.
-      t += `${bar(wk, tgt)} ${wk}/${tgt}\n`;
-    } else if (nextMin) {
-      // Past the weekly goal: instead of sitting maxed-out at tgt/tgt (which
-      // reads as "you're done"), keep the bar moving toward the next hidden
-      // level, matching the "Next level: ??? · N XP to go" line below. This
-      // is what keeps a full climb to the top of the ladder (Maiman/Schawlow)
-      // feel like visible progress rather than a wall at the weekly goal.
-      t += `${bar(wk - L.min, nextMin - L.min)}\n`;
-    } else {
-      t += `${bar(1, 1)}\n`; // top of the ladder — nothing further to show progress toward
-    }
-    if (hit && !was) t += '🎯 Weekly goal reached! Keep going — every extra XP still climbs the ladder.\n';
-    else if (hit) t += '🎯 Weekly goal reached. Extra XP still raises your level.\n';
-    else {
-      const gap = tgt - wk;
-      const rd = s.xpQuiz > 0 ? Math.ceil(gap / s.xpQuiz) : 0;
-      t += `${gap} XP to your weekly goal` + (rd ? ` (about ${rd} more round${rd > 1 ? 's' : ''} at this pace)` : '') + '\n';
-    }
-    t += `\nYour weekly XP puts you at <b>${esc(L.name)}</b> level. ${esc(L.name)} ${esc(L.blurb)}.\n`;
+    t += `\n<b>Total mastery: ${total}</b>\n`;
+    // Bar tracks progress toward the next hidden level, the same "always moving" approach
+    // used before the weekly-goal concept was dropped — never sits maxed-out mid-climb.
+    t += nextMin ? `${bar(total - L.min, nextMin - L.min)}\n` : `${bar(1, 1)}\n`;
+    t += `Your mastery puts you at <b>${esc(L.name)}</b> level. ${esc(L.name)} ${esc(L.blurb)}.\n`;
     if (li < lb) t += '🎉 New level unlocked!\n';
-    t += nextMin ? `Next level: ??? · ${nextMin - wk} XP to go\n` : 'You reached the top level this week.\n';
+    t += nextMin ? `Next level: ??? · ${nextMin - total} XP to go\n` : 'You reached the top level!\n';
     if (cfg.leaderboard) t += '\n' + boardText(s.key);
     return t;
   }
@@ -529,13 +564,13 @@ function createLaserQuiz(bot, opts = {}) {
     s.xpQuiz = 0;
     s.pts = [];
     s.roundLogged = false;
-    s.xp0 = weeklyOn(s) ? weekly(s) : 0;
+    s.roundResult = null;
   }
 
   async function startSession(uid, chatId) {
     const s = {
       uid, chatId, key: cfg.salt ? userKey(uid) : null, msgId: null, bag: [], laser: null, steps: [],
-      si: -1, sel: [], answered: false, lastResult: null, xpQuiz: 0, xp0: 0, pts: [], streak: 0, sessionXp: 0, roundLogged: false, last: Date.now(),
+      si: -1, sel: [], answered: false, lastResult: null, xpQuiz: 0, pts: [], streak: 0, sessionXp: 0, roundLogged: false, roundResult: null, last: Date.now(),
     };
     sessions.set(uid, s);
     nextLaser(s);
@@ -545,18 +580,34 @@ function createLaserQuiz(bot, opts = {}) {
   function gradeCurrent(s) {
     const st = s.steps[s.si];
     const g = grade(st, s.sel);
+    // Live-feedback-only "this quiz"/"this session" XP, streak-bonus flavor included. Does
+    // NOT feed mastery -- mastery is computed once, at round completion, from raw points
+    // alone (see finishRound below), so a lucky streak carried over from an earlier laser
+    // in the same session can never inflate a specific laser's permanent personal best.
+    const xpBase = Math.max(0, Math.round((g.pts / 10) * cfg.pointsPerQuestion));
     let bonus = 0;
-    if (g.perfect) { s.streak++; if (s.streak >= 3) bonus = 5; } else { s.streak = 0; }
-    const raw = g.pts + bonus;
-    let applied = raw;
-    let capped = false;
-    if (weeklyOn(s)) { const a = award(s.key, raw); applied = a.applied; capped = a.capped; }
+    if (g.perfect) { s.streak++; if (s.streak >= cfg.streakMin) bonus = cfg.streakBonus; } else { s.streak = 0; }
+    const applied = xpBase + bonus;
     s.xpQuiz += applied;
     s.sessionXp += applied;
     s.pts.push(g.pts);
     s.answered = true;
-    s.lastResult = { ...g, bonus, applied, capped };
+    s.lastResult = { ...g, bonus, applied };
     logEvent(s, st.id, g);
+  }
+
+  // Called once, right when a laser's last question is answered and "next" is tapped.
+  // Computes the round's mastery-candidate score from raw points only (no streak bonus —
+  // see header comment), and banks it as the laser's new personal best if it's an
+  // improvement and today's mastery-gain cap allows it. See awardMastery above.
+  function finishRound(s) {
+    const rawTotal = s.pts.reduce((a, b) => a + b, 0);
+    const rawMax = s.steps.length * 10;
+    const masteryCandidate = Math.max(0, Math.round((rawTotal * cfg.pointsPerQuestion) / 10));
+    let roundResult = null;
+    if (masteryOn(s)) roundResult = { ...awardMastery(s.key, s.laser.id, masteryCandidate), candidate: masteryCandidate };
+    s.roundResult = roundResult;
+    logRound(s, rawTotal, rawMax, masteryCandidate, roundResult);
   }
 
   async function allowed(uid) {
@@ -649,7 +700,7 @@ function createLaserQuiz(bot, opts = {}) {
       s.lastResult = null;
       if (s.si >= s.steps.length && !s.roundLogged) {
         s.roundLogged = true;
-        logRound(s);
+        finishRound(s);
       }
       await present(s, true);
       return;
@@ -678,7 +729,7 @@ function createLaserQuiz(bot, opts = {}) {
     hasSession: (uid) => !!getSession(uid),
     shutdown: () => { if (store) store.flush(); },
     _internals: {
-      sessions, userKey, touchUser, award, board,
+      sessions, userKey, touchUser, awardMastery, masteryOf, board,
       idle: () => Promise.all([...queues.values()]),
     },
   };

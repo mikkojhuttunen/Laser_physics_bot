@@ -14,11 +14,14 @@
  *
  * Two event kinds are read from the same file:
  *   step  event: { ts, u, kind:"step",  laser, step, pts, perfect }        - one per answered question
- *   round event: { ts, u, kind:"round", laser, steps, pts, max, perfect, xp } - one per completed laser
+ *   round event: { ts, u, kind:"round", laser, steps, pts, max, perfect, xp, isNewBest, masteryDelta }
+ *               - one per completed laser. xp is that round's candidate score; masteryDelta is what
+ *                 was actually banked (0 unless isNewBest is true) -- see laserQuiz.js's mastery model.
  * (Events logged before the "kind" field existed are treated as "step" events — see parseEvents.)
  *
  * Method
- *  - Unique students / total rounds / total XP: straightforward counts and sums over round events.
+ *  - Unique students / total rounds / total mastery XP gained: straightforward counts and sums
+ *    over round events (mastery XP sums masteryDelta, not xp -- see the code comment below).
  *  - Per-laser/step class accuracy: mean(pts/10) over step events, grouped by laser+step. This is
  *    the same "what do students find hard" lens /quizstats gives for the course quiz — worth
  *    comparing side by side with that report.
@@ -94,10 +97,16 @@ function analyse(events, opts = {}) {
   const students = new Set(events.map((e) => e.u));
 
   // ---- basic usage ----
+  // masteryDelta (not xp) is what was actually banked as a permanent personal-best gain --
+  // summing xp instead would double-count replays of a laser under the mastery model (xp is
+  // just that round's candidate score, whether or not it beat the stored best). Falls back to
+  // xp for events logged before masteryDelta existed (pre-mastery-model rounds), so older logs
+  // still degrade gracefully rather than reporting zero.
+  const totalMasteryGained = rounds.reduce((a, r) => a + (typeof r.masteryDelta === 'number' ? r.masteryDelta : r.xp), 0);
   const usage = {
     uniqueStudents: students.size,
     totalRounds: rounds.length,
-    totalXp: rounds.reduce((a, r) => a + r.xp, 0),
+    totalXp: totalMasteryGained,
     totalQuestionsAnswered: steps.length,
     lasersPlayed: (() => {
       const m = new Map();
@@ -185,7 +194,7 @@ function formatTelegram(r) {
   lines.push('');
   lines.push(`Unique students: ${u.uniqueStudents}`);
   lines.push(`Rounds played: ${u.totalRounds}`);
-  lines.push(`Total XP awarded (all-time): ${u.totalXp}`);
+  lines.push(`Total mastery XP gained (all-time): ${u.totalXp}`);
   lines.push(`Questions answered: ${u.totalQuestionsAnswered}`);
 
   if (u.lasersPlayed.length) {
