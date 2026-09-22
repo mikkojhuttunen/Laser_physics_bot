@@ -427,20 +427,34 @@ function createLaserQuiz(bot, opts = {}) {
     const tgt = cfg.target;
     const hit = wk >= tgt;
     const was = s.xp0 >= tgt;
-    t += `\n<b>Weekly XP: ${wk}</b>\n${bar(wk, tgt)} ${Math.min(wk, tgt)}/${tgt}\n`;
-    if (hit && !was) t += '🎯 Weekly goal reached!\n';
+    const li = levelIndex(wk);
+    const lb = levelIndex(s.xp0);
+    const L = LEVELS[li];
+    const nextMin = li > 0 ? LEVELS[li - 1].min : null;
+    t += `\n<b>Weekly XP: ${wk}</b>\n`;
+    if (!hit) {
+      // Before the weekly goal: bar tracks progress toward it, as before.
+      t += `${bar(wk, tgt)} ${wk}/${tgt}\n`;
+    } else if (nextMin) {
+      // Past the weekly goal: instead of sitting maxed-out at tgt/tgt (which
+      // reads as "you're done"), keep the bar moving toward the next hidden
+      // level, matching the "Next level: ??? · N XP to go" line below. This
+      // is what keeps a full climb to the top of the ladder (Maiman/Schawlow)
+      // feel like visible progress rather than a wall at the weekly goal.
+      t += `${bar(wk - L.min, nextMin - L.min)}\n`;
+    } else {
+      t += `${bar(1, 1)}\n`; // top of the ladder — nothing further to show progress toward
+    }
+    if (hit && !was) t += '🎯 Weekly goal reached! Keep going — every extra XP still climbs the ladder.\n';
     else if (hit) t += '🎯 Weekly goal reached. Extra XP still raises your level.\n';
     else {
       const gap = tgt - wk;
       const rd = s.xpQuiz > 0 ? Math.ceil(gap / s.xpQuiz) : 0;
       t += `${gap} XP to your weekly goal` + (rd ? ` (about ${rd} more round${rd > 1 ? 's' : ''} at this pace)` : '') + '\n';
     }
-    const li = levelIndex(wk);
-    const lb = levelIndex(s.xp0);
-    const L = LEVELS[li];
     t += `\nYour weekly XP puts you at <b>${esc(L.name)}</b> level. ${esc(L.name)} ${esc(L.blurb)}.\n`;
     if (li < lb) t += '🎉 New level unlocked!\n';
-    t += li > 0 ? `Next level: ??? · ${LEVELS[li - 1].min - wk} XP to go\n` : 'You reached the top level this week.\n';
+    t += nextMin ? `Next level: ??? · ${nextMin - wk} XP to go\n` : 'You reached the top level this week.\n';
     if (cfg.leaderboard) t += '\n' + boardText(s.key);
     return t;
   }
