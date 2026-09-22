@@ -213,6 +213,75 @@ function fakeBot() {
     assert(lowMaxCfg.warnings.some((w) => /top level.*unreachable|unreachable.*top level/i.test(w) || /below the top level/i.test(w)), 'a too-low LASER_QUIZ_MAX_XP should produce a startup warning');
   }
 
+  // --- weekly board: ranked by weekGain (XP gained since Monday), separate from the
+  // all-time mastery total. A user whose stored "week" doesn't match the current week must
+  // read as zero here, not leak a stale previous-week value. ---
+  {
+    const wLq = createLaserQuiz(fakeBot(), { env });
+    const WI = wLq._internals;
+    const wkey = WI.userKey(90005);
+    WI.awardMastery(wkey, 'laser-a', 30);
+    WI.awardMastery(wkey, 'laser-b', 20); // total weekGain should be 30+20=50 this week
+    let wb = WI.weeklyBoard(wkey);
+    assert(wb.rows.some((r) => r.k === wkey && r.xp === 50), 'weeklyBoard should reflect this week\'s total gain (30+20)');
+    // simulate a stale previous-week record by rewriting the stored "week" directly
+    const u = WI.touchUser(wkey);
+    u.week = '2000-W01';
+    wb = WI.weeklyBoard(wkey);
+    assert(!wb.rows.some((r) => r.k === wkey), 'a user whose stored week is not the current week must not appear in weeklyBoard');
+    wLq.shutdown();
+  }
+
+  // --- LASER_QUIZ_RESET_AFTER: a past reset date wipes bestByLaser ONCE, the next time the
+  // user is touched, then behaves normally (no re-wipe on subsequent touches). ---
+  {
+    const resetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lq-reset-'));
+    const preLq = createLaserQuiz(fakeBot(), { env: { ...env, QUIZ_DATA_DIR: resetDir } });
+    const PI = preLq._internals;
+    const rkey = PI.userKey(90006);
+    PI.awardMastery(rkey, 'laser-a', 42);
+    assert.strictEqual(PI.masteryOf(PI.touchUser(rkey)), 42, 'sanity check before the reset config is applied');
+    preLq.shutdown();
+
+    const pastDate = '2000-01-01';
+    const postLq = createLaserQuiz(fakeBot(), { env: { ...env, QUIZ_DATA_DIR: resetDir, LASER_QUIZ_RESET_AFTER: pastDate } });
+    const QI = postLq._internals;
+    assert.strictEqual(QI.masteryOf(QI.touchUser(rkey)), 0, 'mastery must be wiped once a past LASER_QUIZ_RESET_AFTER date is reached');
+    assert.deepStrictEqual(QI.touchUser(rkey).bestByLaser, {}, 'bestByLaser must be emptied by the reset');
+
+    QI.awardMastery(rkey, 'laser-b', 20);
+    assert.strictEqual(QI.masteryOf(QI.touchUser(rkey)), 20, 'mastery earned after the reset should accumulate normally');
+    QI.awardMastery(rkey, 'laser-c', 15);
+    assert.strictEqual(QI.masteryOf(QI.touchUser(rkey)), 35, 'a second touch under the same reset epoch must not wipe again');
+    postLq.shutdown();
+
+    // a malformed date should warn and be ignored, not silently mis-parse
+    const badCfg = _test.readConfig({ ...env, LASER_QUIZ_RESET_AFTER: 'not-a-date' });
+    assert.strictEqual(badCfg.resetAfter, null, 'a malformed LASER_QUIZ_RESET_AFTER must not be applied');
+    assert(badCfg.warnings.some((w) => /LASER_QUIZ_RESET_AFTER/.test(w)), 'a malformed LASER_QUIZ_RESET_AFTER should produce a startup warning');
+  }
+
+  // --- /leaderboard and /weeklyboard commands ---
+  {
+    const cmdBot = fakeBot();
+    const cmdLq = createLaserQuiz(cmdBot, { env });
+    const CI = cmdLq._internals;
+    const cmdUid = 90007;
+    CI.awardMastery(CI.userKey(cmdUid), 'laser-a', 40);
+
+    assert.strictEqual(cmdLq.handleCommand({ text: '/leaderboard', from: { id: cmdUid }, chat: { id: cmdUid } }), true);
+    await CI.idle();
+    assert(/Mastery leaderboard/.test(cmdBot.sent[cmdBot.sent.length - 1].text), '/leaderboard should show the all-time board');
+
+    assert.strictEqual(cmdLq.handleCommand({ text: '/weeklyboard', from: { id: cmdUid }, chat: { id: cmdUid } }), true);
+    await CI.idle();
+    assert(/top scorers/.test(cmdBot.sent[cmdBot.sent.length - 1].text), '/weeklyboard should show the weekly board');
+
+    // both must fall through to false for unrelated text, same as /lasers
+    assert.strictEqual(cmdLq.handleCommand({ text: 'hello', from: { id: cmdUid }, chat: { id: cmdUid } }), false);
+    cmdLq.shutdown();
+  }
+
   // --- full quiz flow through the real UI/session layer, always answering correctly ---
   const uid = 42;
   const cb = (data) => ({ id: 'q', from: { id: uid }, message: { chat: { id: uid }, message_id: 7 }, data });

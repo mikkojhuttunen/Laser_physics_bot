@@ -1,4 +1,6 @@
-# Laser types quiz: wiring guide
+# Laser quiz: wiring guide
+
+Commands: `/lasers` (play a round), `/leaderboard` (all-time top 10 by total mastery), `/weeklyboard` (this week's top 10 by mastery XP gained since Monday). All three go through the same `handleCommand()`/`handleCallback()` pair below — no separate wiring needed per command.
 
 ## Files
 
@@ -46,6 +48,7 @@ Also add `/lasers` to your `setMyCommands` list.
 | `LEADERBOARD_VISIBLE` | off | Show the anonymous all-time top 10 after each quiz. Needs `WEEKLY_XP_ENABLED`; otherwise it is ignored with a startup warning. |
 | `LASER_QUIZ_MAX_XP` | 1000 | Ceiling on TOTAL mastery XP shown/leveled from — rounds down the true achievable max (e.g. 1002 with default scoring) to a clean configured number. Only the total is capped, never individual per-laser bests. `0` = uncapped. Keep this at or below the top level's `min` in `laser_quiz_names.js` (a startup warning fires if it's set lower, since the top level(s) would become unreachable) and at or below the true achievable 100% total (see the `pointsPerQuestion` comment in `readConfig()`), or a perfect player could never actually reach it. |
 | `LASER_QUIZ_DAILY_XP_CAP` | 300 | Max mastery XP a student can GAIN per day (anti-cram, not anti-replay — replays of an already-mastered laser cost nothing to begin with). `0` = no cap. |
+| `LASER_QUIZ_RESET_AFTER` | unset | `YYYY-MM-DD` (in `QUIZ_TZ` local time). Once "today" reaches this date, each student's `bestByLaser` (and therefore mastery total, level, and both leaderboards) is wiped **once**, the next time they use the bot — e.g. set it to a new course's start date to give a new cohort a clean slate without deleting `laser_xp.json` by hand. Unset (default) = mastery never resets on its own. Does **not** touch `laser_quiz_log.jsonl`, so past rounds stay available to `/laserstats` regardless. |
 | `LASER_QUIZ_POINTS_PER_QUESTION` | 6 | XP for a fully-correct answer, before the streak bonus. |
 | `LASER_QUIZ_STREAK_MIN` | 3 | Perfect answers in a row before the streak bonus kicks in. |
 | `LASER_QUIZ_STREAK_BONUS` | 3 | Live-quiz bonus XP per perfect answer once the streak threshold is hit. Counts toward mastery, kept small by default so it doesn't meaningfully distort a laser's banked best. |
@@ -66,15 +69,23 @@ Flag behaviour:
 
 ## Mastery model
 
-Mastery is **not** a running total of everything ever earned. For each laser, only your **best-ever round score** counts; total mastery = sum of your best score per laser, across every laser you've played. There is no weekly (or any) reset — a personal best, once banked, is permanent.
+Mastery is **not** a running total of everything ever earned. For each laser, only your **best-ever round score** counts; total mastery = sum of your best score per laser, across every laser you've played. Mastery does not reset on its own — a personal best, once banked, is permanent — unless you set `LASER_QUIZ_RESET_AFTER` (see the table above), which wipes it exactly once, on a date you choose.
 
 Practical effect: replaying a laser you've already aced adds nothing (a worse round never lowers the stored best; a matching or worse round is simply not a new best). The only way to raise your total is to improve on a laser you haven't yet maxed, or to play a laser for the first time. Reaching the top of the level ladder therefore genuinely requires close to 100% correct on every laser at least once — grinding one easy laser repeatedly does not substitute for that.
 
 The streak bonus (`LASER_QUIZ_STREAK_BONUS`) counts toward a round's mastery-candidate score, same as everything else earned during that round. Its default is kept deliberately small precisely because of this: a hot streak carried over from an earlier laser in the same sitting can nudge a laser's banked best a little higher than a cold first-ever attempt would, and a small bonus value keeps that effect minor rather than a meaningful distortion.
 
+## Two leaderboards
+
+`/leaderboard` — all-time, ranked by total mastery. This is the one shown automatically after each completed round too (if `LEADERBOARD_VISIBLE` is on). Only resets if `LASER_QUIZ_RESET_AFTER` fires.
+
+`/weeklyboard` — ranked by `weekGain`, the mastery XP a student has actually banked (i.e. genuine personal-best improvements, not just points scored) since Monday. This one **always** resets every ISO week regardless of `LASER_QUIZ_RESET_AFTER` — it's a rolling "who's improved the most this week" view, a different question from "who has mastered the most overall."
+
+Both need `WEEKLY_XP_ENABLED` + `QUIZ_SALT`, and both need `LEADERBOARD_VISIBLE` — without it, `/leaderboard` and `/weeklyboard` reply "The leaderboard isn't turned on for this course" rather than showing rankings.
+
 ## What is stored
 
-- `laser_xp.json`: per user an HMAC of the Telegram ID (never the raw ID), an alias, and `bestByLaser` — a map of laser id to that laser's best-ever round score. Total mastery is the sum of `bestByLaser`'s values, computed on read, not stored separately. `day`/`dayGain` track today's mastery-gain cap only, not mastery itself.
+- `laser_xp.json`: per user an HMAC of the Telegram ID (never the raw ID), an alias, and `bestByLaser` — a map of laser id to that laser's best-ever round score. Total mastery is the sum of `bestByLaser`'s values (rounded down to `LASER_QUIZ_MAX_XP`), computed on read, not stored separately. `day`/`dayGain` track today's mastery-gain cap; `week`/`weekGain` track this week's gain for `/weeklyboard`; `resetApplied` records which `LASER_QUIZ_RESET_AFTER` date (if any) has already wiped this user, so a past reset date doesn't re-wipe on every touch. None of these gain/reset-tracking fields affect mastery itself.
 - `laser_quiz_log.jsonl`: `{ts, u (hashed), laser, step, pts, perfect}` per answered question, plus one `{..., kind:"round", pts, max, xp, isNewBest, masteryDelta}` event per completed laser. `masteryDelta` is what was actually banked (0 unless `isNewBest` is true) — sum that, not `xp`, for an accurate "total mastery gained" figure; see `laserStats_fys501.js` / `/laserstats`.
 - Students only ever see alias plus their mastery total. The level ladder is never sent in full; the next level shows as `???`.
 

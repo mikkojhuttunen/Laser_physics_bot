@@ -1,6 +1,6 @@
 'use strict';
 /**
- * Laser types quiz (/lasers) for the FYS.501 Telegram bot.
+ * Laser quiz (/lasers, /leaderboard, /weeklyboard) for the FYS.501 Telegram bot.
  *
  * - Zero LLM calls: questions come from laser_types.json, grading is done in code.
  * - Button-only UI (inline keyboards); one message is edited in place per laser.
@@ -9,19 +9,30 @@
  *
  * Mastery model: for each laser, only your BEST-ever round score counts, never the sum of
  * every attempt. Total mastery = sum of your best score per laser, across every laser you've
- * played. There is no weekly reset. This means reaching the top of the level ladder genuinely
- * requires close to 100% on every laser at least once — replaying a laser you've already
- * aced doesn't add anything, only improving on a laser you did worse on does. The streak
- * bonus (below) counts toward a round's mastery-candidate score, same as everything else in
- * that round — its default is kept deliberately small (LASER_QUIZ_STREAK_BONUS=3) precisely
- * so that a hot streak carried over from an earlier laser in the same session only nudges a
- * laser's banked best a little, rather than meaningfully distorting it.
+ * played. This never resets on its own (see LASER_QUIZ_RESET_AFTER for a manual, one-time
+ * reset, e.g. for a new course run). This means reaching the top of the level ladder
+ * genuinely requires close to 100% on every laser at least once — replaying a laser you've
+ * already aced doesn't add anything, only improving on a laser you did worse on does. The
+ * streak bonus (below) counts toward a round's mastery-candidate score, same as everything
+ * else in that round — its default is kept deliberately small (LASER_QUIZ_STREAK_BONUS=3)
+ * precisely so that a hot streak carried over from an earlier laser in the same session only
+ * nudges a laser's banked best a little, rather than meaningfully distorting it.
+ *
+ * Two leaderboards, both student-facing via /leaderboard and /weeklyboard, and both also
+ * shown automatically after each completed round: the all-time one (board/boardText, ranked
+ * by total mastery) and a weekly one (weeklyBoard/weeklyBoardText, ranked by weekGain --
+ * mastery XP actually gained since Monday, resetting every ISO week regardless of
+ * LASER_QUIZ_RESET_AFTER).
  *
  * Env vars (all optional):
  *   WEEKLY_XP_ENABLED          collect mastery scores (needs QUIZ_SALT)         default off
  *   LEADERBOARD_VISIBLE        show the all-time top 10 (needs WEEKLY_XP_ENABLED) default off
  *   LASER_QUIZ_MAX_XP          ceiling on TOTAL mastery, 0 = uncapped               default 1000
  *   LASER_QUIZ_DAILY_XP_CAP    max mastery XP a student can GAIN per day, 0 = no cap  default 300
+ *   LASER_QUIZ_RESET_AFTER     YYYY-MM-DD; once reached, wipes each student's mastery ONCE,
+ *                              the next time they use the bot (e.g. set to a new course's
+ *                              start date). Unset = never resets. Leaves laser_quiz_log.jsonl
+ *                              untouched, so /laserstats history is unaffected.  default unset
  *   LASER_QUIZ_POINTS_PER_QUESTION  XP for a fully-correct answer (before streak bonus)  default 6
  *   LASER_QUIZ_STREAK_MIN      perfect answers in a row before the streak bonus kicks in  default 3
  *   LASER_QUIZ_STREAK_BONUS    bonus XP per perfect answer once streak >= STREAK_MIN, counts
@@ -108,8 +119,19 @@ function readConfig(env = process.env) {
     ttlMs: (intEnv(env.LASER_QUIZ_SESSION_TTL_MIN, 30) || 30) * 60000,
     log: env.LASER_QUIZ_LOG === undefined ? true : truthy(env.LASER_QUIZ_LOG),
     requireReview: truthy(env.LASER_QUIZ_REQUIRE_REVIEW),
+    // A calendar date (YYYY-MM-DD, in QUIZ_TZ local time), e.g. for a new course run:
+    // once "today" reaches this date, each student's bestByLaser (and therefore their
+    // mastery total, level, and leaderboard placement) is wiped ONCE, the next time they
+    // touch the bot -- a fresh start for a new cohort without deleting laser_xp.json by
+    // hand. Unset (default) = never resets. Does NOT touch laser_quiz_log.jsonl -- past
+    // rounds stay in the log for /laserstats regardless of this reset.
+    resetAfter: /^\d{4}-\d{2}-\d{2}$/.test(String(env.LASER_QUIZ_RESET_AFTER || '').trim())
+      ? String(env.LASER_QUIZ_RESET_AFTER).trim() : null,
     warnings: [],
   };
+  if (env.LASER_QUIZ_RESET_AFTER && !c.resetAfter) {
+    c.warnings.push(`LASER_QUIZ_RESET_AFTER "${env.LASER_QUIZ_RESET_AFTER}" is not a valid YYYY-MM-DD date -- ignored, mastery will not reset.`);
+  }
   if (c.weeklyXp && !c.salt) {
     c.warnings.push('WEEKLY_XP_ENABLED is on but QUIZ_SALT is missing: mastery tracking disabled.');
     c.weeklyXp = false;
@@ -353,18 +375,30 @@ function createLaserQuiz(bot, opts = {}) {
   }
 
   // Per user: alias, bestByLaser (laser id -> best-ever round XP for that laser — the
-  // permanent mastery record), and day/dayGain for the daily mastery-GAIN cap below.
-  // No week/weekly-reset fields: mastery never resets.
+  // permanent mastery record). day/dayGain gate the daily mastery-GAIN cap; week/weekGain
+  // track this week's gain for /weeklyboard only (mastery itself never resets weekly).
+  // resetApplied records which LASER_QUIZ_RESET_AFTER epoch (if any) has already wiped
+  // this user's bestByLaser, so a past reset date doesn't re-wipe on every touch.
   function touchUser(key) {
     const day = today();
+    const week = isoWeekOf(day);
     let u = store.data.users[key];
     if (!u) {
-      u = { alias: pickAlias(key), bestByLaser: {}, day, dayGain: 0 };
+      u = {
+        alias: pickAlias(key), bestByLaser: {}, day, dayGain: 0, week, weekGain: 0,
+        resetApplied: (cfg.resetAfter && day >= cfg.resetAfter) ? cfg.resetAfter : null,
+      };
       store.data.users[key] = u;
       store.dirty = true;
     }
     if (!u.bestByLaser) u.bestByLaser = {}; // defensive: pre-mastery-model records
     if (u.day !== day) { u.day = day; u.dayGain = 0; store.dirty = true; }
+    if (u.week !== week) { u.week = week; u.weekGain = 0; store.dirty = true; }
+    if (cfg.resetAfter && day >= cfg.resetAfter && u.resetApplied !== cfg.resetAfter) {
+      u.bestByLaser = {};
+      u.resetApplied = cfg.resetAfter;
+      store.dirty = true;
+    }
     return u;
   }
 
@@ -398,6 +432,7 @@ function createLaserQuiz(bot, opts = {}) {
     }
     u.bestByLaser[laserId] = candidateXp;
     u.dayGain += delta;
+    u.weekGain = (u.weekGain || 0) + delta;
     store.dirty = true;
     return { isNewBest: true, delta, capped: false, prevBest, masteryBefore, masteryAfter: masteryOf(u) };
   }
@@ -406,6 +441,21 @@ function createLaserQuiz(bot, opts = {}) {
     const rows = Object.entries(store.data.users)
       .map(([k, u]) => ({ k, alias: u.alias, xp: masteryOf(u) }))
       .filter((r) => r.xp > 0)
+      .sort((a, b) => b.xp - a.xp || a.alias.localeCompare(b.alias));
+    return { rows, top: rows.slice(0, 10), mi: rows.findIndex((r) => r.k === key) };
+  }
+
+  // Ranked by weekGain (mastery XP actually gained since Monday), not by total mastery --
+  // a different question from board() above ("who's improved the most this week" vs "who's
+  // mastered the most overall"). Filters on u.week === the current week rather than relying
+  // on touchUser() to have lazily reset every user first (it only resets the specific user
+  // being touched) -- otherwise a user who last played in a previous week would still show
+  // their stale weekGain here instead of correctly reading as zero this week.
+  function weeklyBoard(key) {
+    const week = isoWeekOf(today());
+    const rows = Object.entries(store.data.users)
+      .filter(([, u]) => u.week === week && (u.weekGain || 0) > 0)
+      .map(([k, u]) => ({ k, alias: u.alias, xp: u.weekGain }))
       .sort((a, b) => b.xp - a.xp || a.alias.localeCompare(b.alias));
     return { rows, top: rows.slice(0, 10), mi: rows.findIndex((r) => r.k === key) };
   }
@@ -446,8 +496,17 @@ function createLaserQuiz(bot, opts = {}) {
     return `🏆 <b>Mastery leaderboard</b>\n<pre>${esc(lines.join('\n'))}</pre>\nAnonymous names · all-time, best score per laser\n`;
   }
 
+  function weeklyBoardText(key) {
+    const { rows, top, mi } = weeklyBoard(key);
+    if (!rows.length) return "🏆 <b>This week's top scorers</b>\nNo mastery XP gained yet this week. Be the first!\n";
+    const fmt = (i, r) => `${String(i + 1).padStart(2)}. ${trunc(r.alias, 21).padEnd(21)} ${String(r.xp).padStart(4)}${r.k === key ? ' ←' : ''}`;
+    const lines = top.map((r, i) => fmt(i, r));
+    if (mi >= 10) { lines.push('   …'); lines.push(fmt(mi, rows[mi])); }
+    return `🏆 <b>This week's top scorers</b>\n<pre>${esc(lines.join('\n'))}</pre>\nAnonymous names · mastery XP gained since Monday, resets weekly\n`;
+  }
+
   function introText(s) {
-    let t = `🔬 <b>Laser types quiz</b>\n`;
+    let t = `🔬 <b>Laser quiz</b>\n`;
     if (masteryOn(s)) t += `Mastery XP: ${mastery(s)}\n`;
     t += `\nConsider lasers with <b>${esc(s.laser.gain)}</b> as gain.\n\n${s.steps.length} questions.`;
     return t;
@@ -645,6 +704,23 @@ function createLaserQuiz(bot, opts = {}) {
     await startSession(uid, msg.chat.id);
   }
 
+  // Standalone board views (/leaderboard, /weeklyboard) -- distinct from the board shown
+  // automatically after each quiz round, for a student who just wants to check rankings
+  // without playing. Same membership gate as /lasers itself.
+  async function onBoardCommand(msg, textFn) {
+    const uid = msg.from.id;
+    if (!(await allowed(uid))) {
+      await bot.sendMessage(msg.chat.id, 'The laser quiz is available to course members only.');
+      return;
+    }
+    if (!cfg.leaderboard) {
+      await bot.sendMessage(msg.chat.id, "The leaderboard isn't turned on for this course.");
+      return;
+    }
+    const key = cfg.salt ? userKey(uid) : null;
+    await bot.sendMessage(msg.chat.id, textFn(key), { parse_mode: 'HTML' });
+  }
+
   async function onCallback(q) {
     const uid = q.from.id;
     const chatId = q.message && q.message.chat.id;
@@ -733,9 +809,20 @@ function createLaserQuiz(bot, opts = {}) {
   // ----- public API -----
 
   function handleCommand(msg) {
-    if (!msg || typeof msg.text !== 'string' || !msg.from || !/^\/lasers(@\w+)?(\s|$)/i.test(msg.text)) return false;
-    enqueue(msg.from.id, () => onCommand(msg));
-    return true;
+    if (!msg || typeof msg.text !== 'string' || !msg.from) return false;
+    if (/^\/lasers(@\w+)?(\s|$)/i.test(msg.text)) {
+      enqueue(msg.from.id, () => onCommand(msg));
+      return true;
+    }
+    if (/^\/leaderboard(@\w+)?(\s|$)/i.test(msg.text)) {
+      enqueue(msg.from.id, () => onBoardCommand(msg, boardText));
+      return true;
+    }
+    if (/^\/weeklyboard(@\w+)?(\s|$)/i.test(msg.text)) {
+      enqueue(msg.from.id, () => onBoardCommand(msg, weeklyBoardText));
+      return true;
+    }
+    return false;
   }
 
   function handleCallback(q) {
@@ -751,7 +838,7 @@ function createLaserQuiz(bot, opts = {}) {
     hasSession: (uid) => !!getSession(uid),
     shutdown: () => { if (store) store.flush(); },
     _internals: {
-      sessions, userKey, touchUser, awardMastery, masteryOf, board,
+      sessions, userKey, touchUser, awardMastery, masteryOf, board, weeklyBoard,
       idle: () => Promise.all([...queues.values()]),
     },
   };

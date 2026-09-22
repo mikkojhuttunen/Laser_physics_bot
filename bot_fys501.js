@@ -1063,8 +1063,10 @@ const HELP_TEXT =
   "- /quiz chapter 2 (or /quiz 2.3) — same thing, as a command\n" +
   "- add a number for how many questions, e.g. \"quiz me on chapter 2, 10 questions\" or \"/quiz 2 10\"\n" +
   "- /mvquiz chapter 2 (or /mvquiz 2.3) — a \"select all that apply\" quiz: tap every letter that is correct, then Submit. Partial credit is given.\n\n" +
-  "Laser types:\n" +
-  "- /lasers — a quick round on common gain media (Nd:YAG, HeNe, diode, ...): level scheme, pump, lifetime and more\n\n" +
+  "Laser quiz:\n" +
+  "- /lasers — a quick round on common gain media (Nd:YAG, HeNe, diode, ...): level scheme, pump, lifetime and more\n" +
+  "- /leaderboard — all-time top scorers\n" +
+  "- /weeklyboard — top scorers this week\n\n" +
   "Usage:\n" +
   "- /usage — how many AI answers you have left today (quizzes, lecture links and commands are free)\n\n" +
   "Privacy:\n" +
