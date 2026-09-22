@@ -89,7 +89,13 @@ The diode laser entry takes a different approach: rather than skipping the quest
 1. Every laser has `"reviewed": false`. Check each number and note in `laser_types.json`, then set it to `true` (and optionally set `LASER_QUIZ_REQUIRE_REVIEW=true`).
 2. Startup validation throws with a list of problems if a laser is malformed (missing note, too few distractors, unknown pump key, lifetime bucket not in `lifetimeBuckets`, and so on).
 3. Adding a laser: append an object to `lasers` following an existing entry. You need at least 4 lasers, because the "which transition" distractors come from other lasers.
-4. This patch adds four new lasers, all `"reviewed": false`: **Ruby** (fills the one real gap in the level-scheme coverage — it's the only pure 3-level laser in the set), **Er:YAG** (2940 nm, self-terminating transition — read `notes.level` and `notes.lifetime` carefully, this one doesn't fit the simple framework cleanly), **Thulium/Tm:YAG** (~2010 nm, eye-safe, cross-relaxation), and **Diode** (the electrically-pumped semiconductor that pumps most of the other lasers in this set — no pump-wavelength step, and its own level-scheme answer is "N/A").
+4. This patch adds four new lasers, all `"reviewed": false`: **Ruby** (fills the one real gap in the level-scheme coverage — it's the only pure 3-level laser in the set), **Er:YAG** (2940 nm, self-terminating transition — its level-scheme step is skipped entirely; see "Freeform nuance questions" below), **Thulium/Tm:YAG** (~2010 nm, eye-safe, cross-relaxation), and **Diode** (the electrically-pumped semiconductor that pumps most of the other lasers in this set — no pump-wavelength step, and its own level-scheme answer is "N/A").
+
+## Freeform nuance questions
+
+A laser can carry an `extraQuestions` array for a laser-specific wrinkle that doesn't fit any of the standard fields above. Each entry supplies its own `id`, `title` (shown in place of the usual `STEP_TITLES` lookup), `q`, `multi`, `options` (`{t, ok}` pairs, 2–6 of them), and `note`. These are inserted right after the lifetime step.
+
+Er:YAG uses this instead of the level-scheme question: its 2940 nm transition is self-terminating (the lower laser level outlives the upper one, the opposite of the usual 3-level/4-level assumption), which a 3-option multiple-choice doesn't represent well. Its `level` field is `null` (skipping the level-scheme step, the same nullable pattern the diode entry introduced) and `extraQuestions` carries a dedicated multi-select question — "which of the following are true about this transition?" — instead. That's a template for any future laser whose physics doesn't fit the standard fields cleanly.
 
 ## Tuning notes
 

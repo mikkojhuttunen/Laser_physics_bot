@@ -140,6 +140,18 @@ function validateData(d) {
     if (l.lifetime) {
       if (!Array.isArray(d.lifetimeBuckets) || !d.lifetimeBuckets.includes(l.lifetime.bucket)) err.push(`${w}: lifetime.bucket not in lifetimeBuckets`);
     }
+    (l.extraQuestions || []).forEach((eq, i) => {
+      const ew = `${w}: extraQuestions[${i}]`;
+      if (!eq.id) err.push(`${ew}: missing id`);
+      if (!eq.q) err.push(`${ew}: missing question text`);
+      if (!eq.note) err.push(`${ew}: missing note`);
+      if (!Array.isArray(eq.options) || eq.options.length < 2 || eq.options.length > 6) err.push(`${ew}: needs 2-6 options`);
+      else {
+        if (!eq.options.some((o) => o.ok)) err.push(`${ew}: no correct option`);
+        if (!eq.options.some((o) => !o.ok)) err.push(`${ew}: no wrong option`);
+        if (!eq.multi && eq.options.filter((o) => o.ok).length !== 1) err.push(`${ew}: single-choice needs exactly one correct option`);
+      }
+    });
     const nk = ['pump', 'lasing', 'transition', 'modes', 'power', 'apps'];
     if (l.level !== null && l.level !== undefined) nk.push('level');
     if (l.pumpWavelength) nk.push('pumpWavelength');
@@ -175,6 +187,18 @@ function buildSteps(l, all, rng = Math.random) {
       id: 'lifetime', multi: false, q: 'What is the approximate upper-state (metastable) lifetime of the gain medium?',
       options: sh([opt(l.lifetime.bucket, true), ...wrongBuckets.map((b) => opt(b, false))]),
       note: l.notes.lifetime,
+    });
+  }
+  // Freeform slot for a laser-specific nuance that doesn't fit the standard fields above
+  // (e.g. Er:YAG's self-terminating transition). Each entry supplies its own title/question/
+  // options/note, so no changes to STEP_TITLES or validateData's field list are needed to add one.
+  if (Array.isArray(l.extraQuestions)) {
+    l.extraQuestions.forEach((eq) => {
+      steps.push({
+        id: eq.id, multi: !!eq.multi, q: eq.q, title: eq.title,
+        options: sh(eq.options.map((o) => opt(o.t, o.ok))),
+        note: eq.note,
+      });
     });
   }
   if (l.pumpWavelength) {
@@ -356,7 +380,7 @@ function createLaserQuiz(bot, opts = {}) {
     const st = s.steps[s.si];
     let t = `🔬 <b>${esc(s.laser.name)}</b> · question ${s.si + 1}/${s.steps.length}`;
     if (weeklyOn(s)) t += ` · weekly XP ${weekly(s)}/${cfg.target}`;
-    t += `\n<i>${STEP_TITLES[st.id]}</i>\n\n${esc(st.q)}\n\n`;
+    t += `\n<i>${esc(st.title || STEP_TITLES[st.id])}</i>\n\n${esc(st.q)}\n\n`;
     st.options.forEach((o, i) => {
       let mark = '';
       if (s.answered) {

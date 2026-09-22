@@ -30,9 +30,10 @@ assert.strictEqual(_test.levelIndex(999), 1);
 
 for (const l of DATA.lasers) {
   const steps = _test.buildSteps(l, DATA.lasers);
-  // base 7 = pump, level, lasing, transition, modes, power, apps; level is dropped if null/undefined (e.g. diode)
+  // base 7 = pump, level, lasing, transition, modes, power, apps; level is dropped if null/undefined (e.g. diode, er-yag)
   const base = (l.level === null || l.level === undefined) ? 6 : 7;
-  assert.strictEqual(steps.length, base + (l.pumpWavelength ? 1 : 0) + (l.lifetime ? 1 : 0), `${l.id} step count`);
+  const extra = (l.extraQuestions || []).length;
+  assert.strictEqual(steps.length, base + (l.pumpWavelength ? 1 : 0) + (l.lifetime ? 1 : 0) + extra, `${l.id} step count`);
   steps.forEach((s) => {
     assert(s.options.some((o) => o.ok), `${l.id}/${s.id}: no correct option`);
     assert(s.options.some((o) => !o.ok), `${l.id}/${s.id}: no wrong option`);
@@ -61,6 +62,19 @@ for (const l of DATA.lasers) {
   assert(levelStep, 'diode should still get a level-scheme step (answer: N/A)');
   assert(/N\/A/.test(levelStep.options.find((o) => o.ok).t), 'diode\'s correct level answer should be the N/A option');
   assert(!steps.find((s) => s.id === 'pumpWavelength'), 'diode has no optical pump wavelength, so that step should be skipped');
+}
+// er:yag: level-scheme step is skipped outright (self-terminating transition doesn't fit the 3/4-level picture),
+// replaced by a dedicated nuance question
+{
+  const er = DATA.lasers.find((l) => l.id === 'er-yag');
+  const steps = _test.buildSteps(er, DATA.lasers);
+  assert(!steps.find((s) => s.id === 'level'), 'er-yag should skip the level-scheme step');
+  const nuance = steps.find((s) => s.id === 'selfTerminating');
+  assert(nuance, 'er-yag should have the self-terminating nuance question');
+  assert.strictEqual(nuance.title, 'Self-terminating transition');
+  assert(nuance.multi, 'nuance question should be multi-select');
+  const g = _test.grade(nuance, nuance.options.map((o, i) => (o.ok ? i : -1)).filter((i) => i >= 0));
+  assert.strictEqual(g.pts, 10, 'selecting exactly the correct options should score full marks');
 }
 
 const step = { options: [{ ok: true }, { ok: true }, { ok: false }, { ok: false }] };

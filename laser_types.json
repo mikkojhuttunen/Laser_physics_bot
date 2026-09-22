@@ -588,7 +588,7 @@
           "F"
         ]
       },
-      "level": 2,
+      "level": null,
       "pumpWavelength": {
         "ok": "~750–800 nm (Xe flashlamp bands; ~790 nm for diode/Ti:sapphire pumping)",
         "no": [
@@ -644,15 +644,45 @@
       },
       "notes": {
         "pump": "A xenon flashlamp's output overlaps Er:YAG's absorption bands around 500, 650 and 750–800 nm; diode or Ti:sapphire pumping near 790 nm is also used.",
-        "level": "Structurally the upper (⁴I₁₁/₂) and lower (⁴I₁₃/₂) laser levels are distinct from the ⁴I₁₅/₂ ground state, so it's labeled 4-level here — but see the lifetime note: this transition is unusually self-terminating, which the simple 3/4-level picture doesn't capture.",
         "pumpWavelength": "The absorption bands are broad enough to tolerate either flashlamp or diode/Ti:sapphire pumping without precise wavelength matching.",
         "lasing": "2940 nm falls right in a strong water-absorption peak, which is exactly why it's so effective for tissue ablation.",
         "transition": "Both levels belong to the ⁴I manifold family of Er³⁺, one level closer to the ground state than the ⁴I9/2 or ⁴S3/2 levels the flashlamp directly excites.",
         "modes": "Continuous-wave operation is possible but requires high Er³⁺ doping so that ion-ion cross-relaxation keeps recycling the lower level fast enough.",
         "power": "Energy per pulse is modest compared to Nd:YAG because of the self-terminating bottleneck; scaling further usually means higher doping and cross-relaxation, not just more pump power.",
         "apps": "2940 nm is the strongest water absorption band of any common laser line, which drives essentially all of its medical uses.",
-        "lifetime": "In heavily-doped crystals the upper level (⁴I₁₁/₂) lifetime is ~0.23 ms — but the lower level (⁴I₁₃/₂) lives even longer, so the 2.94 µm transition is inherently self-terminating. High Er³⁺ doping and cross-relaxation/up-conversion between neighboring ions are what rescue continuous or high-rep-rate operation — a genuinely different failure mode than the simple 3-level/4-level framework used elsewhere in this quiz."
-      }
+        "lifetime": "In heavily-doped crystals the upper level (⁴I₁₁/₂) lifetime is ~0.23 ms. See the question above for why the number alone doesn't tell the full story here."
+      },
+      "extraQuestions": [
+        {
+          "id": "selfTerminating",
+          "title": "Self-terminating transition",
+          "multi": true,
+          "q": "The 2940 nm transition doesn't fit neatly into the usual 3-level/4-level picture. Which of the following are true about it? Select all that apply.",
+          "options": [
+            {
+              "t": "The lower laser level (⁴I₁₃/₂) actually lives longer than the upper level (⁴I₁₁/₂), so population piles up there and quenches the gain — the transition is self-terminating",
+              "ok": true
+            },
+            {
+              "t": "Ion–ion cross-relaxation / up-conversion between neighboring Er³⁺ ions is what recycles the lower level fast enough to sustain CW or high-rep-rate output",
+              "ok": true
+            },
+            {
+              "t": "The lower laser level is the ground state, making this a pure 3-level system like ruby",
+              "ok": false
+            },
+            {
+              "t": "The upper level empties faster than the lower level, exactly like a textbook 4-level laser",
+              "ok": false
+            },
+            {
+              "t": "Reaching population inversion requires cryogenic cooling of the crystal",
+              "ok": false
+            }
+          ],
+          "note": "Structurally, both laser levels sit above the ground state (⁴I₁₅/₂), so a simple diagram would label this \"4-level.\" But that label assumes the lower level always empties fast — here it's the opposite: the lower level (⁴I₁₃/₂) outlives the upper one (⁴I₁₁/₂), so every emitted photon leaves behind an ion that blocks further gain until something removes it. High Er³⁺ doping makes ion-ion cross-relaxation and up-conversion fast enough to clear the bottleneck, which is why real Er:YAG lasers work at all — CW operation in particular depends on it."
+        }
+      ]
     },
     {
       "id": "thulium",
