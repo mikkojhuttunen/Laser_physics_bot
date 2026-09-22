@@ -179,6 +179,7 @@ const quizGenerator = require("./quizGenerator_fys501");
 const mvQuizGenerator = require("./multivalueQuizGenerator_fys501");
 const { createLaserQuiz } = require("./laserQuiz");
 const { isCourseMember } = require("./membership");
+const laserStatsCommands = require("./laserStatsCommands_fys501");
 const pendingAdmin = require("./pendingAdmin_fys501");
 const corpusLoader = require("./corpusLoader_fys501");
 const lectureLinks = require("./lectureLinks_fys501");
@@ -1171,6 +1172,22 @@ async function handleUpdate(update) {
         sendDocument: tgSendDocument,
       })
       .catch((e) => console.error("/quizstats crashed:", e.message));
+  }
+
+  // /laserstats (ADMIN_USER_IDS only): same admin-gating pattern as /quizstats above,
+  // reads laserQuiz.js's own log file (laserQuiz.config.dataDir) rather than a separate store.
+  const laserStatsMatch = text.match(/^\/laserstats(@\S+)?\b\s*(.*)$/i);
+  if (laserStatsMatch) {
+    return laserStatsCommands
+      .handleLaserStatsCommand({
+        chatId,
+        userId,
+        arg: laserStatsMatch[2],
+        dataDir: laserQuiz.config.dataDir,
+        sendText: (c, t) => sendMessage(c, t, message.message_id),
+        sendDocument: tgSendDocument,
+      })
+      .catch((e) => console.error("/laserstats crashed:", e.message));
   }
 
   // ---- dev-only data-source introspection (v1.5.0) — not in /help/start,

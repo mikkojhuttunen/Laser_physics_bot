@@ -351,7 +351,22 @@ function createLaserQuiz(bot, opts = {}) {
 
   function logEvent(s, stepId, g) {
     if (!wantLog || !s.key) return;
-    const rec = { ts: new Date().toISOString(), u: s.key, laser: s.laser.id, step: stepId, pts: g.pts, perfect: g.perfect };
+    const rec = { ts: new Date().toISOString(), u: s.key, kind: 'step', laser: s.laser.id, step: stepId, pts: g.pts, perfect: g.perfect };
+    fs.appendFile(logFile, JSON.stringify(rec) + '\n', (e) => { if (e) logErr(e); });
+  }
+
+  // One event per completed laser (all steps answered), distinct from the
+  // per-step events above. Needed to count "rounds played" and total applied
+  // XP cleanly — laser_xp.json's xp field resets every ISO week (it's for
+  // leveling, not lifetime totals), so it can't answer "how much XP has been
+  // earned in total" on its own. See laserStats_fys501.js / /laserstats.
+  function logRound(s) {
+    if (!wantLog || !s.key) return;
+    const pts = s.pts.reduce((a, b) => a + b, 0);
+    const rec = {
+      ts: new Date().toISOString(), u: s.key, kind: 'round', laser: s.laser.id,
+      steps: s.steps.length, pts, max: s.steps.length * 10, perfect: s.pts.filter((p) => p === 10).length, xp: s.xpQuiz,
+    };
     fs.appendFile(logFile, JSON.stringify(rec) + '\n', (e) => { if (e) logErr(e); });
   }
 
@@ -513,13 +528,14 @@ function createLaserQuiz(bot, opts = {}) {
     s.lastResult = null;
     s.xpQuiz = 0;
     s.pts = [];
+    s.roundLogged = false;
     s.xp0 = weeklyOn(s) ? weekly(s) : 0;
   }
 
   async function startSession(uid, chatId) {
     const s = {
       uid, chatId, key: cfg.salt ? userKey(uid) : null, msgId: null, bag: [], laser: null, steps: [],
-      si: -1, sel: [], answered: false, lastResult: null, xpQuiz: 0, xp0: 0, pts: [], streak: 0, sessionXp: 0, last: Date.now(),
+      si: -1, sel: [], answered: false, lastResult: null, xpQuiz: 0, xp0: 0, pts: [], streak: 0, sessionXp: 0, roundLogged: false, last: Date.now(),
     };
     sessions.set(uid, s);
     nextLaser(s);
@@ -631,6 +647,10 @@ function createLaserQuiz(bot, opts = {}) {
       s.sel = [];
       s.answered = false;
       s.lastResult = null;
+      if (s.si >= s.steps.length && !s.roundLogged) {
+        s.roundLogged = true;
+        logRound(s);
+      }
       await present(s, true);
       return;
     }
