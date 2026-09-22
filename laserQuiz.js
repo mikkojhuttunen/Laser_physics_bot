@@ -9,20 +9,22 @@
  *
  * Mastery model: for each laser, only your BEST-ever round score counts, never the sum of
  * every attempt. Total mastery = sum of your best score per laser, across every laser you've
- * played. This never resets on its own (see LASER_QUIZ_RESET_AFTER for a manual, one-time
- * reset, e.g. for a new course run). This means reaching the top of the level ladder
- * genuinely requires close to 100% on every laser at least once — replaying a laser you've
- * already aced doesn't add anything, only improving on a laser you did worse on does. The
- * streak bonus (below) counts toward a round's mastery-candidate score, same as everything
- * else in that round — its default is kept deliberately small (LASER_QUIZ_STREAK_BONUS=3)
- * precisely so that a hot streak carried over from an earlier laser in the same session only
- * nudges a laser's banked best a little, rather than meaningfully distorting it.
+ * played. This never resets on its own by default -- see LASER_QUIZ_RESET_AFTER for a
+ * manual, one-time reset (e.g. for a new course run) and LASER_QUIZ_RESET_ANNUALLY for a
+ * standing rule that wipes it automatically every calendar year instead. This means reaching
+ * the top of the level ladder genuinely requires close to 100% on every laser at least once
+ * — replaying a laser you've already aced doesn't add anything, only improving on a laser
+ * you did worse on does. The streak bonus (below) counts toward a round's mastery-candidate
+ * score, same as everything else in that round — its default is kept deliberately small
+ * (LASER_QUIZ_STREAK_BONUS=3) precisely so that a hot streak carried over from an earlier
+ * laser in the same session only nudges a laser's banked best a little, rather than
+ * meaningfully distorting it.
  *
  * Two leaderboards, both student-facing via /leaderboard and /weeklyboard, and both also
  * shown automatically after each completed round: the all-time one (board/boardText, ranked
  * by total mastery) and a weekly one (weeklyBoard/weeklyBoardText, ranked by weekGain --
  * mastery XP actually gained since Monday, resetting every ISO week regardless of
- * LASER_QUIZ_RESET_AFTER).
+ * LASER_QUIZ_RESET_AFTER / LASER_QUIZ_RESET_ANNUALLY).
  *
  * Env vars (all optional):
  *   WEEKLY_XP_ENABLED          collect mastery scores (needs QUIZ_SALT)         default off
@@ -33,6 +35,10 @@
  *                              the next time they use the bot (e.g. set to a new course's
  *                              start date). Unset = never resets. Leaves laser_quiz_log.jsonl
  *                              untouched, so /laserstats history is unaffected.  default unset
+ *   LASER_QUIZ_RESET_ANNUALLY  wipe each student's mastery automatically once a calendar
+ *                              year, the first time they use the bot after the year rolls
+ *                              over (QUIZ_TZ local time) -- a standing rule, unlike the
+ *                              one-off RESET_AFTER above; the two can be combined  default off
  *   LASER_QUIZ_POINTS_PER_QUESTION  XP for a fully-correct answer (before streak bonus)  default 6
  *   LASER_QUIZ_STREAK_MIN      perfect answers in a row before the streak bonus kicks in  default 3
  *   LASER_QUIZ_STREAK_BONUS    bonus XP per perfect answer once streak >= STREAK_MIN, counts
@@ -124,9 +130,15 @@ function readConfig(env = process.env) {
     // mastery total, level, and leaderboard placement) is wiped ONCE, the next time they
     // touch the bot -- a fresh start for a new cohort without deleting laser_xp.json by
     // hand. Unset (default) = never resets. Does NOT touch laser_quiz_log.jsonl -- past
-    // rounds stay in the log for /laserstats regardless of this reset.
+    // rounds stay in the log for /laserstats regardless of this reset. Coexists with
+    // resetAnnually below -- a one-off custom date vs. a standing recurring rule.
     resetAfter: /^\d{4}-\d{2}-\d{2}$/.test(String(env.LASER_QUIZ_RESET_AFTER || '').trim())
       ? String(env.LASER_QUIZ_RESET_AFTER).trim() : null,
+    // When on, each student's bestByLaser is wiped automatically once a calendar year, the
+    // first time they touch the bot after the year rolls over (QUIZ_TZ local time) --
+    // functionally "resets at the end of the year" without needing to update a date by hand
+    // every year the way resetAfter does. Off by default.
+    resetAnnually: truthy(env.LASER_QUIZ_RESET_ANNUALLY),
     warnings: [],
   };
   if (env.LASER_QUIZ_RESET_AFTER && !c.resetAfter) {
@@ -378,14 +390,17 @@ function createLaserQuiz(bot, opts = {}) {
   // permanent mastery record). day/dayGain gate the daily mastery-GAIN cap; week/weekGain
   // track this week's gain for /weeklyboard only (mastery itself never resets weekly).
   // resetApplied records which LASER_QUIZ_RESET_AFTER epoch (if any) has already wiped
-  // this user's bestByLaser, so a past reset date doesn't re-wipe on every touch.
+  // this user's bestByLaser, so a past reset date doesn't re-wipe on every touch. year is
+  // tracked unconditionally (like day/week) but only acted on when resetAnnually is on,
+  // wiping bestByLaser once per real calendar-year change, never on a record's first touch.
   function touchUser(key) {
     const day = today();
     const week = isoWeekOf(day);
+    const year = day.slice(0, 4);
     let u = store.data.users[key];
     if (!u) {
       u = {
-        alias: pickAlias(key), bestByLaser: {}, day, dayGain: 0, week, weekGain: 0,
+        alias: pickAlias(key), bestByLaser: {}, day, dayGain: 0, week, weekGain: 0, year,
         resetApplied: (cfg.resetAfter && day >= cfg.resetAfter) ? cfg.resetAfter : null,
       };
       store.data.users[key] = u;
@@ -394,6 +409,17 @@ function createLaserQuiz(bot, opts = {}) {
     if (!u.bestByLaser) u.bestByLaser = {}; // defensive: pre-mastery-model records
     if (u.day !== day) { u.day = day; u.dayGain = 0; store.dirty = true; }
     if (u.week !== week) { u.week = week; u.weekGain = 0; store.dirty = true; }
+    if (!u.year) {
+      // First touch since the "year" field existed on this record: set a baseline without
+      // wiping, so shipping resetAnnually doesn't surprise-wipe everyone's existing mastery
+      // mid-year -- the recurring reset then applies naturally at the next real year change.
+      u.year = year;
+      store.dirty = true;
+    } else if (u.year !== year) {
+      if (cfg.resetAnnually) u.bestByLaser = {};
+      u.year = year;
+      store.dirty = true;
+    }
     if (cfg.resetAfter && day >= cfg.resetAfter && u.resetApplied !== cfg.resetAfter) {
       u.bestByLaser = {};
       u.resetApplied = cfg.resetAfter;
@@ -402,14 +428,29 @@ function createLaserQuiz(bot, opts = {}) {
     return u;
   }
 
+  // Read-only mirror of the reset checks in touchUser() above, for code paths (board(),
+  // weeklyBoard(), masteryOf()) that must show reset-aware numbers for EVERY user in the
+  // store, not just whichever one happens to be the current caller -- touchUser() only
+  // lazily wipes the single user it's given, so without this, /leaderboard could show a
+  // user's stale pre-reset total until THEY personally interact with the bot again after
+  // the reset boundary passes. Never mutates or writes to disk.
+  function effectiveBest(u) {
+    const day = today();
+    if (cfg.resetAfter && day >= cfg.resetAfter && u.resetApplied !== cfg.resetAfter) return {};
+    if (cfg.resetAnnually && u.year && u.year !== day.slice(0, 4)) return {};
+    return u.bestByLaser || {};
+  }
+
   // Capped at cfg.maxXp (0 = uncapped) so the displayed/level-driving total never exceeds a
   // clean, configurable ceiling even if the true achievable sum (from pointsPerQuestion,
   // streak bonus and the current laser count) lands slightly above it -- e.g. today's true
   // 100%-everything max is 1002, and this rounds that down to the configured 1000. Only the
   // TOTAL is capped; individual bestByLaser entries are stored uncapped and at full
-  // precision, so this is purely a display/leveling ceiling, not a scoring change.
+  // precision, so this is purely a display/leveling ceiling, not a scoring change. Reads
+  // through effectiveBest(), not u.bestByLaser directly, so a not-yet-physically-wiped stale
+  // record (see effectiveBest above) still reports correctly post-reset.
   const masteryOf = (u) => {
-    const raw = Object.values(u.bestByLaser).reduce((a, b) => a + b, 0);
+    const raw = Object.values(effectiveBest(u)).reduce((a, b) => a + b, 0);
     return cfg.maxXp > 0 ? Math.min(cfg.maxXp, raw) : raw;
   };
 

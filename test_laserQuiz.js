@@ -261,6 +261,46 @@ function fakeBot() {
     assert(badCfg.warnings.some((w) => /LASER_QUIZ_RESET_AFTER/.test(w)), 'a malformed LASER_QUIZ_RESET_AFTER should produce a startup warning');
   }
 
+  // --- LASER_QUIZ_RESET_ANNUALLY: bestByLaser wipes once per real calendar-year change, but
+  // only when the toggle is on, and never on a record's first-ever touch (no year to compare
+  // against yet). Simulated by rewriting the stored "year" field directly, same technique as
+  // the weekly-board stale-week test above. ---
+  {
+    // OFF (default): a year change must NOT wipe mastery
+    const offLq = createLaserQuiz(fakeBot(), { env });
+    const OI = offLq._internals;
+    const okey = OI.userKey(90008);
+    OI.awardMastery(okey, 'laser-a', 33);
+    OI.touchUser(okey).year = '2000'; // simulate "last touched in a past year"
+    assert.strictEqual(OI.masteryOf(OI.touchUser(okey)), 33, 'LASER_QUIZ_RESET_ANNUALLY off: a year change must not wipe mastery');
+    offLq.shutdown();
+
+    // ON: a year change wipes bestByLaser exactly once, not on every subsequent touch
+    const onLq = createLaserQuiz(fakeBot(), { env: { ...env, LASER_QUIZ_RESET_ANNUALLY: 'true' } });
+    const ANI = onLq._internals;
+    const akey = ANI.userKey(90009);
+    ANI.awardMastery(akey, 'laser-a', 33);
+    assert.strictEqual(ANI.masteryOf(ANI.touchUser(akey)), 33, 'sanity check before simulating a year change');
+    ANI.touchUser(akey).year = '2000'; // simulate "last touched in a past year"
+    assert.strictEqual(ANI.masteryOf(ANI.touchUser(akey)), 0, 'LASER_QUIZ_RESET_ANNUALLY on: a real year change must wipe mastery');
+    assert.deepStrictEqual(ANI.touchUser(akey).bestByLaser, {}, 'bestByLaser must be emptied by the annual reset');
+    ANI.awardMastery(akey, 'laser-b', 18);
+    assert.strictEqual(ANI.masteryOf(ANI.touchUser(akey)), 18, 'mastery earned after the annual reset should accumulate normally');
+    ANI.awardMastery(akey, 'laser-c', 5);
+    assert.strictEqual(ANI.masteryOf(ANI.touchUser(akey)), 23, 'a second touch in the same (new) year must not wipe again');
+    onLq.shutdown();
+
+    // A brand-new record's first-ever touch must establish a year baseline WITHOUT wiping,
+    // even with the toggle on -- there is nothing to compare against yet.
+    const freshLq = createLaserQuiz(fakeBot(), { env: { ...env, LASER_QUIZ_RESET_ANNUALLY: 'true' } });
+    const FI = freshLq._internals;
+    const fkey = FI.userKey(90010);
+    const r = FI.awardMastery(fkey, 'laser-a', 12); // first-ever touch happens inside awardMastery -> touchUser
+    assert.strictEqual(r.isNewBest, true, "a brand-new user's first round should still bank normally");
+    assert.strictEqual(FI.masteryOf(FI.touchUser(fkey)), 12, 'first-ever touch must not be treated as a year change');
+    freshLq.shutdown();
+  }
+
   // --- /leaderboard and /weeklyboard commands ---
   {
     const cmdBot = fakeBot();
