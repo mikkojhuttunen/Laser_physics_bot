@@ -182,6 +182,37 @@ function fakeBot() {
     cappedLq.shutdown();
   }
 
+  // --- LASER_QUIZ_MAX_XP: ceiling on the TOTAL mastery sum, not individual per-laser bests.
+  // Uses a very high daily-gain cap so it never interferes with reaching the ceiling here. ---
+  {
+    const maxEnv = { ...env, LASER_QUIZ_DAILY_XP_CAP: '0', LASER_QUIZ_MAX_XP: '100' };
+    const maxLq = createLaserQuiz(fakeBot(), { env: maxEnv });
+    const MI = maxLq._internals;
+    const xkey = MI.userKey(90003);
+    MI.awardMastery(xkey, 'laser-a', 70);
+    assert.strictEqual(MI.masteryOf(MI.touchUser(xkey)), 70, 'below the 100 ceiling: total is unaffected');
+    MI.awardMastery(xkey, 'laser-b', 60); // true sum would be 130, ceiling is 100
+    assert.strictEqual(MI.masteryOf(MI.touchUser(xkey)), 100, 'total must be rounded down to LASER_QUIZ_MAX_XP');
+    // per-laser bests themselves stay at full, uncapped precision -- only the aggregate is capped
+    assert.strictEqual(MI.touchUser(xkey).bestByLaser['laser-a'], 70);
+    assert.strictEqual(MI.touchUser(xkey).bestByLaser['laser-b'], 60);
+    maxLq.shutdown();
+
+    // LASER_QUIZ_MAX_XP=0 means uncapped, same convention as LASER_QUIZ_DAILY_XP_CAP
+    const uncappedEnv = { ...env, LASER_QUIZ_DAILY_XP_CAP: '0', LASER_QUIZ_MAX_XP: '0' };
+    const uncappedLq = createLaserQuiz(fakeBot(), { env: uncappedEnv });
+    const UI = uncappedLq._internals;
+    const ukey = UI.userKey(90004);
+    UI.awardMastery(ukey, 'laser-a', 70);
+    UI.awardMastery(ukey, 'laser-b', 60);
+    assert.strictEqual(UI.masteryOf(UI.touchUser(ukey)), 130, 'LASER_QUIZ_MAX_XP=0 must leave the total uncapped');
+    uncappedLq.shutdown();
+
+    // a config with LASER_QUIZ_MAX_XP set below the top level's threshold should warn at startup
+    const lowMaxCfg = _test.readConfig({ ...maxEnv, LASER_QUIZ_MAX_XP: '10' });
+    assert(lowMaxCfg.warnings.some((w) => /top level.*unreachable|unreachable.*top level/i.test(w) || /below the top level/i.test(w)), 'a too-low LASER_QUIZ_MAX_XP should produce a startup warning');
+  }
+
   // --- full quiz flow through the real UI/session layer, always answering correctly ---
   const uid = 42;
   const cb = (data) => ({ id: 'q', from: { id: uid }, message: { chat: { id: uid }, message_id: 7 }, data });
@@ -206,7 +237,13 @@ function fakeBot() {
   assert(/complete/.test(last) && /Total mastery/.test(last) && /Mastery leaderboard/.test(last), 'summary text');
   assert(/New personal best|First mastery score banked/.test(last), 'a fresh 100% round should bank a new best');
   const key = I.userKey(uid);
-  assert.strictEqual(I.touchUser(key).bestByLaser[playedLaserId], n * lq.config.pointsPerQuestion, 'a perfect round with no streak-bonus-eligible run should bank exactly n * pointsPerQuestion');
+  // A perfect round banks n*pointsPerQuestion PLUS the streak bonus earned during that same
+  // round (streak bonus now counts toward mastery -- see the header comment in laserQuiz.js).
+  // This is that session's FIRST round, so streak starts at 0: bonus-eligible questions are
+  // every one from the streakMin-th perfect answer onward, i.e. max(0, n - (streakMin - 1)).
+  const bonusEligible = Math.max(0, n - (lq.config.streakMin - 1));
+  const expectedBest = n * lq.config.pointsPerQuestion + bonusEligible * lq.config.streakBonus;
+  assert.strictEqual(I.touchUser(key).bestByLaser[playedLaserId], expectedBest, 'a perfect round should bank n*pointsPerQuestion plus its streak bonus');
   console.log(last.replace(/<[^>]+>/g, ''));
 
   // stale button is ignored

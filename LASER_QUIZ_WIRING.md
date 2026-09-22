@@ -44,10 +44,11 @@ Also add `/lasers` to your `setMyCommands` list.
 |---|---|---|
 | `WEEKLY_XP_ENABLED` | off | Collect mastery scores. Turns on the permanent level ladder and the header mastery counter. Requires `QUIZ_SALT`. Name kept for backward compatibility — there is no weekly reset; see "Mastery model" below. |
 | `LEADERBOARD_VISIBLE` | off | Show the anonymous all-time top 10 after each quiz. Needs `WEEKLY_XP_ENABLED`; otherwise it is ignored with a startup warning. |
+| `LASER_QUIZ_MAX_XP` | 1000 | Ceiling on TOTAL mastery XP shown/leveled from — rounds down the true achievable max (e.g. 1002 with default scoring) to a clean configured number. Only the total is capped, never individual per-laser bests. `0` = uncapped. Keep this at or below the top level's `min` in `laser_quiz_names.js` (a startup warning fires if it's set lower, since the top level(s) would become unreachable) and at or below the true achievable 100% total (see the `pointsPerQuestion` comment in `readConfig()`), or a perfect player could never actually reach it. |
 | `LASER_QUIZ_DAILY_XP_CAP` | 300 | Max mastery XP a student can GAIN per day (anti-cram, not anti-replay — replays of an already-mastered laser cost nothing to begin with). `0` = no cap. |
 | `LASER_QUIZ_POINTS_PER_QUESTION` | 6 | XP for a fully-correct answer, before the streak bonus. |
 | `LASER_QUIZ_STREAK_MIN` | 3 | Perfect answers in a row before the streak bonus kicks in. |
-| `LASER_QUIZ_STREAK_BONUS` | 3 | Live-quiz bonus XP per perfect answer once the streak threshold is hit. Flavor only — excluded from mastery, see below. |
+| `LASER_QUIZ_STREAK_BONUS` | 3 | Live-quiz bonus XP per perfect answer once the streak threshold is hit. Counts toward mastery, kept small by default so it doesn't meaningfully distort a laser's banked best. |
 | `QUIZ_SALT` | none | Secret for hashing Telegram IDs. Generate once (`openssl rand -hex 32`) and never change it, or everyone gets a new identity. |
 | `QUIZ_DATA_DIR` | `./data` | Set to your Railway volume mount path (e.g. `/data`), otherwise mastery data is lost on each deploy. |
 | `QUIZ_TZ` | `Europe/Helsinki` | Time zone for day boundaries (daily mastery-gain cap resets at local midnight). |
@@ -69,7 +70,7 @@ Mastery is **not** a running total of everything ever earned. For each laser, on
 
 Practical effect: replaying a laser you've already aced adds nothing (a worse round never lowers the stored best; a matching or worse round is simply not a new best). The only way to raise your total is to improve on a laser you haven't yet maxed, or to play a laser for the first time. Reaching the top of the level ladder therefore genuinely requires close to 100% correct on every laser at least once — grinding one easy laser repeatedly does not substitute for that.
 
-The streak bonus (`LASER_QUIZ_STREAK_BONUS`) is deliberately excluded from what counts toward mastery — it only affects the live "this quiz" flavor number shown during play. This keeps mastery immune to session-order luck: a hot streak carried over from an earlier laser in the same sitting can never inflate a specific laser's permanent best.
+The streak bonus (`LASER_QUIZ_STREAK_BONUS`) counts toward a round's mastery-candidate score, same as everything else earned during that round. Its default is kept deliberately small precisely because of this: a hot streak carried over from an earlier laser in the same sitting can nudge a laser's banked best a little higher than a cold first-ever attempt would, and a small bonus value keeps that effect minor rather than a meaningful distortion.
 
 ## What is stored
 
@@ -111,5 +112,5 @@ Thulium uses the same mechanism differently: it keeps its normal level-scheme st
 
 ## Tuning notes
 
-- A full single-sitting 100%-correct cycle through all current lasers (112 questions as of the 13-laser set) banks close to the top of the ladder (1000 XP) at the default `LASER_QUIZ_POINTS_PER_QUESTION=6` — by design, so reaching the top requires something close to mastering the whole set, not just playing a lot. Recompute this pairing (see the comment above `readConfig()` in `laserQuiz.js`) whenever the laser count changes meaningfully, and retune the ladder in `laser_quiz_names.js` if it starts feeling too easy or too grindy once you see real usage.
+- A full single-sitting 100%-correct cycle through all current lasers (112 questions as of the 13-laser set) reaches 1002 XP at the default `LASER_QUIZ_POINTS_PER_QUESTION=6` — `LASER_QUIZ_MAX_XP` (default 1000) then rounds that down to a clean ceiling, so reaching the top requires something close to mastering the whole set, not just playing a lot. The exact `pointsPerQuestion`/`streakBonus` pairing matters less now than it used to, since the cap does the final rounding — it only needs to keep the true achievable total at or above `LASER_QUIZ_MAX_XP` (see the comment above `readConfig()` in `laserQuiz.js`). Retune the ladder in `laser_quiz_names.js` if it starts feeling too easy or too grindy once you see real usage.
 - Callback data format: `lq:s`, `lq:t:<step>:<option>`, `lq:c:<step>`, `lq:n:<step>`, `lq:l`, `lq:x` (all under 64 bytes). Buttons carrying an old step number are ignored, so stale messages cannot double-count XP.
