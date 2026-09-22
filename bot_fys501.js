@@ -520,6 +520,18 @@ const quizBot = {
       console.error("Telegram answerCallbackQuery failed:", e.response?.status, JSON.stringify(e.response?.data))
     );
   },
+  // Needed by laserQuiz.js's clearKb() (strips the inline keyboard off a
+  // finished/expired quiz message) — quizGenerator/mvQuizGenerator never
+  // needed this one, so it was missing until the "Next laser" bug fix.
+  async editMessageReplyMarkup(replyMarkup, opts = {}) {
+    return tg("editMessageReplyMarkup", {
+      chat_id: opts.chat_id,
+      message_id: opts.message_id,
+      reply_markup: replyMarkup,
+    }).catch((e) =>
+      console.error("Telegram editMessageReplyMarkup (quiz) failed:", e.response?.status, JSON.stringify(e.response?.data))
+    );
+  },
   // Used by membership.js. Unlike the methods above this one must THROW on failure
   // (with Telegram's description in the message) so membership.js can tell
   // "user not found" apart from network/permission errors.
@@ -1055,7 +1067,7 @@ const HELP_TEXT =
   "Usage:\n" +
   "- /usage — how many AI answers you have left today (quizzes, lecture links and commands are free)\n\n" +
   "Privacy:\n" +
-  "- /privacy — what quiz data is recorded (anonymously) and why; /optout stops it and deletes your data\n\n" +
+  "- /privacy — what quiz data is recorded (anonymously) and why; /optout stops it and deletes your data, /optin turns it back on\n\n" +
   "Lecture videos:\n" +
   "- /lectures (or /topics) — full listing, week by week\n" +
   "- /week1 ... /week6 — just that week's videos\n" +
