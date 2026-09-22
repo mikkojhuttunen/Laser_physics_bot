@@ -765,7 +765,38 @@
         "power": "Efficient cross-relaxation keeps thermal loading low relative to the stored energy, which is part of why Tm systems scale well in fiber and thin-rod geometries.",
         "apps": "Eye-safety at 2 µm makes it attractive for LIDAR and outdoor ranging; strong water absorption suits soft-tissue surgery similarly to Er:YAG, just at a different wavelength and with fiber delivery more common.",
         "lifetime": "~15 ms radiative lifetime of the upper level in YAG — about 15× longer than Yb:YAG's. Combined with the two-for-one cross-relaxation process (one absorbed 785 nm pump photon excites two Tm³⁺ ions to the upper laser level), this gives a very low pump-power threshold for a given stored energy, and only a ~20% quantum defect despite the large wavelength gap between pump and laser photons."
-      }
+      },
+      "extraQuestions": [
+        {
+          "id": "crossRelaxation",
+          "title": "Two-for-one cross-relaxation",
+          "multi": true,
+          "q": "Tm:YAG's pump-to-laser conversion is often called “two-for-one” cross-relaxation. Which of the following are true about it? Select all that apply.",
+          "options": [
+            {
+              "t": "One absorbed ~785 nm pump photon can excite two neighboring Tm³⁺ ions to the upper laser level, giving a quantum efficiency approaching 200%",
+              "ok": true
+            },
+            {
+              "t": "Despite the large energy gap between the ~785 nm pump photon and the ~2010 nm laser photon, the quantum defect is only ~20% because two laser photons emerge per pump photon",
+              "ok": true
+            },
+            {
+              "t": "It happens inside a single Tm³⁺ ion, with no energy transfer to neighboring ions",
+              "ok": false
+            },
+            {
+              "t": "It only becomes significant at very low (well under 1%) Tm³⁺ doping concentrations",
+              "ok": false
+            },
+            {
+              "t": "It increases thermal loading in the crystal compared to an equivalent Yb:YAG laser",
+              "ok": false
+            }
+          ],
+          "note": "The pump excites a Tm³⁺ ion to ³H₄; that ion can then relax to the upper laser level ³F₄ while handing its leftover energy to a neighboring ground-state (³H₆) ion, promoting it to ³F₄ as well — one photon in, two excited ions out. This cross-relaxation is a near-resonant, ion-to-ion energy-transfer process, so it needs Tm³⁺ ions close enough together to interact, which is why it only becomes efficient at higher doping (a few percent Tm³⁺), not lower. The quantum-defect saving is what keeps Tm:YAG's thermal load low relative to its very large pump/laser wavelength gap, and part of why it scales well in fiber and thin-rod geometries."
+        }
+      ]
     },
     {
       "id": "diode",

@@ -63,6 +63,19 @@ for (const l of DATA.lasers) {
   assert(/N\/A/.test(levelStep.options.find((o) => o.ok).t), 'diode\'s correct level answer should be the N/A option');
   assert(!steps.find((s) => s.id === 'pumpWavelength'), 'diode has no optical pump wavelength, so that step should be skipped');
 }
+// thulium: dedicated cross-relaxation question, in addition to (not replacing) its level-scheme step
+{
+  const tm = DATA.lasers.find((l) => l.id === 'thulium');
+  const steps = _test.buildSteps(tm, DATA.lasers);
+  assert(steps.find((s) => s.id === 'level'), 'thulium should still have its normal level-scheme step');
+  const cr = steps.find((s) => s.id === 'crossRelaxation');
+  assert(cr, 'thulium should have the cross-relaxation nuance question');
+  assert.strictEqual(cr.title, 'Two-for-one cross-relaxation');
+  assert(cr.multi, 'cross-relaxation question should be multi-select');
+  assert.strictEqual(cr.options.filter((o) => o.ok).length, 2, 'exactly 2 correct options');
+  const g = _test.grade(cr, cr.options.map((o, i) => (o.ok ? i : -1)).filter((i) => i >= 0));
+  assert.strictEqual(g.pts, 10, 'selecting exactly the correct options should score full marks');
+}
 // er:yag: level-scheme step is skipped outright (self-terminating transition doesn't fit the 3/4-level picture),
 // replaced by a dedicated nuance question
 {
@@ -73,8 +86,8 @@ for (const l of DATA.lasers) {
   assert(nuance, 'er-yag should have the self-terminating nuance question');
   assert.strictEqual(nuance.title, 'Self-terminating transition');
   assert(nuance.multi, 'nuance question should be multi-select');
-  const g = _test.grade(nuance, nuance.options.map((o, i) => (o.ok ? i : -1)).filter((i) => i >= 0));
-  assert.strictEqual(g.pts, 10, 'selecting exactly the correct options should score full marks');
+  const g2 = _test.grade(nuance, nuance.options.map((o, i) => (o.ok ? i : -1)).filter((i) => i >= 0));
+  assert.strictEqual(g2.pts, 10, 'selecting exactly the correct options should score full marks');
 }
 
 const step = { options: [{ ok: true }, { ok: true }, { ok: false }, { ok: false }] };

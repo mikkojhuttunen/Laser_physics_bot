@@ -97,6 +97,8 @@ A laser can carry an `extraQuestions` array for a laser-specific wrinkle that do
 
 Er:YAG uses this instead of the level-scheme question: its 2940 nm transition is self-terminating (the lower laser level outlives the upper one, the opposite of the usual 3-level/4-level assumption), which a 3-option multiple-choice doesn't represent well. Its `level` field is `null` (skipping the level-scheme step, the same nullable pattern the diode entry introduced) and `extraQuestions` carries a dedicated multi-select question — "which of the following are true about this transition?" — instead. That's a template for any future laser whose physics doesn't fit the standard fields cleanly.
 
+Thulium uses the same mechanism differently: it keeps its normal level-scheme step (quasi-3-level is a clean fit) and *adds* an `extraQuestions` entry on top, testing the "two-for-one" cross-relaxation process — one absorbed pump photon exciting two Tm³⁺ ions, which is what makes its quantum defect so low despite the huge pump/laser wavelength gap. `extraQuestions` is additive, not a replacement, unless you also null out `level` the way Er:YAG does.
+
 ## Tuning notes
 
 - A perfect 8-question round is worth 80 XP plus streak bonuses (+5 per perfect answer from the third in a row, carried across lasers within a session), so up to about 110 XP. The top level (1000 XP) therefore needs roughly 10 perfect rounds in a week; retune `WEEKLY_XP_TARGET` and the ladder in `laser_quiz_names.js` once you see real usage.
