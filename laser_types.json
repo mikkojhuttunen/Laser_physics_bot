@@ -874,6 +874,266 @@
         "apps": "Nearly every other laser in this quiz that's diode-pumped is ultimately powered by exactly this kind of device.",
         "lifetime": "Carrier (spontaneous-emission) lifetime is typically ~1–3 ns — by far the shortest of any laser in this quiz. It rules out Q-switching or the µs–ms energy storage used by ion-doped crystals, but it's exactly why diode lasers can be modulated directly at GHz rates by modulating the drive current — the basis of fiber-optic data transmission."
       }
+    },
+    {
+      "id": "excimer",
+      "reviewed": false,
+      "name": "Excimer (ArF/KrF)",
+      "gain": "an argon–fluorine or krypton–fluorine gas mixture forming excited-state dimer molecules (ArF*, KrF*)",
+      "pump": {
+        "ok": [
+          "D"
+        ],
+        "no": [
+          "A",
+          "C",
+          "E"
+        ]
+      },
+      "level": 2,
+      "pumpWavelength": null,
+      "lasing": {
+        "ok": "Deep UV: 193 nm (ArF) or 248 nm (KrF), depending on the gas mixture",
+        "no": [
+          "266 nm (quadrupled Nd:YAG)",
+          "355 nm (tripled Nd:YAG)",
+          "10.6 µm"
+        ]
+      },
+      "transition": "ArF*/KrF*: bound excited-dimer (exciplex) state → dissociative (unbound) ground state",
+      "modes": [
+        {
+          "t": "Pulsed, ns-scale, high peak power",
+          "ok": true
+        },
+        {
+          "t": "High repetition rates (up to several kHz) in industrial systems",
+          "ok": true
+        },
+        {
+          "t": "Continuous-wave",
+          "ok": false
+        }
+      ],
+      "power": {
+        "ok": "Pulse energies of tens of mJ to ~1 J; average power up to hundreds of W in industrial lithography/micromachining systems",
+        "no": [
+          "Below 1 mW",
+          "Fixed ~5 mW, cannot scale",
+          "Only nJ pulses at GHz rates"
+        ]
+      },
+      "apps": {
+        "ok": [
+          "Deep-UV photolithography (semiconductor manufacturing)",
+          "PRK/LASIK eye surgery (ArF, 193 nm)",
+          "Micromachining and thin-film patterning"
+        ],
+        "no": [
+          "Telecom amplification",
+          "Barcode scanning"
+        ]
+      },
+      "notes": {
+        "pump": "A fast, high-voltage electrical discharge (sometimes assisted by electron-beam pre-ionization) excites the Ar/Kr–F₂ gas mixture; the excited-state ArF*/KrF* molecules form only transiently inside the discharge.",
+        "level": "The lower 'laser level' is a repulsive, unbound molecular state that dissociates within about a picosecond, so it can never accumulate population — making excimer lasers one of the closest real-world approximations to an ideal 4-level system.",
+        "lasing": "193 nm (ArF) and 248 nm (KrF) are the two most common excimer lines; other halogen/noble-gas pairs (e.g. XeCl at 308 nm) give other UV wavelengths.",
+        "transition": "The bound excited dimer relaxes by emitting a UV photon and falling apart into separate, unbound ground-state atoms — the reverse of how the molecule was formed.",
+        "modes": "The short-lived excited species and the need to continuously re-form fresh molecules rule out CW operation; excimer lasers run in ns pulses set by the discharge duration.",
+        "power": "High-repetition-rate industrial systems (for lithography and micromachining) trade single-pulse energy for average power, running at hundreds to thousands of Hz.",
+        "apps": "Deep-UV output enables features and cuts smaller than visible or near-IR lasers can achieve, and 193 nm is strongly absorbed in the outermost layers of the cornea, giving very precise ablation in refractive eye surgery.",
+        "lifetime": "The bound excited-dimer state has a radiative lifetime of roughly 7-10 ns (measured at 6.8 ns for KrF specifically) — one reason the discharge must keep re-exciting fresh molecules pulse after pulse rather than storing energy the way a long-lived solid-state upper level does."
+      },
+      "lifetime": {
+        "bucket": "~ns (nanoseconds)"
+      },
+      "extraQuestions": [
+        {
+          "id": "dissociativeGroundState",
+          "title": "A ground state that isn't really there",
+          "multi": true,
+          "q": "Excimer lasers are unusual among the lasers in this quiz because of what happens to the lower laser level. Which of the following are true? Select all that apply.",
+          "options": [
+            {
+              "t": "The lower level is a repulsive (unbound) molecular state that falls apart within about a picosecond, so population can never build up there",
+              "ok": true
+            },
+            {
+              "t": "Because the ground state is unbound, fresh ArF or KrF molecules must be chemically re-formed from Ar/Kr and a fluorine donor (e.g. F₂) inside the discharge on every pulse",
+              "ok": true
+            },
+            {
+              "t": "Like Nd:YAG's long-lived upper state, the excited-dimer state stores energy efficiently, which is why excimer lasers are usually Q-switched rather than pulsed by the pump itself",
+              "ok": false
+            },
+            {
+              "t": "The lower level in an excimer laser is a long-lived, bound state — just like the ground state of a HeNe or Nd:YAG laser",
+              "ok": false
+            },
+            {
+              "t": "Excimer lasers can run continuous-wave in the same way argon-ion or CO₂ lasers do, since the discharge keeps the gain medium continuously excited",
+              "ok": false
+            }
+          ],
+          "note": "Excimer/exciplex molecules (ArF*, KrF*, XeCl*, etc.) only exist as bound species in their electronically excited state — the ground-state potential curve is purely repulsive, so as soon as a molecule emits a photon it flies apart into separate atoms. That means there is structurally no way for the lower laser level to accumulate population, which is exactly the condition a 4-level laser needs, just taken to its logical extreme. But it also means the gain medium has to be rebuilt from scratch every pulse (via fast electrical discharge, reacting Ar/Kr with F₂), and the short (~ns) lifetime of the excited state rules out both Q-switched energy storage and CW operation — unlike Nd:YAG or the CW gas lasers (HeNe, argon-ion, CO₂) elsewhere in this quiz."
+        }
+      ]
+    },
+    {
+      "id": "argon-ion",
+      "reviewed": false,
+      "name": "Argon-ion (Ar⁺)",
+      "gain": "singly-ionized argon gas (Ar⁺) in a high-current arc discharge",
+      "pump": {
+        "ok": [
+          "D"
+        ],
+        "no": [
+          "A",
+          "C",
+          "E"
+        ]
+      },
+      "level": 2,
+      "pumpWavelength": null,
+      "lasing": {
+        "ok": "Blue–green, mainly 488.0 and 514.5 nm (several weaker lines between ~450 and 530 nm)",
+        "no": [
+          "632.8 nm",
+          "1064 nm",
+          "10.6 µm"
+        ]
+      },
+      "transition": "Ar⁺: 4p → 4s (strongest lines at 488.0 and 514.5 nm)",
+      "modes": [
+        {
+          "t": "Continuous-wave (the classic mode of operation)",
+          "ok": true
+        },
+        {
+          "t": "Mode-locked ps pulses (used in some research systems)",
+          "ok": true
+        },
+        {
+          "t": "Flashlamp-pumped ms pulses",
+          "ok": false
+        }
+      ],
+      "power": {
+        "ok": "CW output from tens of mW up to a few W; large multi-line 'big-frame' systems reach ~10–20 W, at very low (~0.1%) wall-plug efficiency",
+        "no": [
+          "Only nJ pulses at GHz rates",
+          "Fixed ~1 mW, cannot scale",
+          "Multi-kW continuous, air-cooled"
+        ]
+      },
+      "apps": {
+        "ok": [
+          "Pumping dye and (historically) Ti:Sapph lasers",
+          "Confocal microscopy and flow cytometry",
+          "Ophthalmology (retinal photocoagulation)",
+          "Raman spectroscopy"
+        ],
+        "no": [
+          "Telecom amplification",
+          "EUV lithography"
+        ]
+      },
+      "notes": {
+        "pump": "A high-current DC arc discharge ionizes the argon gas and then excites the resulting Ar⁺ ions by further electron collisions — a two-step process that needs far more electrical power than a neutral-gas discharge like HeNe.",
+        "level": "The upper laser level is reached by multi-step electron-impact excitation from the Ar⁺ ion ground state; the lower laser level empties quickly via a strongly allowed UV transition (~72–74 nm) back to the ion ground state, giving a classic 4-level scheme.",
+        "lasing": "488 nm and 514.5 nm are the two strongest of roughly a dozen visible Ar⁺ lines; intracavity prisms or etalons can select a single line.",
+        "transition": "Both levels are excited states of the argon ion (not the neutral atom), reached only after the discharge has already stripped an electron from Ar.",
+        "modes": "The continuously-refreshed high-current discharge sustains a stable CW population inversion; mode-locking is possible but the short upper-state lifetime rules out Q-switching.",
+        "power": "Ionizing and exciting argon twice over (once to strip the electron, again to reach the upper laser level) makes argon-ion one of the least efficient common lasers, requiring substantial water cooling for anything beyond a few watts.",
+        "apps": "Strong, stable visible output historically made argon-ion the workhorse pump for dye and Ti:Sapph lasers, and it remains common in microscopy, cytometry and ophthalmology, though diode-pumped solid-state lasers have replaced it in many roles.",
+        "lifetime": "The upper 4p level's radiative lifetime is only a few to ~10 ns, typical of a strongly allowed atomic transition — far too short to store pump energy, which is why the discharge must continuously re-excite the ions to sustain CW output rather than relying on any energy storage."
+      },
+      "lifetime": {
+        "bucket": "~ns (nanoseconds)"
+      }
+    },
+    {
+      "id": "er-fiber",
+      "reviewed": false,
+      "name": "Er-doped fiber (EDFA/Er:fiber)",
+      "gain": "erbium-doped silica optical fiber (Er³⁺:fiber)",
+      "pump": {
+        "ok": [
+          "A"
+        ],
+        "no": [
+          "C",
+          "D",
+          "E"
+        ]
+      },
+      "level": 1,
+      "pumpWavelength": {
+        "ok": "~980 nm (or ~1480 nm for in-band pumping)",
+        "no": [
+          "~808 nm",
+          "~940 nm",
+          "~1064 nm"
+        ]
+      },
+      "lasing": {
+        "ok": "~1530–1565 nm (telecom C-band; L-band Er-doped fiber extends further)",
+        "no": [
+          "1064 nm",
+          "2940 nm",
+          "10.6 µm"
+        ]
+      },
+      "transition": "Er³⁺: ⁴I₁₃/₂ → ⁴I₁₅/₂",
+      "modes": [
+        {
+          "t": "Continuous-wave (fiber oscillator or EDFA amplifier)",
+          "ok": true
+        },
+        {
+          "t": "Mode-locked fs–ps pulses (e.g. for frequency combs)",
+          "ok": true
+        },
+        {
+          "t": "Flashlamp-pumped ms pulses",
+          "ok": false
+        }
+      ],
+      "power": {
+        "ok": "mW-level signals in telecom EDFAs; dedicated fiber oscillators/amplifiers commonly reach 1–100 W CW",
+        "no": [
+          "Fixed ~5 mW, cannot scale",
+          "Multi-kW continuous, like an industrial CO₂ laser",
+          "Only J-level pulses at low repetition rate"
+        ]
+      },
+      "apps": {
+        "ok": [
+          "Optical-fiber telecom amplification (EDFA, C-band)",
+          "Fiber lasers for materials marking and processing",
+          "Frequency combs and precision metrology",
+          "Dermatology and some surgical uses near 1.5 µm"
+        ],
+        "no": [
+          "Deep-UV photolithography",
+          "Barcode scanning"
+        ]
+      },
+      "notes": {
+        "pump": "980 nm or 1480 nm laser diodes are coupled into the fiber core (or cladding, for high-power designs) via fiber-optic couplers — no free-space optics are needed.",
+        "level": "The lower laser level (⁴I₁₅/₂) is the ion's ground-state manifold and is thermally populated at room temperature, so — like Yb:YAG and Thulium — this is a quasi-3-level system, not a clean 4-level one.",
+        "pumpWavelength": "980 nm ('indirect' pumping, via the fast-decaying ⁴I₁₁/₂ level) avoids exciting ions that would reabsorb the signal, giving the best noise figure — the usual choice for low-noise preamps. 1480 nm ('in-band' pumping, straight into the lower Stark sublevels of ⁴I₁₃/₂) has a smaller quantum defect relative to the ~1550 nm signal, so more of the pump energy becomes signal photons rather than heat — better power-conversion efficiency, the usual choice for high-power booster stages.",
+        "lasing": "The ⁴I₁₃/₂ → ⁴I₁₅/₂ manifold-to-manifold transition is inhomogeneously broadened by the glass host, giving the broad gain bandwidth that makes silica fiber the backbone of WDM telecom amplification.",
+        "transition": "Same ion (Er³⁺) as Er:YAG, but a different transition and host: fiber lasing uses ⁴I₁₃/₂ → ⁴I₁₅/₂ near 1.5 µm, not Er:YAG's ⁴I₁₁/₂ → ⁴I₁₃/₂ at 2940 nm.",
+        "modes": "Fiber's long interaction length and excellent heat dissipation support both efficient CW operation and, with dispersion/nonlinearity management, stable mode-locking for compact fs–ps sources.",
+        "power": "A single-mode telecom EDFA only needs to amplify mW-level signals, while dedicated high-power Er (or Er/Yb co-doped) fiber lasers scale into the tens-to-hundreds-of-watt range.",
+        "apps": "The C-band gain window lines up with the telecom fiber's lowest-loss transmission window, which is why EDFAs became the enabling technology for long-haul fiber-optic communication.",
+        "lifetime": "The ⁴I₁₃/₂ upper level has an unusually long ~10 ms lifetime in silica glass — one of the longest of any common gain medium — letting a fiber amplifier store substantial energy relative to its tiny (µm-scale) mode volume and sustain gain efficiently even at modest pump power."
+      },
+      "lifetime": {
+        "bucket": "~10s of ms"
+      }
     }
   ],
   "lifetimeBuckets": [
