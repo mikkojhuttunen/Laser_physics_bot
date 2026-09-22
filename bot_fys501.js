@@ -177,6 +177,8 @@ const express = require("express");
 const axios = require("axios");
 const quizGenerator = require("./quizGenerator_fys501");
 const mvQuizGenerator = require("./multivalueQuizGenerator_fys501");
+const { createLaserQuiz } = require("./laserQuiz");
+const { isCourseMember } = require("./membership");
 const pendingAdmin = require("./pendingAdmin_fys501");
 const corpusLoader = require("./corpusLoader_fys501");
 const lectureLinks = require("./lectureLinks_fys501");
@@ -531,6 +533,14 @@ const quizBot = {
     }
   },
 };
+
+// Laser-types quiz (/lasers) — zero-LLM, button-only, reuses the quizBot adapter
+// above (same sendMessage/editMessageText/answerCallbackQuery/getChatMember shape
+// laserQuiz.js expects). See LASER_QUIZ_WIRING.md for the env vars that control
+// weekly XP / leaderboard behaviour; all are optional and off by default.
+const laserQuiz = createLaserQuiz(quizBot, {
+  isAllowed: (userId) => isCourseMember(quizBot, userId),
+});
 
 // Called by quizGenerator.startQuiz() when the student didn't name a
 // chapter/section (e.g. just typed "quiz me"). Presents an inline-keyboard
@@ -1040,6 +1050,8 @@ const HELP_TEXT =
   "- /quiz chapter 2 (or /quiz 2.3) — same thing, as a command\n" +
   "- add a number for how many questions, e.g. \"quiz me on chapter 2, 10 questions\" or \"/quiz 2 10\"\n" +
   "- /mvquiz chapter 2 (or /mvquiz 2.3) — a \"select all that apply\" quiz: tap every letter that is correct, then Submit. Partial credit is given.\n\n" +
+  "Laser types:\n" +
+  "- /lasers — a quick round on common gain media (Nd:YAG, HeNe, diode, ...): level scheme, pump, lifetime and more\n\n" +
   "Usage:\n" +
   "- /usage — how many AI answers you have left today (quizzes, lecture links and commands are free)\n\n" +
   "Privacy:\n" +
@@ -1074,6 +1086,7 @@ app.get("/healthz", (_req, res) =>
     glossaryLooksHealthy: corpusLoader.glossaryLooksHealthy(),
     glossaryCourseMismatch: corpusLoader.glossaryCourseMismatch(),
     membershipGate: !!process.env.COURSE_CHANNEL_ID,
+    laserQuiz: { weeklyXp: laserQuiz.config.weeklyXp, leaderboard: laserQuiz.config.leaderboard },
     quizAnalytics: quizAnalytics.status(),
     usage: limiter.status(),
   })
@@ -1112,6 +1125,11 @@ async function handleUpdate(update) {
   const text = (message.text || "").trim();
 
   if (!shouldAnswer(message)) return;
+
+  // Laser-types quiz (/lasers) — Stage 0, before any LLM routing or membership
+  // gating below (laserQuiz.js does its own isAllowed check per LASER_QUIZ_WIRING.md).
+  // Zero LLM calls, so this never touches STUDENT_LLM_DAILY_USAGE or the EUR backstop.
+  if (laserQuiz.handleCommand(message)) return;
 
   // ---- access control (v1.2.0): OPEN bot — no blanket membership check here.
   // Deterministic replies below (commands, lecture links, /HW overviews from
@@ -1417,6 +1435,12 @@ async function handleUpdate(update) {
 async function handleCallbackQuery(cq) {
   const data = cq.data || "";
 
+  // Laser-types quiz (/lasers) — own "lq:" callback_data namespace, checked
+  // first so it can never collide with "quiz:"/"mv:"/chapter-picker prefixes.
+  if (data.startsWith("lq:")) {
+    return laserQuiz.handleCallback(cq);
+  }
+
   // ---- multivalue ("select all that apply") quiz add-on — its own
   // callback_data namespace, kept separate from "quiz:"/"quizchapter:" ----
   // Grading taps are free — no membership check, no credit cost — since
@@ -1483,4 +1507,12 @@ app.listen(PORT, () => {
     `FYS.501 Laser bot v${BOT_VERSION} listening on port ${PORT} | model=${MODEL} | cache=${CACHE_TTL} | ` +
     `Glossary=${glossaryStatus} | QuizAnalytics=${quizAnalytics.isEnabled() ? "on" : "off"}`
   );
+});
+
+// Railway sends SIGTERM on every redeploy — flush laserQuiz's in-memory XP
+// store to disk (QUIZ_DATA_DIR) before the process is killed, or unsaved
+// weekly XP / level-up progress from the last few minutes is lost.
+process.on("SIGTERM", () => {
+  laserQuiz.shutdown();
+  process.exit(0);
 });

@@ -877,7 +877,7 @@
     },
     {
       "id": "excimer",
-      "reviewed": false,
+      "reviewed": true,
       "name": "Excimer (ArF/KrF)",
       "gain": "an argon–fluorine or krypton–fluorine gas mixture forming excited-state dimer molecules (ArF*, KrF*)",
       "pump": {
@@ -981,7 +981,7 @@
     },
     {
       "id": "argon-ion",
-      "reviewed": false,
+      "reviewed": true,
       "name": "Argon-ion (Ar⁺)",
       "gain": "singly-ionized argon gas (Ar⁺) in a high-current arc discharge",
       "pump": {
@@ -1055,7 +1055,7 @@
     },
     {
       "id": "er-fiber",
-      "reviewed": false,
+      "reviewed": true,
       "name": "Er-doped fiber (EDFA/Er:fiber)",
       "gain": "erbium-doped silica optical fiber (Er³⁺:fiber)",
       "pump": {
